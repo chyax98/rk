@@ -5,8 +5,8 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const COMMENTABLE = new Set(['callout', 'decision-card', 'diagram']);
-const KNOWN = new Set(['heading', 'paragraph', 'callout', 'decision-card', 'diagram']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram']);
+const ID_FORMAT = /^[a-zA-Z0-9_-]+$/;
 
 export function parseRK(source, file = '<source>') {
   const errors = [];
@@ -64,8 +64,12 @@ export function parseRK(source, file = '<source>') {
         errors.push(diag('RK_UNKNOWN_BLOCK_TYPE', `Unknown block type: ${name}`, file, r));
         continue;
       }
-      if (COMMENTABLE.has(name) && !attrs.id) {
+      if (!attrs.id) {
         errors.push(diag('RK_BLOCK_ID_REQUIRED', `${name} block requires id`, file, r));
+        continue;
+      }
+      if (!ID_FORMAT.test(attrs.id)) {
+        errors.push(diag('RK_BLOCK_ID_INVALID', `${name} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
         continue;
       }
       let block;

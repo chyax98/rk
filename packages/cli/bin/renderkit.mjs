@@ -35,8 +35,12 @@ program.command('push <file>').option('--open', 'open browser').option('--json',
   const artifactId = json.artifactId;
   await writeLock(file, { artifactId, url: json.url, lastRevision: json.revision, endpoint });
 
-  output({ ok: true, artifactId, revision: json.revision, url: json.url, diff: json.diff, resolved: json.resolved || [] }, opts.json);
+  const result = { ok: true, artifactId, revision: json.revision, url: json.url, diff: json.diff, resolved: json.resolved || [] };
+  output(result, opts.json);
 
+  if (opts.open && json.url) {
+    try { openUrl(json.url); } catch (_e) { /* browser open failure is non-fatal */ }
+  }
 });
 
 program.command('status <target>').option('--json', 'json output').action(async (target, opts) => {
@@ -87,6 +91,6 @@ async function readLock(file) { try { return JSON.parse(await fs.readFile(lockPa
 async function writeLock(file, data) { await fs.writeFile(lockPath(file), JSON.stringify(data, null, 2)); }
 function output(obj, forceJson) { if (forceJson || !process.stdout.isTTY) console.log(JSON.stringify(obj, null, 2)); else pretty(obj); }
 function pretty(obj) { if (obj.ok === false) { console.error('RenderKit error'); console.error(JSON.stringify(obj, null, 2)); return; } console.log(JSON.stringify(obj, null, 2)); }
-function openUrl(url) { const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'cmd' : 'xdg-open'; const args = process.platform === 'win32' ? ['/c', 'start', url] : [url]; spawn(cmd, args, { detached: true, stdio: 'ignore' }).unref(); }
+function openUrl(url) { const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'cmd' : 'xdg-open'; const args = process.platform === 'win32' ? ['/c', 'start', url] : [url]; const child = spawn(cmd, args, { detached: true, stdio: 'ignore' }); child.on('error', () => { /* opener missing — non-fatal */ }); child.unref(); }
 
 function repoRoot() { return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'); }

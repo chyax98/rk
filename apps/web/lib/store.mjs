@@ -1,9 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import os from 'node:os';
 import { parseRK } from '@renderkit/dsl';
 
-const root = path.join(process.cwd(), '.data');
+const root = path.join(os.homedir(), '.renderkit', 'data');
 const artifactsDir = path.join(root, 'artifacts');
 const indexPath = path.join(root, 'index.json');
 
