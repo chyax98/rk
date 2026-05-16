@@ -19,6 +19,19 @@ Do NOT use RenderKit for:
 - Casual notes, chat responses, or inline documentation
 - Files the human will directly edit (RenderKit artifacts are Agent-authored, human-reviewed)
 
+## Design-quality directives
+
+These directives are adapted from the cloned `html-anything` design assets and are mandatory for RenderKit authoring. RenderKit is not prompt-only HTML generation, but the anti-slop design rules still apply.
+
+1. **Content determines structure.** Do not force a fixed number of blocks. Split by actual semantic units: decision, risk, metric, code, diagram, comparison, timeline, checklist.
+2. **Do not compress away user content.** Cover every important requirement, data group, risk, decision, and action item. Use more blocks rather than stuffing unrelated ideas into one paragraph.
+3. **Use real data only.** Never invent metrics, names, dates, incidents, or placeholder text such as lorem ipsum / Your text here.
+4. **Reading-first.** The artifact should read like a finished document. Metadata exists for CLI/API feedback, not for the human's primary reading surface.
+5. **Visual restraint.** Prefer one primary accent, neutral surfaces, generous whitespace, consistent 8px rhythm, soft borders, and subtle shadows.
+6. **Typography discipline.** Keep paragraphs readable; avoid wall-of-text Markdown. Use `summary`, `stat`, `table`, `quote`, `comparison`, `timeline`, `tabs`, and `grid` when they improve scanning.
+7. **Accessibility.** Preserve contrast, meaningful headings, alt text for images, captions for diagrams, and clear labels for tables/charts.
+8. **No body editing assumption.** Human feedback arrives as comments/selectors. The Agent updates `.rk.md` and pushes a new revision.
+
 ## File format: `.rk.md`
 
 RenderKit uses a Markdown-based DSL with frontmatter and directive blocks.
