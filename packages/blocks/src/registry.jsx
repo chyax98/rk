@@ -5,7 +5,6 @@ import CalloutBlock from './CalloutBlock.jsx';
 import DecisionBlock from './DecisionBlock.jsx';
 import CodeBlock from './CodeBlock.jsx';
 import DiagramBlock from './DiagramBlock.jsx';
-import SubdocumentBlock from './SubdocumentBlock.jsx';
 import GridBlock from './GridBlock.jsx';
 import TableBlock from './TableBlock.jsx';
 import ImageBlock from './ImageBlock.jsx';
@@ -28,7 +27,6 @@ export const registry = {
   'decision-card': DecisionBlock,
   'code': CodeBlock,
   'diagram': DiagramBlock,
-  'subdocument': SubdocumentBlock,
   'grid': GridBlock,
   'table': TableBlock,
   'image': ImageBlock,

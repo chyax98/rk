@@ -38,7 +38,10 @@ alternatives:
     reason: Too unsafe and too hard for agents to maintain
 :::
 
-:::subdocument{id="grid-child" title="Nested child doc card" source="examples/theme-cases/paper-light-doc.rk.md" surface="engineering-plan" status="linked"}
-A grid cell can reference a child document without inlining the whole child source.
+:::table{id="grid-reference" title="Reference matrix"}
+| Reference | Surface |
+|---|---|
+| Paper document | engineering-plan |
+| Review report | review-report |
 :::
 ::::

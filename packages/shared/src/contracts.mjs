@@ -8,7 +8,6 @@ export const BLOCK_TYPES = Object.freeze([
   'decision-card',
   'code',
   'diagram',
-  'subdocument',
   'grid',
   'table',
   'image',

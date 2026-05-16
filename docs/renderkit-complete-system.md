@@ -56,7 +56,6 @@ Agent 写 .rk.md
 | tabs 多视图内容 | 已实现 | `TabsBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
 | stat/checklist/quote 编辑化组件 | 已实现 | `StatBlock.jsx`、`ChecklistBlock.jsx`、`QuoteBlock.jsx`、`examples/capabilities/editorial-components.rk.md` |
 | comparison/timeline 叙事组件 | 已实现 | `ComparisonBlock.jsx`、`TimelineBlock.jsx`、`examples/capabilities/narrative-blocks.rk.md` |
-| subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
 | ECharts | 已实现浏览器渲染，支持 raw JSON 和 `echarts-bar`/`echarts-line`/`echarts-pie` CSV-like shorthand | `EChartsBlock.jsx` |
@@ -113,7 +112,6 @@ decision-card
 diagram
 code
 summary
-subdocument
 grid
 table
 image
@@ -164,7 +162,14 @@ CodeBlock
 DiagramBlock
 EChartsBlock
 GridBlock
-SubdocumentBlock
+TableBlock
+ImageBlock
+TabsBlock
+StatBlock
+ChecklistBlock
+QuoteBlock
+ComparisonBlock
+TimelineBlock
 MermaidDiagram
 BlockFrame
 ```
@@ -397,28 +402,7 @@ Browser -> Agent: feedback
 :::
 ````
 
-### 5.6 `subdocument`
-
-用于文档内嵌文档、子文档引用、附件式计划。
-
-```md
-:::subdocument{id="child-plan" title="API migration child plan" source="examples/surfaces/engineering-plan.rk.md" surface="engineering-plan" status="linked"}
-这个子文档承载详细迁移步骤，父文档只保留摘要和入口。
-:::
-```
-
-当前 `subdocument` 是一个可评论 block。它可带：
-
-| 属性 | 说明 |
-|---|---|
-| `title` | 子文档标题 |
-| `source` | 本地源文件路径 |
-| `artifactId` | 未来可链接已 push artifact |
-| `revision` | 可选 revision |
-| `surface` | 子文档类型 |
-| `status` | linked/draft 等状态文案 |
-
-### 5.7 `grid`
+### 5.6 `grid`
 
 用于二维布局。它解决“每行只能一个 block”的密度问题。`grid` 可把多个子 block 排成列。
 
@@ -997,7 +981,7 @@ examples/alpha-showcase.rk.md
 展示：
 
 - paper-light default。
-- summary/callout/decision/code/subdocument/diagram。
+- summary/callout/decision/code/table/diagram。
 - `width="half"`。
 - Agent feedback loop。
 
@@ -1048,13 +1032,12 @@ Agent 写 `.rk.md` 时应遵守：
 
 1. 先选择 surface，再选择 theme。
 2. 默认 theme 使用 `paper-light`。
-3. 需要长期评论锚点时，用 directive block，不依赖自动 heading/paragraph id。
-4. 每个 directive block 必须有稳定 `id`。
-5. 不要把所有内容写成普通段落；用 summary/callout/decision/code/diagram/grid 组织信息。
+3. 需要长期评论锚点时，用显式 directive block `id`，不要依赖自动 id。
+4. display-only directive 可以省略 id，由 parser 生成 deterministic `auto-...` id。
+5. 不要把所有内容写成普通段落；用 summary/callout/decision/code/diagram/grid/table 组织信息。
 6. 不要用 Web UI 改正文；收到评论后改 `.rk.md` 并 push。
 7. 图表优先选择可本地渲染 engine。
 8. 高密度信息使用 `grid`，不要硬塞成很长列表。
-9. 子文档使用 `subdocument`，不要把完整子文档复制进父文档。
 
 Authoring skill：
 
@@ -1114,8 +1097,7 @@ D2 使用 `@terrastruct/d2` WASM，本地能力完整，但依赖体积较大。
 2. 给 PlantUML 增加环境诊断：Java/Graphviz 检查。
 3. 给 diagram render API 增加缓存，避免重复渲染大图。
 4. 给 `grid` 增加更明确的 cell span 能力。
-5. 给 `subdocument` 接真实 artifact link 和 feedback 汇总。
-6. 给 gallery 增加“push example/open rendered artifact”能力。
+5. 给 gallery 增加“push example/open rendered artifact”能力。
 
 ### 18.2 中期能力
 
@@ -1201,7 +1183,7 @@ b19a001 visual artifact system: design tokens, themes, code/summary blocks, skil
 
 其中：
 
-- `0ef74ec` 完成文档优先 renderer、theme strategy、grid、subdocument、recipes/gallery、block extraction、design system 大改。
+- `0ef74ec` 完成文档优先 renderer、theme strategy、grid、recipes/gallery、block extraction、design system 大改。
 - `ef83751` 完成 D2/PlantUML 本地渲染 API 和 smoke 验证。
 
 ---

@@ -38,7 +38,7 @@ alternatives:
 :::
 
 :::callout{id="block-coverage" tone="success" title="Block 覆盖" width="half"}
-本文档覆盖了 heading、paragraph、summary、callout、decision-card、code、diagram、subdocument 等 block 类型。
+本文档覆盖了 heading、paragraph、summary、callout、decision-card、code、diagram、table、tabs、stat、checklist 等 block 类型。
 :::
 
 :::code{id="cli-usage" language="bash" title="CLI 使用示例"}
@@ -65,8 +65,12 @@ surface: engineering-plan
 ```
 :::
 
-:::subdocument{id="child-doc-example" title="嵌入式子文档：工程方案示例" source="examples/surfaces/engineering-plan.rk.md" surface="engineering-plan" status="linked" width="half"}
-子文档作为普通 block 参与 outline、评论、source location 和 feedback 流程。后续可以把 source 或 artifactId 接到 CLI/Web API，实现文档内嵌文档、跨 artifact 跳转和子文档反馈汇总。
+:::table{id="surface-reference-table" title="Surface reference" width="half"}
+| Surface | Use |
+|---|---|
+| engineering-plan | Dense technical proposal |
+| review-report | Findings and severity |
+| documentation | Blog/Notion-style prose |
 :::
 
 :::diagram{id="renderkit-flow" engine="mermaid" caption="RenderKit Agent Review Loop"}

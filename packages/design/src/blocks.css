@@ -553,53 +553,7 @@
   border-radius: var(--rk-radius-full);
 }
 
-/* ─── Subdocument block ─── */
-.rk-block-subdocument {
-  border: var(--rk-border-width) solid var(--rk-border);
-  background: linear-gradient(180deg, var(--rk-surface-solid), var(--rk-surface-raised));
-}
-.rk-subdocument-card { display: grid; gap: var(--rk-space-3); }
-.rk-subdocument-kicker {
-  font: var(--rk-type-label);
-  text-transform: uppercase;
-  letter-spacing: var(--rk-tracking-wide);
-  color: var(--rk-muted);
-}
-.rk-subdocument-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--rk-space-3);
-}
-.rk-subdocument-title {
-  margin: 0;
-  color: var(--rk-text);
-  font: var(--rk-type-h3);
-}
-.rk-subdocument-summary {
-  margin: 0;
-  color: var(--rk-text-secondary);
-}
-.rk-subdocument-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--rk-space-2);
-  color: var(--rk-muted);
-  font-size: var(--rk-text-xs);
-}
-.rk-subdocument-meta code {
-  border: var(--rk-border-width) solid var(--rk-code-border);
-  border-radius: var(--rk-radius-md);
-  background: var(--rk-code-bg);
-  color: var(--rk-code-text);
-  padding: 1px var(--rk-space-2);
-}
-.rk-subdocument-link {
-  width: fit-content;
-  text-decoration: none;
-}
 
-/* ─── Grid/layout block ─── */
 .rk-block-grid {
   background: transparent;
   border: 0;

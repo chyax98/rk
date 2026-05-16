@@ -118,7 +118,7 @@ Four-colon outer fence, three-colon inner blocks. This is a remark-directive lim
 1. **Preserve block-level review anchors.** Every block must still have stable `id`, `sourceRange`, `sourceExcerpt`. No proposal here can break that.
 2. **Preserve strict validation.** Same error codes, same fail-fast behavior.
 3. **Agent is the primary author.** Humans review rendered output, not source. Optimize for agent write speed, not human source readability.
-4. **Backward compatible.** All existing `.rk.md` files must continue to parse. New syntax is additive.
+4. **Product-first grammar.** 1.0 keeps the grammar small and reader-focused; intentionally removed blocks do not need compatibility shims.
 
 ### 2.2 Proposal A: Short aliases for block types
 
@@ -134,9 +134,8 @@ Add single-character or two-character aliases for the most common blocks:
 | `:::dec{` | `:::decision-card{` | Decision briefs use these heavily |
 | `:::fig{` | `:::diagram{` | Shorter for the visual block |
 | `:::src{` | `:::code{` | Code source blocks |
-| `:::sub{` | `:::subdocument{` | Sub-document references |
 
-Implementation: expand aliases in the parser before block compilation. Add alias mapping to `KNOWN` or add a pre-resolution step.
+Implementation: expand aliases in the parser before block compilation. Add alias mapping to `BLOCK_ALIASES` or add a pre-resolution step. Do not add aliases for removed/cross-document features such as `subdocument`.
 
 **Example before/after:**
 

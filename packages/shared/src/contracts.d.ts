@@ -8,7 +8,6 @@ export type BlockType =
   | 'decision-card'
   | 'code'
   | 'diagram'
-  | 'subdocument'
   | 'grid'
   | 'table'
   | 'image'

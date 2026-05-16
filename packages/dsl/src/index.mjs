@@ -16,7 +16,6 @@ const BLOCK_COMPILERS = {
   'diagram': (node, attrs, ctx) => compileDiagram(node, attrs, ctx.source, ctx.errors, ctx.file),
   'code': (node, attrs, ctx) => compileCode(node, attrs, ctx.source, ctx.errors, ctx.file),
   'summary': (node, attrs, ctx) => compileSummary(node, attrs, ctx.source),
-  'subdocument': (node, attrs, ctx) => compileSubdocument(node, attrs, ctx.source),
   'grid': (node, attrs, ctx) => compileGrid(node, attrs, ctx),
   'table': (node, attrs, ctx) => compileTable(node, attrs, ctx.source, ctx.errors, ctx.file),
   'image': (node, attrs, ctx) => compileImage(node, attrs, ctx.source, ctx.errors, ctx.file),
@@ -311,26 +310,6 @@ function compileGrid(node, attrs, ctx) {
     },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(ctx.source, node.position)
-  };
-}
-
-function compileSubdocument(node, attrs, source) {
-  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
-  return {
-    id: attrs.id,
-    type: 'subdocument',
-    props: {
-      title: attrs.title || attrs.source || attrs.artifactId || 'Untitled subdocument',
-      source: attrs.source || '',
-      artifactId: attrs.artifactId || '',
-      revision: attrs.revision || '',
-      surface: attrs.surface || '',
-      status: attrs.status || 'linked',
-      width: normalizeWidth(attrs.width || attrs.span),
-      summary: body.trim()
-    },
-    sourceRange: pos(node),
-    sourceExcerpt: excerpt(source, node.position)
   };
 }
 

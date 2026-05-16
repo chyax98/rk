@@ -27,6 +27,6 @@ kubectl get deploy payment-api -o wide
 If p95 latency increases for two consecutive windows, roll back the deployment and attach comments to this block.
 :::
 
-:::subdocument{id="amber-child" title="Incident appendix" source="examples/surfaces/runbook.rk.md" surface="runbook" status="linked"}
-The linked child runbook can carry detailed regional procedures while this parent stays short.
+:::note{id="amber-appendix-note" title="Incident appendix"}
+Keep regional appendix details as linked prose or separate artifacts; this runbook stays focused on the operator path.
 :::

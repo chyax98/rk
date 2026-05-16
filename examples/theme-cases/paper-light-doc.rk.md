@@ -39,6 +39,6 @@ surface: engineering-plan
 ```
 :::
 
-:::subdocument{id="paper-child" title="Child plan reference" source="examples/surfaces/engineering-plan.rk.md" surface="engineering-plan" status="linked"}
-Subdocuments are normal reviewable blocks. The web app may inspect, comment, and copy feedback commands without editing body content.
+:::note{id="paper-reference" title="Reference note"}
+Related plans should be linked in prose or represented as tables/diagrams. Cross-document embedding is intentionally outside the 1.0 reading/commenting scope.
 :::

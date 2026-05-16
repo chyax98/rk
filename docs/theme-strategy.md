@@ -9,7 +9,7 @@ RenderKit themes are product modes, not decorative skins. A theme must make the 
 3. **Explicit frontmatter wins if valid.** If an author chooses `theme`, the parser keeps it. Unknown themes warn and fall back to `paper-light`.
 4. **Dark mode is opt-in only.** `dark-pro` exists for developer-preference demos and high-contrast workspaces, not default artifacts.
 5. **No high-saturation chrome.** App rails, inspector, context menus, and source excerpts must stay quieter than document content.
-6. **Every theme must support every core block.** heading, paragraph, summary, callout, decision-card, code, diagram, and subdocument must remain legible.
+6. **Every theme must support every core block.** heading, paragraph, summary, callout, decision-card, code, diagram, table, image, tabs, stat, checklist, quote, comparison, timeline, and grid must remain legible.
 7. **Review actions never mutate body content.** Selection/right-click may inspect, comment, or copy feedback commands only.
 
 ## Theme meanings

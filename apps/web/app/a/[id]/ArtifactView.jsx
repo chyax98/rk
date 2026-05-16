@@ -274,7 +274,6 @@ function blockLabel(block) {
   if (block.type === 'heading') return block.props?.text || block.id;
   if (block.props?.title) return block.props.title;
   if (block.props?.question) return block.props.question;
-  if (block.type === 'subdocument') return block.props?.title || block.id;
   return block.id;
 }
 

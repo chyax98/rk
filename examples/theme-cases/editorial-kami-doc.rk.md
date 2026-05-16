@@ -30,10 +30,10 @@ alternatives:
     reason: Too decorative for an Agent-to-UI review surface
 :::
 
-:::code{id="kami-code" language="md" title="Subdocument marker"}
+:::code{id="kami-code" language="md" title="Reference note marker"}
 ```md
-:::subdocument{id="child-doc" title="Appendix" source="appendix.rk.md"}
-Short context for the child document.
+:::note{id="appendix-note" title="Appendix"}
+Link to the appendix in prose and keep this document reading-first.
 :::
 ```
 :::

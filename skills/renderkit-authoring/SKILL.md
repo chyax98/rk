@@ -456,7 +456,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 
 | Code | Fix |
 |------|-----|
-| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs, stat, checklist, quote, comparison, timeline; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo, compare, roadmap |
+| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, grid, table, image, tabs, stat, checklist, quote, comparison, timeline; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo, compare, roadmap |
 | `RK_BLOCK_ID_REQUIRED` | Legacy only. Current parser auto-generates missing directive ids; add explicit `id="..."` for comment-stable blocks. |
 | `RK_BLOCK_ID_INVALID` | Use only `[a-zA-Z0-9_-]+` characters in the id |
 | `RK_DUPLICATE_BLOCK_ID` | Each block id must be unique |

@@ -9,7 +9,6 @@ export { default as DecisionBlock } from './DecisionBlock.jsx';
 export { default as CodeBlock } from './CodeBlock.jsx';
 export { default as DiagramBlock } from './DiagramBlock.jsx';
 export { default as MermaidDiagram } from './MermaidDiagram.jsx';
-export { default as SubdocumentBlock } from './SubdocumentBlock.jsx';
 export { default as GridBlock } from './GridBlock.jsx';
 export { default as TableBlock } from './TableBlock.jsx';
 export { default as ImageBlock } from './ImageBlock.jsx';
