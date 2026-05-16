@@ -86,12 +86,16 @@ c91a1ae harden sqlite and document diagram language
 
 The active goal is **not complete** because these requirements remain incomplete or weakly verified:
 
-1. **Comment UX flywheel** is still in progress: filters, side markers, and robust prefix/suffix anchoring are not integrated on mainline.
-2. **md2html-inspired reading/print/a11y polish** is still in progress on worker branch, not integrated on mainline.
-3. **Automated browser specs** are still missing. `pw` command evidence exists, but there is no durable Playwright test suite yet.
-4. **TypeScript contracts** are planned but not implemented.
-5. **Agent authoring skill** still needs another pass to absorb shared anti-slop directives from `html-anything` and design guidance from `ui-ux-pro-max`.
-6. **Final 1.0 audit** has not been run after all modules land.
+1. **Automated browser specs** are still missing. `pw` command evidence exists, but there is no durable Playwright test suite yet.
+2. **TypeScript contracts** are planned but not implemented.
+3. **更多外部设计资源的运行时集成**仍未完成：`md2html` / `html-anything` / `ui-ux-pro-max` / `guizang` 的分析已落文档，但仍有部分只停留在研究或 authoring guidance 层。
+4. **Final 1.0 audit** has not been run after all modules land.
+
+已在主线完成但仍需后续观察：
+
+- Comment UX flywheel：评论筛选、轻量侧边标记、prefix/suffix selector anchoring 已落到主线，见 `docs/product/renderkit-1.0-pass10-reading-comment-flywheel.md`。
+- md2html-inspired reading/print/a11y polish 已落到主线，见同一 pass 文档。
+- `html-anything` shared anti-slop directives 已吸收到 authoring skill，见 `docs/product/renderkit-1.0-pass9-authoring-directives.md`。
 
 ## Next actions
 
