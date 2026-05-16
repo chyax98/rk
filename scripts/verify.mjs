@@ -80,7 +80,7 @@ assert("gallery.json exists", existsSync(galleryPath));
 if (existsSync(galleryPath)) {
   const gallery = JSON.parse(readFileSync(galleryPath, "utf8"));
   assert("gallery has surfaces array", Array.isArray(gallery.surfaces));
-  assert("gallery has 5 surfaces", gallery.surfaces?.length === 5, `got ${gallery.surfaces?.length}`);
+  assert("gallery has 7 surfaces", gallery.surfaces?.length === 7, `got ${gallery.surfaces?.length}`);
   for (const s of gallery.surfaces || []) {
     assert(`gallery surface ${s.id} has file`, typeof s.file === "string");
     assert(`gallery surface ${s.id} file exists`, existsSync(join(root, s.file)), s.file);

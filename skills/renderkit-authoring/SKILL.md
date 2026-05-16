@@ -39,6 +39,11 @@ Before authoring a substantial artifact, ask the local CLI for the current recip
 ```bash
 renderkit recipes list --json
 renderkit recipes show engineering-plan --json
+renderkit surfaces --json
+renderkit themes --json
+renderkit blocks --json
+renderkit aliases --json
+renderkit errors --json
 renderkit design resources --json
 renderkit design resource md2html --json
 ```
@@ -399,10 +404,9 @@ node packages/cli/bin/renderkit.mjs feedback <file>.rk.md --json
 
 | Theme | When to use |
 |-------|------------|
-| `paper-light` | Default. Normal documents, engineering plans, decision briefs, review reports. |
+| `paper-light` | Default. Normal documents, engineering plans, decision briefs, review reports, proposals that may be screenshotted. |
 | `editorial-kami` | Long-form editorial/documentation artifacts with a warm paper feel. |
 | `dark-pro` | Optional dark mode for demos or developer preference; do not use as default. |
-| `paper-light` | Long-form reports, proposals that may be screenshotted. |
 | `amber-terminal` | For users with amber/yellow terminal aesthetic. Avoids black-on-black readability issues. |
 
 If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKNOWN` and falls back to `paper-light`.
@@ -416,8 +420,10 @@ If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKN
 | `review-report` | summary, stat, checklist, callout, code, image, table, tabs, comparison |
 | `runbook` | summary, checklist, code, callout, diagram, image, table, tabs, timeline |
 | `data-report-lite` | summary, stat, quote, checklist, code, diagram, image, table, tabs, grid, comparison, timeline |
+| `proposal` | summary, decision-card, comparison, timeline, callout, table |
+| `documentation` | summary, quote, image, diagram, table, tabs, callout |
 
-If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected.
+If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected. Supported surfaces are discoverable with `renderkit surfaces --json`.
 
 ## Recipes
 

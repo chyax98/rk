@@ -36,6 +36,20 @@
       "file": "examples/surfaces/data-report-lite.rk.md",
       "theme": "paper-light",
       "description": "Lightweight data summary with key metrics and methodology."
+    },
+    {
+      "id": "proposal",
+      "label": "Proposal",
+      "file": "examples/surfaces/proposal.rk.md",
+      "theme": "paper-light",
+      "description": "Balanced product or implementation proposal with recommendation, alternatives, and timeline."
+    },
+    {
+      "id": "documentation",
+      "label": "Documentation",
+      "file": "examples/surfaces/documentation.rk.md",
+      "theme": "editorial-kami",
+      "description": "Blog/Notion-style explanatory document with prose-forward rhythm and lightweight review affordances."
     }
   ]
 }

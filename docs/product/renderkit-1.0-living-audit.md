@@ -58,12 +58,12 @@
 Latest known green gates:
 
 ```text
-pnpm verify         -> Results: 214 passed, 0 failed
+pnpm verify         -> Results: 218 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed
-pnpm verify:contracts -> Results: 54 passed, 0 failed
-pnpm verify:agent -> Results: 26 passed, 0 failed
+pnpm verify:contracts -> Results: 60 passed, 0 failed
+pnpm verify:agent -> Results: 37 passed, 0 failed
 ```
 
 Recent browser evidence:
@@ -93,7 +93,7 @@ e83a033 document design token source map
 当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
 1. **TypeScript Stage 2+ migration** 尚未完成：shared contracts 已完成，但 DSL/Store/API/renderer/Web UI 还未迁移到 typed implementation。
-2. **更多外部设计资源的运行时集成**仍未完成：六个资源已经以 CLI/shared manifest 形式机器可读，但 `ui-ux-pro-max` 的自动 design recommend、`thesvg` icon helper、`guizang` deck surface 仍是 future scope。
+2. **更多外部设计资源的运行时集成**仍未完成：六个资源已经以 CLI/shared manifest 形式机器可读，surface/recipe 元数据已对齐到 7 个 surface；但 `ui-ux-pro-max` 的自动 design recommend、`thesvg` icon helper、`guizang` deck surface 仍是 future scope。
 3. **Final 1.0 audit** has not been run after all modules land.
 
 已在主线完成但仍需后续观察：

@@ -21,7 +21,7 @@ export const BLOCK_TYPES = Object.freeze([
 ]);
 
 export const THEME_NAMES = Object.freeze(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
-export const SURFACE_NAMES = Object.freeze(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
+export const SURFACE_NAMES = Object.freeze(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite', 'proposal', 'documentation']);
 export const COMMENT_STATUSES = Object.freeze(['open', 'resolved', 'orphaned']);
 export const DIAGRAM_ENGINES = Object.freeze(['mermaid', 'svg', 'echarts', 'echarts-bar', 'echarts-line', 'echarts-pie', 'infographic', 'plantuml', 'd2']);
 export const SERVER_RENDERED_DIAGRAM_ENGINES = Object.freeze(['plantuml', 'd2']);
@@ -59,6 +59,19 @@ export const ERROR_CODES = Object.freeze({
   RK_CODE_BODY_REQUIRED: 'RK_CODE_BODY_REQUIRED',
   RK_MODEL_CONTRACT_INVALID: 'RK_MODEL_CONTRACT_INVALID',
   RK_ARTIFACT_NOT_FOUND: 'RK_ARTIFACT_NOT_FOUND',
+  RK_DUPLICATE_BLOCK_ID: 'RK_DUPLICATE_BLOCK_ID',
+  RK_GRID_CHILD_UNSUPPORTED: 'RK_GRID_CHILD_UNSUPPORTED',
+  RK_TABS_CHILD_UNSUPPORTED: 'RK_TABS_CHILD_UNSUPPORTED',
+  RK_TABS_BLOCK_UNSUPPORTED: 'RK_TABS_BLOCK_UNSUPPORTED',
+  RK_DECISION_YAML_INVALID: 'RK_DECISION_YAML_INVALID',
+  RK_TABLE_BODY_REQUIRED: 'RK_TABLE_BODY_REQUIRED',
+  RK_IMAGE_SRC_REQUIRED: 'RK_IMAGE_SRC_REQUIRED',
+  RK_STAT_VALUE_REQUIRED: 'RK_STAT_VALUE_REQUIRED',
+  RK_CHECKLIST_BODY_REQUIRED: 'RK_CHECKLIST_BODY_REQUIRED',
+  RK_QUOTE_BODY_REQUIRED: 'RK_QUOTE_BODY_REQUIRED',
+  RK_COMPARISON_BODY_REQUIRED: 'RK_COMPARISON_BODY_REQUIRED',
+  RK_TIMELINE_BODY_REQUIRED: 'RK_TIMELINE_BODY_REQUIRED',
+  RK_TABS_CHILD_REQUIRED: 'RK_TABS_CHILD_REQUIRED',
 });
 
 const BLOCK_TYPE_SET = new Set(BLOCK_TYPES);

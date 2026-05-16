@@ -20,7 +20,7 @@ export type BlockType =
   | 'timeline';
 
 export type ThemeName = 'paper-light' | 'editorial-kami' | 'dark-pro' | 'amber-terminal';
-export type SurfaceName = 'engineering-plan' | 'decision-brief' | 'review-report' | 'runbook' | 'data-report-lite';
+export type SurfaceName = 'engineering-plan' | 'decision-brief' | 'review-report' | 'runbook' | 'data-report-lite' | 'proposal' | 'documentation';
 export type CommentStatus = 'open' | 'resolved' | 'orphaned';
 export type DiagramEngine = 'mermaid' | 'svg' | 'echarts' | 'echarts-bar' | 'echarts-line' | 'echarts-pie' | 'infographic' | 'plantuml' | 'd2';
 export type BlockWidth = 'full' | 'wide' | 'half' | 'third' | 'two-third';

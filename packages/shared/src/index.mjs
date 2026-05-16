@@ -14,7 +14,7 @@ export const RECIPES = {
     label: 'Engineering Plan',
     description: 'Structured technical proposal for refactors, migrations, or new features. Dense, reviewable, decision-anchored.',
     recommendedTheme: 'paper-light',
-    recommendedBlocks: ['summary', 'callout', 'decision-card', 'code', 'diagram'],
+    recommendedBlocks: ['summary', 'stat', 'checklist', 'callout', 'decision-card', 'code', 'diagram', 'image', 'table', 'tabs', 'grid', 'comparison', 'timeline'],
     structure: [
       'Front-matter with title, theme, surface.',
       'Executive summary block.',
@@ -34,7 +34,7 @@ export const RECIPES = {
     label: 'Decision Brief',
     description: 'Focused decision document: one question, one chosen path, rationale, and alternatives. Minimal prose.',
     recommendedTheme: 'paper-light',
-    recommendedBlocks: ['summary', 'decision-card', 'callout'],
+    recommendedBlocks: ['summary', 'decision-card', 'callout', 'comparison'],
     structure: [
       'Front-matter with title and surface.',
       'Summary block framing the decision context.',
@@ -51,7 +51,7 @@ export const RECIPES = {
     label: 'Review Report',
     description: 'Audit or code review findings. Finding per callout, severity-driven, actionable.',
     recommendedTheme: 'paper-light',
-    recommendedBlocks: ['summary', 'callout', 'code'],
+    recommendedBlocks: ['summary', 'callout', 'code', 'table', 'checklist'],
     structure: [
       'Front-matter with title, theme (paper-light recommended), surface.',
       'Summary block with scope and top-line findings.',
@@ -68,7 +68,7 @@ export const RECIPES = {
     label: 'Runbook',
     description: 'Operational procedure: step-by-step instructions, prerequisites, rollback, and escalation.',
     recommendedTheme: 'amber-terminal',
-    recommendedBlocks: ['summary', 'code', 'callout', 'diagram'],
+    recommendedBlocks: ['summary', 'code', 'callout', 'diagram', 'checklist'],
     structure: [
       'Front-matter with title, theme (amber-terminal recommended), surface.',
       'Summary block with purpose and scope.',
@@ -86,7 +86,7 @@ export const RECIPES = {
     label: 'Data Report Lite',
     description: 'Lightweight data summary: key metrics, trends, anomalies. No full BI, just the signal.',
     recommendedTheme: 'paper-light',
-    recommendedBlocks: ['summary', 'code'],
+    recommendedBlocks: ['summary', 'stat', 'table', 'diagram', 'code'],
     structure: [
       'Front-matter with title, theme (paper-light recommended), surface.',
       'Summary block with key takeaways.',
@@ -96,6 +96,42 @@ export const RECIPES = {
       'Embedding large datasets in code blocks — summarize and link.',
       'Using diagram for simple metric tables — code blocks with formatted text work better.',
       'Over-decorating with callouts — keep it lean.',
+    ],
+  },
+  'proposal': {
+    label: 'Proposal',
+    description: 'Readable balanced proposal for product or implementation direction. Less dense than engineering-plan, stronger than a plain memo.',
+    recommendedTheme: 'paper-light',
+    recommendedBlocks: ['summary', 'decision-card', 'comparison', 'timeline', 'callout', 'table'],
+    structure: [
+      'Front-matter with title, theme (paper-light recommended), surface.',
+      'Summary block stating recommendation and why now.',
+      'Decision-card for the proposed direction.',
+      'Comparison or table for alternatives and tradeoffs.',
+      'Timeline/checklist for execution and review gates.',
+    ],
+    antiPatterns: [
+      'Overusing dashboards or metadata chrome — proposal should read as one document.',
+      'Skipping alternatives — proposals need contrast.',
+      'Turning it into a slide deck — use future deck surface only when explicitly requested.',
+    ],
+  },
+  'documentation': {
+    label: 'Documentation',
+    description: 'Blog/Notion-style explanatory document: prose-forward, relaxed rhythm, light review affordances.',
+    recommendedTheme: 'editorial-kami',
+    recommendedBlocks: ['summary', 'quote', 'image', 'diagram', 'table', 'tabs', 'callout'],
+    structure: [
+      'Front-matter with title, editorial theme, and documentation surface.',
+      'Readable heading hierarchy with short paragraphs.',
+      'Summary for the core takeaway.',
+      'Images/diagrams/tables only when they improve explanation.',
+      'Callouts for caveats and reviewer prompts.',
+    ],
+    antiPatterns: [
+      'Dense engineering grids — documentation should privilege prose and comprehension.',
+      'Uncaptioned images or diagrams.',
+      'Using raw Markdown tables for complex comparisons when comparison/table blocks are clearer.',
     ],
   },
 };

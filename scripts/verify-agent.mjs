@@ -23,11 +23,23 @@ function assert(label, ok, detail = '') {
 console.log('\n== Recipe CLI ==');
 const recipes = runJson('node packages/cli/bin/renderkit.mjs recipes list --json');
 assert('recipes list ok=true', recipes.ok === true);
-assert('recipes list exposes five surfaces', recipes.surfaces?.length === 5, `got ${recipes.surfaces?.length}`);
+assert('recipes list exposes seven surfaces', recipes.surfaces?.length === 7, `got ${recipes.surfaces?.length}`);
 assert('recipes include engineering-plan', recipes.surfaces?.some(r => r.surface === 'engineering-plan'));
 const engineering = runJson('node packages/cli/bin/renderkit.mjs recipes show engineering-plan --json');
 assert('recipe show engineering-plan ok=true', engineering.ok === true);
-assert('engineering-plan recommends diagram/code/reviewable blocks', ['summary', 'code', 'diagram'].every(b => engineering.recipe?.recommendedBlocks?.includes(b)));
+assert('engineering-plan recommends rich reviewable blocks', ['summary', 'stat', 'checklist', 'code', 'diagram', 'table', 'timeline'].every(b => engineering.recipe?.recommendedBlocks?.includes(b)));
+const surfaces = runJson('node packages/cli/bin/renderkit.mjs surfaces --json');
+assert('surfaces command exposes seven supported surfaces', surfaces.surfaces?.length === 7, `got ${surfaces.surfaces?.length}`);
+assert('surfaces include proposal and documentation recipes', ['proposal', 'documentation'].every(s => surfaces.surfaces?.some(x => x.surface === s && x.recipe)));
+const themes = runJson('node packages/cli/bin/renderkit.mjs themes --json');
+assert('themes command exposes four themes', themes.themes?.length === 4, `got ${themes.themes?.length}`);
+assert('themes command has no duplicates', new Set(themes.themes).size === themes.themes.length);
+const blocks = runJson('node packages/cli/bin/renderkit.mjs blocks --json');
+assert('blocks command exposes block types', blocks.blocks?.includes('summary') && blocks.blocks?.includes('timeline'));
+const aliases = runJson('node packages/cli/bin/renderkit.mjs aliases --json');
+assert('aliases command exposes metric/todo aliases', aliases.aliases?.metric?.name === 'stat' && aliases.aliases?.todo?.name === 'checklist');
+const errors = runJson('node packages/cli/bin/renderkit.mjs errors --json');
+assert('errors command exposes duplicate block id code', errors.errors?.RK_DUPLICATE_BLOCK_ID === 'RK_DUPLICATE_BLOCK_ID');
 
 console.log('\n== Design resources CLI ==');
 const resources = runJson('node packages/cli/bin/renderkit.mjs design resources --json');
@@ -49,7 +61,7 @@ const skill = read('skills/renderkit-authoring/SKILL.md');
 for (const alias of ['sum', 'metric', 'todo', 'compare', 'roadmap']) {
   assert(`authoring skill documents alias ${alias}`, skill.includes(`\`${alias}\``));
 }
-for (const command of ['renderkit recipes list', 'renderkit design resources', 'renderkit feedback']) {
+for (const command of ['renderkit recipes list', 'renderkit design resources', 'renderkit surfaces', 'renderkit blocks', 'renderkit aliases', 'renderkit errors', 'renderkit feedback']) {
   assert(`authoring skill documents CLI command: ${command}`, skill.includes(command));
 }
 

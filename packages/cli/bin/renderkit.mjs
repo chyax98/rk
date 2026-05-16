@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseRK } from '@renderkit/dsl';
-import { getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities } from '@renderkit/shared';
+import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, BLOCK_ALIASES, ERROR_CODES, getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities } from '@renderkit/shared';
 
 const program = new Command();
 program.name('renderkit').description('Local Agent artifact renderer').version('0.0.1');
@@ -62,6 +62,22 @@ program.command('feedback <target>').option('--json', 'json output').action(asyn
   const json = await res.json();
   output(json, opts.json);
   process.exit(res.ok ? 0 : 1);
+});
+
+program.command('surfaces').option('--json', 'json output').action((opts) => {
+  output({ ok: true, surfaces: SURFACE_NAMES.map(surface => ({ surface, recipe: getRecipe(surface) || null })) }, opts.json);
+});
+program.command('themes').option('--json', 'json output').action((opts) => {
+  output({ ok: true, themes: THEME_NAMES }, opts.json);
+});
+program.command('blocks').option('--json', 'json output').action((opts) => {
+  output({ ok: true, blocks: BLOCK_TYPES }, opts.json);
+});
+program.command('aliases').option('--json', 'json output').action((opts) => {
+  output({ ok: true, aliases: BLOCK_ALIASES }, opts.json);
+});
+program.command('errors').option('--json', 'json output').action((opts) => {
+  output({ ok: true, errors: ERROR_CODES }, opts.json);
 });
 
 const recipes = program.command('recipes').description('inspect Agent authoring recipes');

@@ -59,6 +59,11 @@ assert('DSL validates diagram engines through shared contracts', dslSource.inclu
 assert('DSL validates model against shared contract', dslSource.includes('validateRenderKitModel(model)'));
 const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.jsx');
 assert('Web review surface logic imports shared contract helper', artifactViewSource.includes("@renderkit/shared/contracts") && artifactViewSource.includes('isWideReviewSurface(surface)'));
+const gallery = JSON.parse(read('examples/gallery.json'));
+const gallerySurfaces = unique((gallery.surfaces || []).map(s => s.id));
+assert('Gallery surfaces match shared surface contracts', arrayEq(gallerySurfaces, SURFACE_NAMES));
+const recipes = await import('../packages/shared/src/index.mjs');
+assert('Every shared surface has a recipe', SURFACE_NAMES.every(surface => Boolean(recipes.getRecipe(surface))));
 const storeSource = read('apps/web/lib/store.mjs');
 assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
 assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
@@ -71,6 +76,8 @@ const examples = [
   'examples/capabilities/editorial-components.rk.md',
   'examples/capabilities/narrative-blocks.rk.md',
   'examples/capabilities/diagram-visual-language.rk.md',
+  'examples/surfaces/proposal.rk.md',
+  'examples/surfaces/documentation.rk.md',
 ];
 for (const file of examples) {
   const result = parseRK(read(file), file);
