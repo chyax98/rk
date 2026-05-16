@@ -1,11 +1,11 @@
-# RenderKit 1.0 Living Completion Audit
+# RenderKit 1.0 持续完成度审计
 
-Status: active, not complete  
-Date: 2026-05-17
+状态：进行中，尚未完成  
+日期：2026-05-17
 
-This audit tracks the active user objective against concrete evidence. It is intentionally strict: green tests or many commits are not enough unless they cover the stated requirement.
+本审计用于把用户的长期目标映射到真实证据。标准保持严格：测试变绿、提交很多、实现很多，都不能单独证明目标完成；必须逐项覆盖需求。
 
-## Objective distilled into deliverables
+## 目标拆解为可交付项
 
 1. **Complete product-quality codebase** for local-first Agent-to-UI artifacts.
 2. **Document UI better than raw Markdown / Feishu / Notion for this scope**: display and comments only.
@@ -29,15 +29,15 @@ This audit tracks the active user objective against concrete evidence. It is int
 14. **All process docs preserved and sorted for review**.
 15. **TypeScript considered** as late-stage architecture hardening.
 
-## Prompt-to-artifact checklist
+## 需求到证据清单
 
 | Requirement | Evidence | Current status | Gaps |
 |---|---|---:|---|
 | Local-first Agent-to-UI artifact flow | `packages/cli/bin/renderkit.mjs`, `apps/web/app/a/[id]/ArtifactView.jsx`, `apps/web/app/api/artifacts/**`, `~/.renderkit/data/renderkit.db` | Mostly done | More automated e2e specs needed |
 | `.rk.md` block authoring | `packages/dsl/src/index.mjs`, `skills/renderkit-authoring/SKILL.md`, `examples/capabilities/*.rk.md` | Strong | TypeScript contracts pending |
 | Mature modules | `highlight.js`, `echarts`, `mermaid`, `@terrastruct/d2`, PlantUML server render, `better-sqlite3` | Strong | Dependency footprint/audit still needed |
-| Reading-first UI | Passes 1, 3, 4, 7; `.pw-evidence/narrative-sqlite-reading-pass7.png` | Good | Further md2html-inspired print/a11y polish in progress |
-| Comments/review support | selection comments, quote selectors, persistent highlight, resolve/reopen, SQLite comments | Good | Filters, side markers, robust re-anchoring in progress |
+| Reading-first UI | Passes 1, 3, 4, 7, 10；`.pw-evidence/narrative-sqlite-reading-pass7.png`、`.pw-evidence/reading-a11y-skiplink-flywheel.png` | Good | 仍需自动化浏览器回归 |
+| Comments/review support | selection comments、quote selectors、persistent highlight、resolve/reopen、SQLite comments、filters、side markers、prefix/suffix re-anchor | Good | 仍需更多编辑后 re-anchor 回归 |
 | Human does not edit body in UI | No body editing API; UI comments only | Good | Keep auditing future UI additions |
 | SQLite storage | `apps/web/lib/db.mjs`, `apps/web/lib/store.mjs`, `pnpm verify:sqlite` | Done | Old JSON migration/backfill optional |
 | SQLite hardening | `scripts/verify-sqlite.mjs`: 102 assertions | Done | Add to main `verify`? maybe later |
@@ -47,13 +47,13 @@ This audit tracks the active user objective against concrete evidence. It is int
 | External resources analyzed | `research/design-assets/renderkit-external-design-resources-analysis.md` | Done | Continue extracting concrete assets incrementally |
 | Integration prioritization | `docs/product/renderkit-1.0-design-resource-integration-plan.md` | Done | Execute remaining P1/P2 integrations |
 | Diagram visual language | `docs/renderkit-diagram-visual-language.md`, fixture, pw screenshot | Done as convention layer | No runtime `tech-graph` engine yet |
-| Browser verification with `pw` | multiple `.pw-evidence/*`; `pw -h`; Pass 7 and Pass 8 evidence | Good | Need automated Playwright spec files |
+| Browser verification with `pw` | multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10 evidence | Good | Need automated browser regression script/spec |
 | CLI/Agent feedback | `renderkit validate/push/status/feedback`, authoring skill | Good | Skill should absorb latest design directives |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
-| Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50` | Active | Avoid GLM-only saturation; use `kimi-for-coding` where available |
+| Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
 | TypeScript | `docs/product/renderkit-1.0-typescript-migration.md`, todo `#36` | Planned | Implement late-stage contracts |
 
-## Current verification evidence
+## 当前验证证据
 
 Latest known green gates:
 
@@ -70,21 +70,23 @@ Recent browser evidence:
 .pw-evidence/narrative-sqlite-comment-subtle-pass7.png
 .pw-evidence/narrative-sqlite-review-pass7.png
 .pw-evidence/diagram-visual-language-flywheel.png
+.pw-evidence/comment-filters-flywheel-review.png
+.pw-evidence/reading-a11y-skiplink-flywheel.png
 ```
 
 Recent commits:
 
 ```text
-0c26718 document typescript migration plan
-c91a1ae harden sqlite and document diagram language
-517add5 add sqlite narrative blocks and design research
-904140b add editorial product components
-320b94e add rich media tabs blocks
+7cafa0c update renderkit living audit
+4dab3f0 improve reading accessibility and comment filters
+2863f03 document chinese-first project writing rule
+e83a033 document design token source map
+6d803fe add renderkit authoring design directives
 ```
 
-## Missing / incomplete before final completion
+## 最终完成前仍缺什么
 
-The active goal is **not complete** because these requirements remain incomplete or weakly verified:
+当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
 1. **Automated browser specs** are still missing. `pw` command evidence exists, but there is no durable Playwright test suite yet.
 2. **TypeScript contracts** are planned but not implemented.
@@ -97,9 +99,9 @@ The active goal is **not complete** because these requirements remain incomplete
 - md2html-inspired reading/print/a11y polish 已落到主线，见同一 pass 文档。
 - `html-anything` shared anti-slop directives 已吸收到 authoring skill，见 `docs/product/renderkit-1.0-pass9-authoring-directives.md`。
 
-## Next actions
+## 下一步
 
-1. Integrate active worker output from `11438e50` when complete.
+1. 整合当前 worker run `07ffd4c9` 的输出：自动化浏览器回归验证、外部设计资源中文化整理。
 2. Verify with:
 
 ```bash
