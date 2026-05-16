@@ -1,0 +1,134 @@
+/* ─── Semantic tokens per theme ─── */
+
+/* ── dark-pro (default) ── */
+:root,
+[data-rk-theme="dark-pro"] {
+  color-scheme: dark;
+  --rk-bg: #0b1020;
+  --rk-bg-grad: radial-gradient(circle at top left, #1b2b55, #0b1020 42%);
+  --rk-surface: rgba(17, 24, 49, 0.86);
+  --rk-surface-solid: #111831;
+  --rk-surface-raised: #151f3d;
+  --rk-text: #ecf2ff;
+  --rk-text-secondary: #d6e2ff;
+  --rk-muted: #8fa0c3;
+  --rk-accent: #7dd3fc;
+  --rk-accent-hover: #93dcfd;
+  --rk-border: #27345d;
+  --rk-border-hover: #4770c8;
+
+  --rk-tone-info-bg: rgba(125, 211, 252, 0.08);
+  --rk-tone-info-border: #7dd3fc;
+  --rk-tone-warning-bg: rgba(251, 191, 36, 0.08);
+  --rk-tone-warning-border: #fbbf24;
+  --rk-tone-danger-bg: rgba(251, 113, 133, 0.08);
+  --rk-tone-danger-border: #fb7185;
+  --rk-tone-success-bg: rgba(52, 211, 153, 0.08);
+  --rk-tone-success-border: #34d399;
+  --rk-tone-neutral-bg: rgba(143, 160, 195, 0.08);
+  --rk-tone-neutral-border: #8fa0c3;
+
+  --rk-status-draft: #60a5fa;
+  --rk-status-proposed: #c084fc;
+  --rk-status-approved: #34d399;
+  --rk-status-blocked: #fb7185;
+  --rk-status-resolved: #94a3b8;
+  --rk-status-orphaned: #f59e0b;
+
+  --rk-focus-ring: rgba(125, 211, 252, 0.35);
+  --rk-pill-bg: #233769;
+  --rk-pill-text: #cfe3ff;
+  --rk-code-bg: #070b17;
+  --rk-shadow: 0 10px 40px rgba(0,0,0,.25);
+  --rk-topbar-bg: rgba(11, 16, 32, 0.9);
+  --rk-rail-bg: rgba(10, 15, 31, 0.95);
+  --rk-btn-primary: linear-gradient(135deg, #2563eb, #0891b2);
+}
+
+/* ── paper-light ── */
+[data-rk-theme="paper-light"] {
+  color-scheme: light;
+  --rk-bg: #f8f7f4;
+  --rk-bg-grad: none;
+  --rk-surface: #ffffff;
+  --rk-surface-solid: #ffffff;
+  --rk-surface-raised: #f0efec;
+  --rk-text: #1a1a1a;
+  --rk-text-secondary: #2d2d2d;
+  --rk-muted: #737373;
+  --rk-accent: #0284c7;
+  --rk-accent-hover: #0369a1;
+  --rk-border: #e5e5e5;
+  --rk-border-hover: #a3a3a3;
+
+  --rk-tone-info-bg: rgba(2, 132, 199, 0.06);
+  --rk-tone-info-border: #0284c7;
+  --rk-tone-warning-bg: rgba(217, 119, 6, 0.06);
+  --rk-tone-warning-border: #d97706;
+  --rk-tone-danger-bg: rgba(220, 38, 38, 0.06);
+  --rk-tone-danger-border: #dc2626;
+  --rk-tone-success-bg: rgba(22, 163, 74, 0.06);
+  --rk-tone-success-border: #16a34a;
+  --rk-tone-neutral-bg: rgba(115, 115, 115, 0.06);
+  --rk-tone-neutral-border: #737373;
+
+  --rk-status-draft: #2563eb;
+  --rk-status-proposed: #7c3aed;
+  --rk-status-approved: #16a34a;
+  --rk-status-blocked: #dc2626;
+  --rk-status-resolved: #737373;
+  --rk-status-orphaned: #d97706;
+
+  --rk-focus-ring: rgba(2, 132, 199, 0.3);
+  --rk-pill-bg: #e5e7eb;
+  --rk-pill-text: #374151;
+  --rk-code-bg: #1e1e2e;
+  --rk-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --rk-topbar-bg: rgba(248, 247, 244, 0.92);
+  --rk-rail-bg: #ffffff;
+  --rk-btn-primary: linear-gradient(135deg, #2563eb, #0284c7);
+}
+
+/* ── amber-terminal ── */
+[data-rk-theme="amber-terminal"] {
+  color-scheme: dark;
+  --rk-bg: #1a1400;
+  --rk-bg-grad: radial-gradient(circle at top left, #2d2200, #1a1400 42%);
+  --rk-surface: rgba(40, 32, 0, 0.85);
+  --rk-surface-solid: #281f00;
+  --rk-surface-raised: #352a00;
+  --rk-text: #ffd866;
+  --rk-text-secondary: #f0c840;
+  --rk-muted: #b89a30;
+  --rk-accent: #ffdd57;
+  --rk-accent-hover: #ffe680;
+  --rk-border: #5a4a10;
+  --rk-border-hover: #8a7520;
+
+  --rk-tone-info-bg: rgba(255, 221, 87, 0.08);
+  --rk-tone-info-border: #ffdd57;
+  --rk-tone-warning-bg: rgba(255, 180, 0, 0.1);
+  --rk-tone-warning-border: #ffb400;
+  --rk-tone-danger-bg: rgba(255, 100, 80, 0.1);
+  --rk-tone-danger-border: #ff6450;
+  --rk-tone-success-bg: rgba(100, 220, 120, 0.08);
+  --rk-tone-success-border: #64dc78;
+  --rk-tone-neutral-bg: rgba(184, 154, 48, 0.08);
+  --rk-tone-neutral-border: #b89a30;
+
+  --rk-status-draft: #ffd866;
+  --rk-status-proposed: #e0c050;
+  --rk-status-approved: #64dc78;
+  --rk-status-blocked: #ff6450;
+  --rk-status-resolved: #b89a30;
+  --rk-status-orphaned: #ffb400;
+
+  --rk-focus-ring: rgba(255, 221, 87, 0.3);
+  --rk-pill-bg: #3d3200;
+  --rk-pill-text: #ffd866;
+  --rk-code-bg: #0f0c00;
+  --rk-shadow: 0 10px 40px rgba(0,0,0,.35);
+  --rk-topbar-bg: rgba(26, 20, 0, 0.92);
+  --rk-rail-bg: rgba(20, 16, 0, 0.95);
+  --rk-btn-primary: linear-gradient(135deg, #b89a30, #8a7520);
+}

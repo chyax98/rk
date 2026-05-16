@@ -1,0 +1,31 @@
+/* ─── Surface layout hints ─── */
+
+/* Default: full-width reading layout */
+[data-rk-surface] .rk-content {
+  max-width: 100%;
+}
+
+/* Engineering plans: wider, denser */
+[data-rk-surface="engineering-plan"] .rk-content {
+  max-width: 100%;
+}
+
+/* Decision briefs: narrower, more centered */
+[data-rk-surface="decision-brief"] .rk-content {
+  max-width: 780px;
+}
+
+/* Review reports: wider for tables */
+[data-rk-surface="review-report"] .rk-content {
+  max-width: 100%;
+}
+
+/* Runbooks: step-oriented */
+[data-rk-surface="runbook"] .rk-content {
+  max-width: 860px;
+}
+
+/* Data reports: wide for tables/charts */
+[data-rk-surface="data-report-lite"] .rk-content {
+  max-width: 100%;
+}

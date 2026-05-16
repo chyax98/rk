@@ -5,7 +5,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary']);
 const ID_FORMAT = /^[a-zA-Z0-9_-]+$/;
 
 export function parseRK(source, file = '<source>') {
@@ -76,6 +76,8 @@ export function parseRK(source, file = '<source>') {
       if (name === 'callout') block = compileCallout(node, attrs, source);
       if (name === 'decision-card') block = compileDecision(node, attrs, source, errors, file);
       if (name === 'diagram') block = compileDiagram(node, attrs, source, errors, file);
+      if (name === 'code') block = compileCode(node, attrs, source, errors, file);
+      if (name === 'summary') block = compileSummary(node, attrs, source);
       if (block) blocks.push(block);
       continue;
     }
@@ -91,6 +93,8 @@ export function parseRK(source, file = '<source>') {
     rk: '1.0',
     title: frontmatter.title || firstHeading(blocks) || 'Untitled Artifact',
     template: frontmatter.template,
+    theme: frontmatter.theme || null,
+    surface: frontmatter.surface || null,
     blocks
   };
   return { ok: errors.length === 0, model, errors, warnings };
@@ -143,6 +147,28 @@ function compileDiagram(node, attrs, source, errors, file) {
     id: attrs.id,
     type: 'diagram',
     props: { engine, code: code?.value || '', caption: attrs.caption || '' },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileCode(node, attrs, source, errors, file) {
+  const code = findCode(node);
+  const bodyText = rawDirectiveBody(source, node) || directiveBodyText(node);
+  return {
+    id: attrs.id,
+    type: 'code',
+    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || bodyText || '' },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileSummary(node, attrs, source) {
+  return {
+    id: attrs.id,
+    type: 'summary',
+    props: { title: attrs.title || '', content: rawDirectiveBody(source, node) || directiveBodyText(node) },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };

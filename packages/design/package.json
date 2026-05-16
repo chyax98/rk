@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./themes.css": "./src/themes.css",
+    "./surfaces.css": "./src/surfaces.css",
+    "./blocks.css": "./src/blocks.css",
+    "./index.css": "./src/index.css"
   }
 }

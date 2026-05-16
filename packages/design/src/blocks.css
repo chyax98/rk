@@ -1,0 +1,197 @@
+/* ─── Block base styles ─── */
+
+.rk-block {
+  background: var(--rk-surface);
+  border: 1px solid var(--rk-border);
+  border-radius: var(--rk-radius-lg);
+  padding: var(--rk-space-5);
+  margin: var(--rk-space-4) 0;
+  box-shadow: var(--rk-shadow);
+  position: relative;
+  transition: border-color var(--rk-ease);
+}
+
+.rk-block:hover { border-color: var(--rk-border-hover); }
+.rk-block[data-rk-selected] { outline: 2px solid var(--rk-accent); outline-offset: 2px; }
+.rk-block[data-rk-has-comments]::after {
+  content: "";
+  position: absolute;
+  top: var(--rk-space-2);
+  left: calc(100% - 3px);
+  width: 3px;
+  height: 60%;
+  border-radius: 2px;
+  background: var(--rk-accent);
+  opacity: 0.6;
+}
+
+/* tools overlay */
+.rk-block-tools {
+  position: absolute;
+  top: var(--rk-space-2);
+  right: var(--rk-space-3);
+  display: flex;
+  gap: var(--rk-space-2);
+  opacity: 0;
+  transition: opacity var(--rk-ease);
+}
+.rk-block:hover .rk-block-tools { opacity: 1; }
+
+.rk-block-id {
+  font-size: 11px;
+  color: var(--rk-muted);
+  font-family: var(--rk-font-mono);
+}
+
+.rk-comment-btn {
+  border: 1px solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text);
+  padding: var(--rk-space-1) var(--rk-space-2);
+  border-radius: var(--rk-radius-full);
+  cursor: pointer;
+  font-size: 12px;
+  transition: border-color var(--rk-ease);
+}
+.rk-comment-btn:hover { border-color: var(--rk-accent-hover); }
+
+/* ── Heading block ── */
+.rk-block-heading {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: var(--rk-space-2) 0;
+  border-radius: 0;
+}
+.rk-block-heading h1, .rk-block-heading h2, .rk-block-heading h3 {
+  margin: var(--rk-space-4) 0 var(--rk-space-2);
+  color: var(--rk-text);
+}
+
+/* ── Paragraph block ── */
+.rk-block-paragraph {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: var(--rk-space-2) 0;
+  border-radius: 0;
+  line-height: var(--rk-lh);
+  color: var(--rk-text-secondary);
+}
+
+/* ── Summary block ── */
+.rk-block-summary {
+  border-left: 4px solid var(--rk-accent);
+  background: var(--rk-tone-info-bg);
+}
+.rk-summary-title {
+  font-weight: 700;
+  margin-bottom: var(--rk-space-2);
+  color: var(--rk-accent);
+}
+.rk-summary-body {
+  line-height: var(--rk-lh);
+  color: var(--rk-text-secondary);
+}
+
+/* ── Callout block ── */
+.rk-block-callout { border-left: 4px solid var(--rk-tone-info-border); }
+.rk-block-callout[data-tone="warning"] { border-left-color: var(--rk-tone-warning-border); background: var(--rk-tone-warning-bg); }
+.rk-block-callout[data-tone="danger"],
+.rk-block-callout[data-tone="error"] { border-left-color: var(--rk-tone-danger-border); background: var(--rk-tone-danger-bg); }
+.rk-block-callout[data-tone="success"] { border-left-color: var(--rk-tone-success-border); background: var(--rk-tone-success-bg); }
+.rk-callout-title { font-weight: 700; margin-bottom: var(--rk-space-2); }
+
+/* ── Decision card ── */
+.rk-block-decision-card { }
+.rk-decision-question { margin-top: 0; }
+.rk-decision-status {
+  display: inline-block;
+  padding: var(--rk-space-1) var(--rk-space-3);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-pill-bg);
+  color: var(--rk-pill-text);
+  font-size: 12px;
+  margin-left: var(--rk-space-2);
+}
+.rk-decision-kv {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--rk-space-2);
+  margin: var(--rk-space-3) 0;
+}
+.rk-decision-kv b { color: var(--rk-muted); }
+.rk-decision-list { margin: var(--rk-space-2) 0 0; padding-left: var(--rk-space-5); }
+
+/* ── Code block ── */
+.rk-block-code {
+  background: var(--rk-code-bg);
+  border-radius: var(--rk-radius-md);
+}
+.rk-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--rk-space-2) var(--rk-space-4);
+  border-bottom: 1px solid var(--rk-border);
+  font-size: 13px;
+}
+.rk-code-title { font-weight: 600; color: var(--rk-text); }
+.rk-code-lang {
+  color: var(--rk-muted);
+  font-family: var(--rk-font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.rk-block-code pre {
+  margin: 0;
+  padding: var(--rk-space-4);
+  overflow-x: auto;
+  font-family: var(--rk-font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--rk-text-secondary);
+  white-space: pre;
+}
+.rk-block-code code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+}
+
+/* ── Diagram block ── */
+.rk-block-diagram { }
+.rk-diagram-caption { color: var(--rk-muted); margin-bottom: var(--rk-space-2); }
+.rk-diagram-error {
+  white-space: pre-wrap;
+  color: var(--rk-tone-danger-border);
+  background: var(--rk-tone-danger-bg);
+  padding: var(--rk-space-3);
+  border-radius: var(--rk-radius-md);
+}
+.rk-diagram-fallback pre {
+  white-space: pre-wrap;
+  background: var(--rk-code-bg);
+  padding: var(--rk-space-3);
+  border-radius: var(--rk-radius-md);
+  overflow: auto;
+}
+
+/* ── Pill (generic) ── */
+.rk-pill {
+  display: inline-block;
+  padding: var(--rk-space-1) var(--rk-space-3);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-pill-bg);
+  color: var(--rk-pill-text);
+  font-size: 12px;
+}
+
+/* ── Error box ── */
+.rk-error-box {
+  white-space: pre-wrap;
+  color: var(--rk-tone-danger-border);
+  background: var(--rk-tone-danger-bg);
+  padding: var(--rk-space-3);
+  border-radius: var(--rk-radius-md);
+}
