@@ -1,7 +1,18 @@
-# RenderKit 1.0 Research — Guizang Deck Surface
+# RenderKit 1.0 研究 — Guizang 幻灯片表面 / Guizang Deck Surface
 
-Status: research asset, not integrated runtime  
-Date: 2026-05-17
+状态：研究资产，未集成运行时  
+日期：2026-05-17
+
+## 中文速览
+
+`guizang-ppt-skill` 是一个 Agent 生成单文件横向 HTML 幻灯片的 skill。它提供两套视觉系统：
+
+- **A 编辑杂志 × 电子墨水**：衬线标题、流体/WebGL 背景、温暖杂志感，适合叙事演讲。
+- **B 瑞士国际主义风格**：Inter/Helvetica/Noto Sans SC、网格/点阵背景、高对比功能色，适合技术产品/数据报告。
+
+对 RenderKit 的核心价值不是直接集成，而是**锁定布局纪律**和**严格主题预设**——这些经验可借用于任何高设计密度的 RenderKit surface。当前阶段定为 **P3**，待 future `surface: deck` 时复用。
+
+---
 
 ## Objective
 

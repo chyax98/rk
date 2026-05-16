@@ -1,7 +1,22 @@
-# RenderKit External Design Resources Analysis
+# RenderKit 外部设计资源分析 / External Design Resources Analysis
 
-Status: completed from local clones  
-Date: 2026-05-17
+状态：已从本地 clone 完成分析  
+日期：2026-05-17
+
+## 中文执行摘要
+
+六个外部仓库对 RenderKit 有价值，但集成方式应不同。按优先级排序：
+
+1. **`md2html`** — 立即提取文档排版、目录、打印、无障碍和组件目录模式。
+2. **`html-anything`** — 立即提取共享反 slop 设计指令和 skill 目录约定；研究示例，不要整体引入应用。
+3. **`fireworks-tech-graph`** — 采用图表风格 token、形状词汇、箭头语义和 SVG 验证/布局规则。
+4. **`ui-ux-pro-max-skill`** — 作为设计智能参考，用于主题/token 决策和未来设计选择工作流。
+5. **`thesvg`** — 作为图表和产品/云图标来源，但需谨慎处理商标/许可证元数据。
+6. **`guizang-ppt-skill`** — 对未来演示/幻灯片表面有价值，但暂不进入核心阅读/评论表面。
+
+RenderKit 应保持**确定性的 Agent-to-UI**，而非变成纯 prompt HTML 生成。最佳路径是将这些资源吸收为**token、组件、创作规则、图表词汇和示例**，然后通过 `.rk.md` 块和 CLI/服务器反馈暴露。
+
+---
 
 ## Executive conclusion
 
@@ -256,7 +271,25 @@ Risks:
 4. **Prefer mature modules only where they are separable.** E.g. `highlight.js`, ECharts, SQLite, SVG icon packages. Avoid vendoring large full apps.
 5. **Design tokens need provenance.** When adopting a token/pattern, record which external repo inspired it and why.
 
-## Recommended integration backlog
+## 推荐集成待办 / Recommended integration backlog
+
+> 中文区项目默认中文；下表保持中英双语，便于 review 时快速定位。
+
+| 优先级 | 工作项 | 来源仓库 | RenderKit 目标 |
+|---|---|---|---|
+| P0 | 阅读优先文档打磨：排版、目录、打印、无障碍审计 | md2html | `apps/web/app/style.css`, `packages/design/src/*` |
+| P0 | 共享反 slop 创作/设计指令 | html-anything, ui-ux-pro-max | `skills/renderkit-authoring/SKILL.md`, docs/product |
+| P0 | UI 元信息精简：默认隐藏 block id / 类型 / 详情 | Objective + md2html | `ArtifactView.jsx`, block CSS |
+| P0 | SQLite 存储 artifact/comment/selector 元信息 | Objective | `apps/web/lib/store.mjs`, `apps/web/lib/db.mjs` |
+| P1 | 图表视觉语言规范 | fireworks-tech-graph + thesvg | `docs/product`, `diagram` 块文档 |
+| P1 | 可选图标清单集成 | thesvg | 未来 `icon`/diagram helper |
+| P1 | Recipe/skill 目录约定 | html-anything | `examples/gallery.json`, `skills/*` |
+| P2 | 导出管道研究：PNG/HTML/PPTX/微信 | html-anything, guizang-ppt | 未来 CLI 命令 |
+| P2 | 幻灯片/演示表面 | guizang-ppt | 未来 `surface: deck` |
+
+---
+
+Original English backlog:
 
 | Priority | Work item | Source repo(s) | RenderKit target |
 |---|---|---|---|

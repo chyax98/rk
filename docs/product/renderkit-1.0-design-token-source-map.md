@@ -1,7 +1,19 @@
-# RenderKit 1.0 Design Token Source Map
+# RenderKit 1.0 Design Token 来源映射 / Design Token Source Map
 
-Status: research-to-implementation guidance  
-Date: 2026-05-17
+状态：研究到实现的指导文档  
+日期：2026-05-17
+
+## 中文速览
+
+本文档将 `md2html` 和 `ui-ux-pro-max-skill` 的 token/配色/排版发现映射到 RenderKit 设计决策。核心结论：
+
+- `md2html` 提供了完整的文档 shell token 结构（背景、表面、边框、文本、强调色、语义色、圆角、z-index、排版）。
+- `ui-ux-pro-max` 的 `styles.csv` 确认极简/瑞士风格适合 RenderKit 默认阅读表面；neumorphism/glassmorphism 不适合。
+- `colors.csv` 给出行业常用语义映射：SaaS 蓝主色 `#2563EB` + 橙强调 `#EA580C`；微 SaaS 靛蓝/紫主色 `#6366F1` + 绿强调 `#059669`。
+- `typography.csv` 支持无衬线优先、模块化比例、宽松行高（1.5–1.6）。
+- `ux-guidelines.csv` 强调对比度 ≥4.5、触控目标 ≥44×44、减少动效偏好。
+
+---
 
 ## Objective
 

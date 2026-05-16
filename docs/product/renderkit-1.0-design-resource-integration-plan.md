@@ -1,7 +1,23 @@
-# RenderKit 1.0 Design Resource Integration Plan
+# RenderKit 1.0 设计资源集成计划 / Design Resource Integration Plan
 
-Status: active integration plan  
-Date: 2026-05-17
+状态：活跃集成计划  
+日期：2026-05-17
+
+## 中文速览
+
+本计划将六个外部设计资源仓库的吸收工作按 P0/P1/P2/P3 排序。核心原则：**RenderKit 保持确定性 Agent-to-UI 渲染器，不把外部 repo 当作 prompt-only 替代品**。只吸收 token、排版规则、块配方、图表语义、图标清单和验证清单。
+
+| 阶段 | 来源仓库 | 集成目标 | 当前状态 |
+|---|---|---|---|
+| P0 架构与阅读/评论核心 | Objective + worker 输出 | SQLite、DSL 注册表、阅读优先 UI | 已实现，见 Pass 7/8/10 |
+| P1 文档打磨 | `md2html` | 排版、目录、打印 CSS、无障碍 | 已部分吸收到主线 CSS |
+| P1 Skill/配方目录 | `html-anything` | 共享反 slop 指令、recipe 文件夹约定 | 已吸收到 authoring skill |
+| P1 图表语言 | `fireworks-tech-graph` + `thesvg` | 语义形状/箭头、主题预设、布局规则 | 已输出规范 + fixture |
+| P2 图标来源 | `thesvg` | 可选图标查找、保留许可证元数据 | 待 future helper |
+| P2 设计智能 | `ui-ux-pro-max-skill` | 配色/排版决策参考、未来 CLI 推荐 | 已建档，待运行时 |
+| P3 演示表面 | `guizang-ppt-skill` | 未来 `surface: deck` | 研究完成，未集成 |
+
+---
 
 ## Objective restated
 
@@ -81,7 +97,21 @@ External repos are design assets, not replacements for RenderKit. Avoid switchin
 
 If a clean architecture is better, prefer the clean architecture. The current move from JSON files to SQLite and the DSL compiler registry refactor are aligned with this rule.
 
-## Prioritized integration roadmap
+## 优先级集成路线图 / Prioritized integration roadmap
+
+> 下表是中文优先的速览；各阶段详细说明见后文英文小节。
+
+| 阶段 | 来源仓库 | 关键集成项 | RenderKit 目标文件/模块 | 状态 |
+|---|---|---|---|---|
+| P0 | Objective + worker | SQLite、DSL 注册表、阅读优先 UI | `apps/web/lib/db.mjs`, `packages/dsl/src/index.mjs`, `ArtifactView.jsx` | 已实现 |
+| P1 | `md2html` | TOC、打印 CSS、skip link、focus、reduced-motion | `apps/web/app/style.css`, `packages/design/src/*` | 已部分吸收 |
+| P1 | `html-anything` | 共享反 slop 指令、recipe/skill 目录约定 | `skills/renderkit-authoring/SKILL.md`, `examples/gallery.json` | 已吸收 |
+| P1 | `fireworks-tech-graph` + `thesvg` | 语义形状、箭头语义、主题预设、布局规则 | `docs/renderkit-diagram-visual-language.md`, `packages/blocks/src/DiagramBlock.jsx` | 规范已输出 |
+| P2 | `thesvg` | 图标清单可选集成、许可证元数据 | `packages/assets` 或 `apps/web/lib/icon-registry.mjs` | 待 future |
+| P2 | `ui-ux-pro-max-skill` | 设计智能参考、token/排版推荐 | `docs/product/renderkit-1.0-design-token-source-map.md` | 已建档 |
+| P3 | `guizang-ppt-skill` | 演示/幻灯片表面 | future `surface: deck` | 研究完成 |
+
+---
 
 ### P0 — Current pass: architecture + reading/comment core
 

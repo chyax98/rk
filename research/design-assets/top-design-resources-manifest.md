@@ -1,4 +1,24 @@
-# Top Design Resources Manifest
+# 顶级设计资源清单 / Top Design Resources Manifest
+
+状态：已在本地 clone 并完成分析  
+日期：2026-05-17  
+本地 clone 根目录：`research/design-assets/external-repos/`
+
+> 这些仓库作为本地研究资产保留，不会 vendoring 进 RenderKit git 历史，因为它们体积大且包含嵌套 `.git`。下方 commit hash 固定了已检查的状态。
+
+## 中文速览
+
+| 优先级 | 仓库 | 核心用途 | 当前状态 |
+|---|---|---|---|
+| P0 | `md2html` | 阅读优先文档排版、打印、无障碍、组件目录 | 已分析，部分 CSS 已吸收到主线 |
+| P0 | `html-anything` | 共享反 slop 设计指令、skill 目录约定 | 已分析，authoring skill 已吸收 |
+| P1 | `fireworks-tech-graph` + `thesvg` | 图表语义形状/箭头词汇、图标来源 | 已输出 diagram visual language 规范 |
+| P1 | `ui-ux-pro-max-skill` | 设计智能数据库、配色/排版参考 | 已分析，token source map 已建档 |
+| P2 | `guizang-ppt-skill` | 演示/幻灯片视觉系统、锁定布局 | 已分析，待 future `surface: deck` |
+
+---
+
+## Original English Manifest
 
 Status: cloned locally and analyzed  
 Date: 2026-05-17  
