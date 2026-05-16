@@ -51,7 +51,7 @@
 | CLI/Agent feedback | `renderkit validate/push/status/feedback`, `renderkit recipes`, `renderkit design resources`, `renderkit design recommend`, authoring skill, `scripts/verify-agent.mjs` | Strong | Future validate hint optional |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
-| TypeScript / shared contracts | `packages/shared/src/contracts.d.ts`, `packages/shared/src/contracts.mjs`, `packages/dsl/src/index.d.ts`, `scripts/verify-contracts.mjs`, `docs/product/renderkit-1.0-typescript-migration.md` | Stage 1 done, Stage 2 started | Deeper implementation typing pending |
+| TypeScript / shared contracts | `packages/shared/src/contracts.d.ts`, `packages/shared/src/contracts.mjs`, `packages/dsl/src/index.d.ts`, `apps/web/lib/store.d.ts`, `apps/web/lib/api-contracts.d.ts`, `scripts/verify-contracts.mjs`, `docs/product/renderkit-1.0-typescript-migration.md` | Stage 1 done, Stage 2/3 started | Deeper implementation typing pending |
 
 ## 当前验证证据
 
@@ -62,7 +62,7 @@ pnpm verify         -> Results: 218 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed
-pnpm verify:contracts -> Results: 62 passed, 0 failed
+pnpm verify:contracts -> Results: 66 passed, 0 failed
 pnpm verify:agent -> Results: 45 passed, 0 failed
 ```
 
@@ -92,7 +92,7 @@ e83a033 document design token source map
 
 当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
-1. **TypeScript Stage 2+ migration** 尚未完成：shared contracts 已完成，DSL package 已有 typed `parseRK()` 边界，但 DSL implementation / Store/API / renderer / Web UI 还未迁移到 typed implementation。
+1. **TypeScript Stage 2+ migration** 尚未完成：shared contracts 已完成，DSL package 已有 typed `parseRK()` 边界，Store/API 已有 declaration boundary，但 DSL/Store/API implementation、renderer、Web UI 还未迁移到 typed implementation。
 2. **更多外部设计资源的运行时集成**仍未完成：六个资源已经以 CLI/shared manifest 和 deterministic `design recommend` 形式机器可读，surface/recipe 元数据已对齐到 7 个 surface；`thesvg` 根据 scope review 只作为 risk-visible reference，不进入 runtime；`guizang` deck surface 仍是 future scope。
 3. **Final 1.0 audit** has not been run after all modules land.
 

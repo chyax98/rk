@@ -70,16 +70,19 @@ export interface ParseResult {
 export interface ArtifactMeta {
   id: string;
   title: string;
+  currentRevision: number;
   createdAt: string;
   updatedAt: string;
-  latestRevision: number;
 }
 
 export interface ArtifactRevision {
+  id: string;
   artifactId: string;
-  revision: number;
-  source: string;
+  number: number;
+  sourceText: string;
+  sourceHash: string;
   model: RenderKitModel;
+  blockIds: string[];
   createdAt: string;
 }
 
@@ -99,10 +102,11 @@ export interface ArtifactComment {
   status: CommentStatus;
   createdAtRevision: number;
   resolvedAtRevision?: number;
-  blockSnapshot?: RenderKitBlock;
+  blockSnapshot?: RenderKitBlock | null;
   createdAt: string;
   resolvedAt?: string;
   resolvedBy?: string;
+  reopenedAt?: string;
 }
 
 export interface FeedbackItem {
@@ -112,15 +116,27 @@ export interface FeedbackItem {
   selector: TextQuoteSelector | null;
   status: Extract<CommentStatus, 'open' | 'orphaned'>;
   createdAtRevision: number;
+  block: RenderKitBlock | null;
+  blockSnapshot: RenderKitBlock | null;
   sourceRange?: SourceRange;
   sourceExcerpt?: string;
+  neighbors: {
+    prev: Array<Pick<RenderKitBlock, 'id' | 'type'>>;
+    next: Array<Pick<RenderKitBlock, 'id' | 'type'>>;
+  };
 }
 
 export interface FeedbackPayload {
-  ok: boolean;
   artifactId: string;
-  revision: number;
-  comments: FeedbackItem[];
+  currentRevision: number;
+  url: string;
+  openComments: FeedbackItem[];
+}
+
+export interface ArtifactBundle {
+  meta: ArtifactMeta;
+  revision: ArtifactRevision;
+  comments: ArtifactComment[];
 }
 
 export interface ContractIssue {

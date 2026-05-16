@@ -1,6 +1,6 @@
 # RenderKit 1.0 TypeScript Migration Plan
 
-Status: Stage 1 implemented; Stage 2 typed DSL boundary started  
+Status: Stage 1 implemented; Stage 2/3 typed boundaries started  
 Date: 2026-05-17
 
 ## Decision
@@ -100,7 +100,7 @@ Remaining focus:
 - per-block `props` discriminated unions.
 - diagnostics type and error codes inside implementation.
 
-### Stage 3 — Store/API contracts
+### Stage 3 — Store/API contracts（已开始）
 
 Migrate or type-check:
 
@@ -110,9 +110,19 @@ apps/web/lib/store.mjs
 apps/web/app/api/**/route.js
 ```
 
-Focus:
+Implemented first boundary:
 
-- SQLite row mapping.
+```text
+apps/web/lib/store.d.ts
+apps/web/lib/api-contracts.d.ts
+```
+
+These declarations type the public store functions and API payloads with shared contracts.
+
+Remaining focus:
+
+- Runtime Store/API implementation migration to TypeScript or typed JSDoc.
+- SQLite row mapping internals.
 - comment lifecycle state machine.
 - feedback shape returned to Agents.
 - selector normalization.
@@ -162,4 +172,4 @@ Current product flywheel remains higher priority:
 4. Diagram visual language and design assets.
 5. Browser verification with `pw`.
 
-Stage 1 shared contracts are implemented. Stage 2 has begun with a typed `parseRK()` package boundary. Remaining TypeScript work is deeper DSL implementation typing plus Store/API, renderer, and high-state Web UI components.
+Stage 1 shared contracts are implemented. Stage 2 has begun with a typed `parseRK()` package boundary. Stage 3 has begun with Store/API declaration boundaries. Remaining TypeScript work is deeper DSL/Store/API implementation typing plus renderer and high-state Web UI components.

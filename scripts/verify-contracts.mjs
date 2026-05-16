@@ -34,11 +34,16 @@ const sharedPkg = JSON.parse(read('packages/shared/package.json'));
 const dslPkg = JSON.parse(read('packages/dsl/package.json'));
 const contractsDts = read('packages/shared/src/contracts.d.ts');
 const dslDts = read('packages/dsl/src/index.d.ts');
+const storeDts = read('apps/web/lib/store.d.ts');
+const apiDts = read('apps/web/lib/api-contracts.d.ts');
 const contractsMjs = read('packages/shared/src/contracts.mjs');
 assert('@renderkit/shared exposes package types', sharedPkg.types === './src/contracts.d.ts');
 assert('@renderkit/shared exports ./contracts', Boolean(sharedPkg.exports?.['./contracts']));
 assert('@renderkit/dsl exposes package types', dslPkg.types === './src/index.d.ts');
 assert('@renderkit/dsl exports typed parseRK', dslDts.includes('parseRK(source: string') && dslDts.includes('ParseResult'));
+assert('Store exposes typed boundary for artifact/comment/feedback functions', ['createArtifact', 'addRevision', 'addComment', 'updateCommentStatus', 'getFeedback'].every(name => storeDts.includes(`function ${name}`)));
+assert('Store typed boundary uses shared contracts', ['ArtifactBundle', 'ArtifactComment', 'FeedbackPayload', 'TextQuoteSelector'].every(name => storeDts.includes(name)));
+assert('API contracts declare core request/response payloads', ['CreateArtifactRequest', 'AddRevisionRequest', 'AddCommentRequest', 'FeedbackResponse'].every(name => apiDts.includes(name)));
 for (const symbol of ['RenderKitModel', 'RenderKitBlock', 'SourceRange', 'Diagnostic', 'ArtifactComment', 'FeedbackPayload', 'TextQuoteSelector']) {
   assert(`contracts.d.ts declares ${symbol}`, contractsDts.includes(symbol));
 }
@@ -71,6 +76,8 @@ assert('Every shared surface has a recipe', SURFACE_NAMES.every(surface => Boole
 const storeSource = read('apps/web/lib/store.mjs');
 assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
 assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
+const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.js');
+assert('Artifact status route uses shared comment status contracts', artifactRouteSource.includes('COMMENT_STATUSES') && artifactRouteSource.includes('COMMENT_OPEN'));
 
 console.log('\n== Example model contract validation ==');
 const examples = [
