@@ -14,4 +14,7 @@ export { default as GridBlock } from './GridBlock.jsx';
 export { default as TableBlock } from './TableBlock.jsx';
 export { default as ImageBlock } from './ImageBlock.jsx';
 export { default as TabsBlock } from './TabsBlock.jsx';
+export { default as StatBlock } from './StatBlock.jsx';
+export { default as ChecklistBlock } from './ChecklistBlock.jsx';
+export { default as QuoteBlock } from './QuoteBlock.jsx';
 export { default as EChartsBlock } from './EChartsBlock.jsx';

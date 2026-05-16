@@ -54,6 +54,7 @@ Agent 写 .rk.md
 | table 技术表格 | 已实现 | `TableBlock.jsx`、`examples/capabilities/product-system.rk.md` |
 | image 富媒体图片 | 已实现 | `ImageBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
 | tabs 多视图内容 | 已实现 | `TabsBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
+| stat/checklist/quote 编辑化组件 | 已实现 | `StatBlock.jsx`、`ChecklistBlock.jsx`、`QuoteBlock.jsx`、`examples/capabilities/editorial-components.rk.md` |
 | subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
@@ -115,6 +116,9 @@ grid
 table
 image
 tabs
+stat
+checklist
+quote
 ```
 
 默认主题：
@@ -477,6 +481,37 @@ Default view should read like a finished document.
 ::::
 :::::
 ````
+
+### 5.11 `stat` / `metric`
+
+用于 KPI、指标卡和产品状态数字。
+
+```md
+:::metric{id="adoption" label="Adoption" value="74%" delta="+18%" tone="success"}
+Share of artifacts using visual blocks.
+:::
+```
+
+### 5.12 `checklist` / `todo`
+
+用于 readiness gates、任务清单和 review punch list。
+
+```md
+:::todo{id="ship-checklist" title="Readiness checklist"}
+- [x] Reading-first layout
+- [ ] Robust re-anchoring
+:::
+```
+
+### 5.13 `quote`
+
+用于产品原则、专家评论和 blog-style pull quote。
+
+```md
+:::quote{id="principle" cite="RenderKit principle" role="Agent-to-UI"}
+The artifact should make the next decision obvious before the reader opens raw source.
+:::
+```
 
 ---
 
@@ -845,7 +880,7 @@ pnpm verify
 当前结果：
 
 ```text
-Results: 173 passed, 0 failed
+Results: 183 passed, 0 failed
 ALL GOOD
 ```
 
@@ -921,6 +956,9 @@ ALL GOOD
 | `RK_TABS_CHILD_REQUIRED` | tabs block 缺 tab child |
 | `RK_TABS_CHILD_UNSUPPORTED` | tabs 下出现非 tab child |
 | `RK_TABS_BLOCK_UNSUPPORTED` | tab 内出现不支持的 nested block |
+| `RK_STAT_VALUE_REQUIRED` | stat/metric block 缺 `value` |
+| `RK_CHECKLIST_BODY_REQUIRED` | checklist/todo block 缺 list items |
+| `RK_QUOTE_BODY_REQUIRED` | quote block 缺 body text |
 | `RK_GRID_CHILD_UNSUPPORTED` | grid 子 block 不支持 |
 | `RK_THEME_UNKNOWN` | theme 未知，fallback 到 `paper-light` |
 | `RK_SURFACE_UNKNOWN` | surface 未知，允许但 warning |

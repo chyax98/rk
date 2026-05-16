@@ -175,6 +175,38 @@ window,p50,p95
 - `mermaid`, `svg`, `echarts*`, and `infographic` render locally in the browser.
 - `plantuml` and `d2` render through the local RenderKit server (`/api/render/diagram`). PlantUML requires local Java and may require Graphviz for some diagram types; D2 uses local WASM.
 
+#### stat / metric
+
+Use `stat` or alias `metric` for KPI cards and product-readiness numbers.
+
+```md
+:::metric{id="adoption" label="Adoption" value="74%" delta="+18%" tone="success"}
+Share of artifacts using visual blocks.
+:::
+```
+
+#### checklist / todo
+
+Use `checklist` or alias `todo` for readiness gates and review punch lists.
+
+```md
+:::todo{id="ship-checklist" title="Readiness checklist"}
+- [x] Reading-first layout
+- [x] Selection comments
+- [ ] Robust re-anchoring
+:::
+```
+
+#### quote
+
+Use `quote` for blog-style pull quotes, principles, and reviewer callouts.
+
+```md
+:::quote{id="principle" cite="RenderKit principle" role="Agent-to-UI"}
+The artifact should make the next decision obvious before the reader opens raw source.
+:::
+```
+
 #### image
 
 Use `image` for architecture snapshots, screenshots, mockups, generated SVGs, and blog-style hero figures.
@@ -311,11 +343,11 @@ If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKN
 
 | Surface | Recommended blocks |
 |---------|-------------------|
-| `engineering-plan` | summary, callout, decision-card, code, diagram, image, table, tabs, grid |
-| `decision-brief` | summary, decision-card, callout, image, table |
-| `review-report` | summary, callout, code, image, table, tabs |
-| `runbook` | summary, code, callout, diagram, image, table, tabs |
-| `data-report-lite` | summary, code, diagram, image, table, tabs, grid |
+| `engineering-plan` | summary, stat, checklist, callout, decision-card, code, diagram, image, table, tabs, grid |
+| `decision-brief` | summary, quote, decision-card, callout, image, table |
+| `review-report` | summary, stat, checklist, callout, code, image, table, tabs |
+| `runbook` | summary, checklist, code, callout, diagram, image, table, tabs |
+| `data-report-lite` | summary, stat, quote, checklist, code, diagram, image, table, tabs, grid |
 
 If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected.
 
@@ -349,7 +381,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 
 | Code | Fix |
 |------|-----|
-| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs; aliases: sum, note, warn, alert, ok, dec, fig, src |
+| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs, stat, checklist, quote; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo |
 | `RK_BLOCK_ID_REQUIRED` | Add `id="..."` attribute to the directive |
 | `RK_BLOCK_ID_INVALID` | Use only `[a-zA-Z0-9_-]+` characters in the id |
 | `RK_DUPLICATE_BLOCK_ID` | Each block id must be unique |
@@ -361,6 +393,9 @@ When in doubt about how a surface should look, read the corresponding example fi
 | `RK_CODE_BODY_REQUIRED` | Add a fenced code block inside code directive |
 | `RK_TABLE_BODY_REQUIRED` | Add a GitHub-flavored Markdown table inside table directive |
 | `RK_IMAGE_SRC_REQUIRED` | Add `src="..."` to image directive |
+| `RK_STAT_VALUE_REQUIRED` | Add `value="..."` to stat/metric directive |
+| `RK_CHECKLIST_BODY_REQUIRED` | Add checklist list items |
+| `RK_QUOTE_BODY_REQUIRED` | Add quote body text |
 | `RK_TABS_CHILD_REQUIRED` | Add at least one `tab` child inside tabs directive |
 | `RK_THEME_UNKNOWN` | (warning) Use a supported theme: paper-light, editorial-kami, dark-pro, amber-terminal. Falls back to paper-light. |
 | `RK_SURFACE_UNKNOWN` | (warning) Use a supported surface: engineering-plan, decision-brief, review-report, runbook, data-report-lite. |

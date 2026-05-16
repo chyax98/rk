@@ -10,6 +10,9 @@ import GridBlock from './GridBlock.jsx';
 import TableBlock from './TableBlock.jsx';
 import ImageBlock from './ImageBlock.jsx';
 import TabsBlock from './TabsBlock.jsx';
+import StatBlock from './StatBlock.jsx';
+import ChecklistBlock from './ChecklistBlock.jsx';
+import QuoteBlock from './QuoteBlock.jsx';
 
 /**
  * Block type → component registry.
@@ -28,4 +31,7 @@ export const registry = {
   'table': TableBlock,
   'image': ImageBlock,
   'tabs': TabsBlock,
+  'stat': StatBlock,
+  'checklist': ChecklistBlock,
+  'quote': QuoteBlock,
 };

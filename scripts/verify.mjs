@@ -149,6 +149,18 @@ assert("rich media tabs case has tabs block", !!tabsBlock);
 assert("tabs block has two tabs", (tabsBlock?.props?.tabs?.length || 0) === 2, `got ${tabsBlock?.props?.tabs?.length || 0}`);
 assert("tabs contain nested blocks", (tabsBlock?.props?.tabs || []).every(t => (t.blocks?.length || 0) >= 2));
 
+const editorialCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/editorial-components.rk.md --json");
+let editorialParsed;
+try { editorialParsed = JSON.parse(editorialCase.stdout); } catch { editorialParsed = null; }
+const editorialBlocks = editorialParsed?.model?.blocks || [];
+const editorialTypes = new Set(editorialBlocks.flatMap(b => [b.type, ...(b.props?.children || []).map(c => c.type)]));
+assert("editorial components case validates", editorialCase.code === 0 && editorialParsed?.ok === true, `exit=${editorialCase.code}`);
+for (const type of ["stat", "checklist", "quote"]) {
+  assert(`editorial components case covers ${type}`, editorialTypes.has(type));
+}
+const checklist = editorialBlocks.find(b => b.type === "checklist");
+assert("checklist parses checked and unchecked items", checklist?.props?.items?.some(i => i.checked) && checklist?.props?.items?.some(i => !i.checked));
+
 // ── Section 6: Web build ──
 console.log("\n== Web build ==");
 try {

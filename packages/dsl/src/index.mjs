@@ -5,7 +5,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table', 'image', 'tabs', 'tab']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table', 'image', 'tabs', 'tab', 'stat', 'checklist', 'quote']);
 const ALIASES = new Map([
   ['sum', { name: 'summary' }],
   ['note', { name: 'callout', attrs: { tone: 'info' } }],
@@ -15,6 +15,8 @@ const ALIASES = new Map([
   ['dec', { name: 'decision-card' }],
   ['fig', { name: 'diagram' }],
   ['src', { name: 'code' }],
+  ['metric', { name: 'stat' }],
+  ['todo', { name: 'checklist' }],
 ]);
 const DEFAULT_THEME = 'paper-light';
 const VALID_THEMES = new Set(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
@@ -99,6 +101,9 @@ export function parseRK(source, file = '<source>') {
       if (name === 'table') block = compileTable(patched, attrs, source, errors, file);
       if (name === 'image') block = compileImage(patched, attrs, source, errors, file);
       if (name === 'tabs') block = compileTabs(patched, attrs, source, errors, file);
+      if (name === 'stat') block = compileStat(patched, attrs, source, errors, file);
+      if (name === 'checklist') block = compileChecklist(patched, attrs, source, errors, file);
+      if (name === 'quote') block = compileQuote(patched, attrs, source, errors, file);
       if (name === 'tab') errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
       if (block) blocks.push(block);
       continue;
@@ -251,6 +256,9 @@ function compileGrid(node, attrs, source, errors, file) {
     if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
     if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
     if (resolved.name === 'tabs') block = compileTabs(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'stat') block = compileStat(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'checklist') block = compileChecklist(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'quote') block = compileQuote(patched, patched.attributes, source, errors, file);
     if (block) children.push(block);
   }
   return {
@@ -338,6 +346,51 @@ function compileImage(node, attrs, source, errors, file) {
   };
 }
 
+function compileStat(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  const value = attrs.value || attrs.metric || '';
+  if (!value) errors.push(diag('RK_STAT_VALUE_REQUIRED', 'stat directive requires value', file, pos(node)));
+  return {
+    id: attrs.id,
+    type: 'stat',
+    props: {
+      label: attrs.label || attrs.title || '',
+      value,
+      delta: attrs.delta || '',
+      tone: attrs.tone || 'neutral',
+      caption: attrs.caption || body,
+      width: normalizeWidth(attrs.width || attrs.span)
+    },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileChecklist(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  const items = parseChecklistItems(body);
+  if (!items.length) errors.push(diag('RK_CHECKLIST_BODY_REQUIRED', 'checklist directive requires list items', file, pos(node)));
+  return {
+    id: attrs.id,
+    type: 'checklist',
+    props: { title: attrs.title || '', items, width: normalizeWidth(attrs.width || attrs.span) },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileQuote(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  if (!body) errors.push(diag('RK_QUOTE_BODY_REQUIRED', 'quote directive requires body text', file, pos(node)));
+  return {
+    id: attrs.id,
+    type: 'quote',
+    props: { quote: body, cite: attrs.cite || attrs.by || '', role: attrs.role || '', width: normalizeWidth(attrs.width || attrs.span) },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
 function compileTabs(node, attrs, source, errors, file) {
   const tabs = [];
   for (const child of node.children || []) {
@@ -397,6 +450,9 @@ function compileNestedBlocks(node, prefix, source, errors, file) {
     if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
     if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
     if (resolved.name === 'grid') block = compileGrid(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'stat') block = compileStat(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'checklist') block = compileChecklist(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'quote') block = compileQuote(patched, patched.attributes, source, errors, file);
     if (block) out.push(block);
   }
   return out;
@@ -407,6 +463,19 @@ function rawDirectiveBody(source, node) {
   const lines = raw.split('\n');
   if (lines.length <= 2) return '';
   return lines.slice(1, -1).join('\n').trim();
+}
+
+function parseChecklistItems(body) {
+  return String(body || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const m = line.match(/^[-*]\s+\[(x|X| |-)\]\s+(.+)$/);
+      if (m) return { checked: m[1].toLowerCase() === 'x', text: m[2].trim() };
+      return { checked: false, text: line.replace(/^[-*]\s+/, '').trim() };
+    })
+    .filter(item => item.text);
 }
 
 function markdownBullets(body) {
