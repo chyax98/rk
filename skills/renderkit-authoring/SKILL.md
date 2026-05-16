@@ -116,20 +116,40 @@ Only `mermaid` engine is supported. Must contain a fenced code block with `merma
 - **Do not rename existing IDs** when revising. Comments anchor to IDs.
 - If you delete a block, open comments on it become "orphaned" — that is acceptable.
 
+### Auto-generated IDs (headings, paragraphs)
+
+Headings and paragraphs get auto-generated IDs (`heading-1`, `heading-2`, `paragraph-1`, etc.). These IDs are **not stable** — they shift when the document structure changes (e.g. adding/removing a heading renumbers all subsequent headings). **Directive block IDs are stable; auto-generated IDs are not.** Avoid relying on auto-generated IDs for durable comment anchors if the document structure may change.
+
 ## CLI workflow
+
+> **Alpha note:** RenderKit is not globally installed. Use the local source command:
+>
+> ```bash
+> node packages/cli/bin/renderkit.mjs <command> [options]
+> ```
+>
+> The commands below show both forms. Use whichever applies to your setup.
 
 ```bash
 # 1. Validate (always validate before push)
 renderkit validate <file>.rk.md --json
+# or locally:
+node packages/cli/bin/renderkit.mjs validate <file>.rk.md --json
 
 # 2. Push (creates artifact or new revision)
 renderkit push <file>.rk.md --open --json
+# or locally:
+node packages/cli/bin/renderkit.mjs push <file>.rk.md --open --json
 
 # 3. Check status
 renderkit status <file>.rk.md --json
+# or locally:
+node packages/cli/bin/renderkit.mjs status <file>.rk.md --json
 
 # 4. Pull human feedback
 renderkit feedback <file>.rk.md --json
+# or locally:
+node packages/cli/bin/renderkit.mjs feedback <file>.rk.md --json
 ```
 
 ## Feedback revision loop
@@ -149,6 +169,8 @@ renderkit feedback <file>.rk.md --json
 | `paper-light` | Long-form reports, proposals that may be screenshotted. |
 | `amber-terminal` | For users with amber/yellow terminal aesthetic. Avoids black-on-black readability issues. |
 
+If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKNOWN` and falls back to `dark-pro`.
+
 ## Surface guide
 
 | Surface | Recommended blocks |
@@ -158,6 +180,8 @@ renderkit feedback <file>.rk.md --json
 | `review-report` | summary, callout, code |
 | `runbook` | summary, code, callout, diagram |
 | `data-report-lite` | summary, code |
+
+If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected.
 
 ## Error codes
 
@@ -173,3 +197,5 @@ renderkit feedback <file>.rk.md --json
 | `RK_DIAGRAM_CODE_REQUIRED` | Add a fenced code block inside diagram |
 | `RK_UNSUPPORTED_DIAGRAM_ENGINE` | Use engine="mermaid" |
 | `RK_CODE_BODY_REQUIRED` | Add a fenced code block inside code directive |
+| `RK_THEME_UNKNOWN` | (warning) Use a supported theme: dark-pro, paper-light, amber-terminal. Falls back to dark-pro. |
+| `RK_SURFACE_UNKNOWN` | (warning) Use a supported surface: engineering-plan, decision-brief, review-report, runbook, data-report-lite. |

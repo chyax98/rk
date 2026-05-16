@@ -6,6 +6,8 @@ import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
 const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary']);
+const VALID_THEMES = new Set(['dark-pro', 'paper-light', 'amber-terminal']);
+const VALID_SURFACES = new Set(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
 const ID_FORMAT = /^[a-zA-Z0-9_-]+$/;
 
 export function parseRK(source, file = '<source>') {
@@ -89,12 +91,23 @@ export function parseRK(source, file = '<source>') {
     } else ids.set(block.id, block);
   }
 
+  let effectiveTheme = frontmatter.theme || null;
+  let effectiveSurface = frontmatter.surface || null;
+
+  if (effectiveTheme && !VALID_THEMES.has(effectiveTheme)) {
+    warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${effectiveTheme}", falling back to "dark-pro"`, file));
+    effectiveTheme = 'dark-pro';
+  }
+  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface)) {
+    warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
+  }
+
   const model = {
     rk: '1.0',
     title: frontmatter.title || firstHeading(blocks) || 'Untitled Artifact',
     template: frontmatter.template,
-    theme: frontmatter.theme || null,
-    surface: frontmatter.surface || null,
+    theme: effectiveTheme,
+    surface: effectiveSurface,
     blocks
   };
   return { ok: errors.length === 0, model, errors, warnings };
@@ -154,11 +167,13 @@ function compileDiagram(node, attrs, source, errors, file) {
 
 function compileCode(node, attrs, source, errors, file) {
   const code = findCode(node);
-  const bodyText = rawDirectiveBody(source, node) || directiveBodyText(node);
+  if (!code || !code.value) {
+    errors.push(diag('RK_CODE_BODY_REQUIRED', 'code directive requires a fenced code block', file, pos(node)));
+  }
   return {
     id: attrs.id,
     type: 'code',
-    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || bodyText || '' },
+    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || '' },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };

@@ -57,10 +57,10 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
           <p className="rk-muted">选择 block 后评论。</p>
         )}
         {comments.length === 0 ? <p className="rk-muted">暂无评论。</p> : comments.map(c => (
-          <div className="rk-comment-card" key={c.id}>
+          <div className="rk-comment-card" key={c.id} data-status={c.status}>
             <div className="rk-comment-header">
               <b>{c.blockId}</b>
-              <span className="rk-pill">{c.status}</span>
+              <span className="rk-pill" data-status={c.status}>{c.status}</span>
             </div>
             <p>{c.text}</p>
             <div className="rk-comment-id">{c.id}</div>
@@ -72,7 +72,6 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
 }
 
 function BlockFrame({ block, onComment, selected, commentCount }) {
-  const isTransparent = block.type === 'heading' || block.type === 'paragraph';
   const cls = `rk-block rk-block-${block.type}${selected ? ' rk-selected' : ''}`;
   return (
     <section
@@ -82,13 +81,12 @@ function BlockFrame({ block, onComment, selected, commentCount }) {
       {...(selected ? { 'data-rk-selected': '' } : {})}
       {...(commentCount > 0 ? { 'data-rk-has-comments': '' } : {})}
       {...(block.props?.tone ? { 'data-tone': block.props.tone } : {})}
+      tabIndex={0}
     >
-      {!isTransparent && (
-        <div className="rk-block-tools">
-          <span className="rk-block-id">{block.id}</span>
-          <button className="rk-comment-btn" onClick={onComment}>💬 {commentCount || ''}</button>
-        </div>
-      )}
+      <div className="rk-block-tools">
+        <span className="rk-block-id">{block.id}</span>
+        <button className="rk-comment-btn" onClick={onComment}>💬 {commentCount || ''}</button>
+      </div>
       <RenderBlock block={block} />
     </section>
   );

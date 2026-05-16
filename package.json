@@ -8,7 +8,9 @@
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node packages/cli/bin/renderkit.mjs",
 
-    "push:example": "pnpm renderkit push examples/plan.rk.md --open"
+    "push:example": "pnpm renderkit push examples/plan.rk.md --open",
+    "verify": "node scripts/verify.mjs",
+    "verify:smoke": "node scripts/verify-smoke.mjs"
   },
   "devDependencies": {}
 }

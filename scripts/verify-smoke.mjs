@@ -1,0 +1,86 @@
+#!/usr/bin/env node
+/**
+ * pnpm verify:smoke — server-dependent smoke test.
+ * If server is down, exit 0 with SKIPPED.
+ * If running: push alpha-showcase, status, feedback; assert JSON shapes.
+ */
+import { execSync } from "node:child_process";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, "..");
+
+const CLI = "node packages/cli/bin/renderkit.mjs";
+const FILE = "examples/alpha-showcase.rk.md";
+
+let pass = 0, fail = 0;
+
+function run(cmd) {
+  try {
+    return { stdout: execSync(cmd, { cwd: root, stdio: ["pipe", "pipe", "pipe"], encoding: "utf8" }), code: 0 };
+  } catch (e) {
+    return { stdout: e.stdout ?? "", stderr: e.stderr ?? "", code: e.status ?? 1 };
+  }
+}
+
+function assert(label, ok, detail = "") {
+  if (ok) { pass++; console.log(`  ✓ ${label}`); }
+  else { fail++; console.log(`  ✗ ${label}${detail ? " — " + detail : ""}`); }
+}
+
+// ── Check server ──
+console.log("\n== Server check ==");
+const srv = run(`${CLI} server status --json`);
+if (srv.code !== 0) {
+  console.log("  SKIPPED: server not running\n");
+  process.exit(0);
+}
+
+let srvParsed;
+try { srvParsed = JSON.parse(srv.stdout); } catch { srvParsed = null; }
+assert("server status ok=true", srvParsed?.ok === true, `got ${srvParsed?.ok}`);
+assert("server has endpoint", typeof srvParsed?.endpoint === "string");
+
+// ── Push ──
+console.log("\n== Push ==");
+const push = run(`${CLI} push ${FILE} --json`);
+let pushParsed;
+try { pushParsed = JSON.parse(push.stdout); } catch { pushParsed = null; }
+
+assert("push exit 0", push.code === 0, `got ${push.code}`);
+assert("push ok=true", pushParsed?.ok === true, `got ${pushParsed?.ok}`);
+assert("push has artifactId", typeof pushParsed?.artifactId === "string");
+assert("push has revision", typeof pushParsed?.revision === "number");
+assert("push has url", typeof pushParsed?.url === "string");
+
+// ── Status ──
+console.log("\n== Status ==");
+const status = run(`${CLI} status ${FILE} --json`);
+let statusParsed;
+try { statusParsed = JSON.parse(status.stdout); } catch { statusParsed = null; }
+
+assert("status exit 0", status.code === 0, `got ${status.code}`);
+assert("status ok=true", statusParsed?.ok === true, `got ${statusParsed?.ok}`);
+assert("status has artifact", typeof statusParsed?.artifact?.id === "string");
+assert("status has currentRevision", typeof statusParsed?.artifact?.currentRevision === "number");
+
+// ── Feedback ──
+console.log("\n== Feedback ==");
+const feedback = run(`${CLI} feedback ${FILE} --json`);
+let feedbackParsed;
+try { feedbackParsed = JSON.parse(feedback.stdout); } catch { feedbackParsed = null; }
+
+assert("feedback exit 0", feedback.code === 0, `got ${feedback.code}`);
+assert("feedback ok=true", feedbackParsed?.ok === true, `got ${feedbackParsed?.ok}`);
+assert("feedback has openComments", Array.isArray(feedbackParsed?.openComments));
+
+// ── Summary ──
+console.log(`\n${"=".repeat(40)}`);
+console.log(`Results: ${pass} passed, ${fail} failed`);
+if (fail > 0) {
+  console.log("SMOKE FAILED\n");
+  process.exit(1);
+} else {
+  console.log("ALL GOOD\n");
+}

@@ -38,6 +38,7 @@ alternatives:
 :::
 
 :::code{id="cli-usage" language="bash" title="CLI 使用示例"}
+```bash
 # Validate before push
 renderkit validate plan.rk.md --json
 
@@ -49,12 +50,15 @@ renderkit status plan.rk.md --json
 
 # Pull feedback from human review
 renderkit feedback plan.rk.md --json
+```
 :::
 
 :::code{id="frontmatter-example" language="yaml" title="Frontmatter 格式"}
+```yaml
 title: 认证模块重构方案
 theme: dark-pro
 surface: engineering-plan
+```
 :::
 
 :::diagram{id="renderkit-flow" engine="mermaid" caption="RenderKit Agent Review Loop"}

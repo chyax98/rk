@@ -84,7 +84,7 @@ a { color: var(--rk-accent); }
   width: 100%;
   min-height: 80px;
   background: var(--rk-code-bg);
-  color: var(--rk-text);
+  color: var(--rk-code-text, var(--rk-text));
   border: 1px solid var(--rk-border);
   border-radius: var(--rk-radius-md);
   padding: var(--rk-space-3);
@@ -99,7 +99,7 @@ a { color: var(--rk-accent); }
 .rk-primary-btn {
   background: var(--rk-btn-primary);
   border: 0;
-  color: white;
+  color: var(--rk-btn-primary-text, #ffffff);
   border-radius: var(--rk-radius-md);
   padding: var(--rk-space-2) var(--rk-space-4);
   cursor: pointer;
@@ -112,7 +112,15 @@ a { color: var(--rk-accent); }
 /* ── Comment cards in rail ── */
 .rk-comment-card {
   border-top: 1px solid var(--rk-border);
-  padding: var(--rk-space-3) 0;
+  border-left: 3px solid var(--rk-accent);
+  padding: var(--rk-space-3) 0 var(--rk-space-3) var(--rk-space-3);
+}
+.rk-comment-card[data-status="resolved"] {
+  border-left-color: var(--rk-status-resolved);
+  opacity: 0.65;
+}
+.rk-comment-card[data-status="orphaned"] {
+  border-left-color: var(--rk-status-orphaned);
 }
 .rk-comment-header {
   display: flex;

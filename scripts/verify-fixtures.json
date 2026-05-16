@@ -1,0 +1,16 @@
+{
+  "good": [
+    "examples/plan.rk.md",
+    "examples/alpha-showcase.rk.md"
+  ],
+  "bad": {
+    "examples/fixtures/bad-id.rk.md": "RK_BLOCK_ID_INVALID",
+    "examples/fixtures/unknown-block.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
+    "examples/fixtures/missing-id.rk.md": "RK_BLOCK_ID_REQUIRED",
+    "examples/fixtures/duplicate-id.rk.md": "RK_DUPLICATE_BLOCK_ID",
+    "examples/fixtures/heading-directive.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
+    "examples/fixtures/paragraph-directive.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
+    "examples/fixtures/empty-code.rk.md": "RK_CODE_BODY_REQUIRED",
+    "examples/fixtures/no-fence-code.rk.md": "RK_CODE_BODY_REQUIRED"
+  }
+}
