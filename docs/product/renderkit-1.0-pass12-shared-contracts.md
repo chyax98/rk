@@ -123,10 +123,12 @@ scripts/verify-contracts.mjs
 3. runtime contract list 是否唯一。
 4. DSL compiler keys 是否等于可 author 的 block contract。
 5. renderer registry keys 是否等于 `BLOCK_TYPES`。
-6. DSL 是否导入 shared theme/surface contract。
-7. DSL 是否对 model 执行 `validateRenderKitModel()`。
-8. 关键 examples parse 后是否满足共享 model contract。
-9. fixtures 是否覆盖每个可 author block（含 alias，例如 `metric -> stat`、`todo -> checklist`）。
+6. DSL 是否导入 shared theme/surface/alias/diagram contract。
+7. Web review surface 逻辑是否使用 shared `isWideReviewSurface()`。
+8. Store comment lifecycle / selector normalization 是否使用 shared contract。
+9. DSL 是否对 model 执行 `validateRenderKitModel()`。
+10. 关键 examples parse 后是否满足共享 model contract。
+11. fixtures 是否覆盖每个可 author block（含 alias，例如 `metric -> stat`、`todo -> checklist`）。
 
 ### 5. 主验证链纳入 contract gate
 
@@ -147,7 +149,7 @@ scripts/verify.mjs
 
 ```bash
 pnpm verify:contracts
-# Results: 52 passed, 0 failed
+# Results: 54 passed, 0 failed
 
 pnpm verify
 # Results: 213 passed, 0 failed

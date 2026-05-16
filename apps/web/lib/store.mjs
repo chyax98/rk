@@ -1,6 +1,12 @@
 import crypto from 'node:crypto';
 import { parseRK } from '@renderkit/dsl';
+import { COMMENT_STATUSES, validateTextQuoteSelector } from '@renderkit/shared/contracts';
 import { getDb } from './db.mjs';
+
+const COMMENT_OPEN = COMMENT_STATUSES[0];
+const COMMENT_RESOLVED = COMMENT_STATUSES[1];
+const COMMENT_ORPHANED = COMMENT_STATUSES[2];
+const HUMAN_EDITABLE_COMMENT_STATUSES = new Set([COMMENT_OPEN, COMMENT_RESOLVED]);
 
 /* ── helpers ────────────────────────────────────────────── */
 
@@ -40,6 +46,8 @@ function findBlockById(blocks, id) {
 
 function normalizeSelector(selector) {
   if (!selector || typeof selector !== 'object') return null;
+  const selectorIssues = validateTextQuoteSelector({ ...selector, type: selector.type || 'TextQuoteSelector' });
+  if (selectorIssues.length > 0 && selectorIssues.some(issue => issue.path === '$.exact')) return null;
   const exact = String(selector.exact || '').trim().slice(0, 500);
   if (!exact) return null;
   return {
@@ -163,7 +171,7 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
   // update comments
   const commentRows = db.prepare('SELECT * FROM comments WHERE artifact_id = ?').all(id);
   const updateCmt = db.prepare(`UPDATE comments SET status = ?, resolved_at_revision = ?, resolved_by = ?, resolved_at = ? WHERE id = ?`);
-  const orphanCmt = db.prepare(`UPDATE comments SET status = 'orphaned' WHERE id = ?`);
+  const orphanCmt = db.prepare(`UPDATE comments SET status = ? WHERE id = ?`);
 
   let orphanedIds = [];
 
@@ -178,9 +186,9 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
     orphanedIds = [];
     for (const c of commentRows) {
       if (resolvedCommentIds.includes(c.id)) {
-        updateCmt.run('resolved', next, 'agent', now(), c.id);
-      } else if (c.status === 'open' && !newIds.has(c.block_id)) {
-        orphanCmt.run(c.id);
+        updateCmt.run(COMMENT_RESOLVED, next, 'agent', now(), c.id);
+      } else if (c.status === COMMENT_OPEN && !newIds.has(c.block_id)) {
+        orphanCmt.run(COMMENT_ORPHANED, c.id);
         orphanedIds.push(c.id);
       }
     }
@@ -240,7 +248,7 @@ export async function addComment(id, blockId, text, selector = null) {
     blockId,
     text,
     selector: normalizeSelector(selector),
-    status: 'open',
+    status: COMMENT_OPEN,
     createdAtRevision: artifact.meta.currentRevision,
     blockSnapshot: block,
     createdAt: now(),
@@ -249,14 +257,13 @@ export async function addComment(id, blockId, text, selector = null) {
   db.prepare(`
     INSERT INTO comments (id, artifact_id, block_id, text, selector, status, created_at_revision, block_snapshot, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(c.id, id, blockId, text, c.selector ? JSON.stringify(c.selector) : null, 'open', c.createdAtRevision, JSON.stringify(block), c.createdAt);
+  `).run(c.id, id, blockId, text, c.selector ? JSON.stringify(c.selector) : null, COMMENT_OPEN, c.createdAtRevision, JSON.stringify(block), c.createdAt);
 
   return { ok: true, comment: c };
 }
 
 export async function updateCommentStatus(id, commentId, status) {
-  const allowed = new Set(['open', 'resolved']);
-  if (!allowed.has(status)) return { ok: false, status: 400, error: 'invalid status' };
+  if (!HUMAN_EDITABLE_COMMENT_STATUSES.has(status)) return { ok: false, status: 400, error: 'invalid status' };
   const artifact = await getArtifact(id);
   if (!artifact) return { ok: false, status: 404, error: 'not found' };
 
@@ -264,12 +271,12 @@ export async function updateCommentStatus(id, commentId, status) {
   const row = db.prepare('SELECT * FROM comments WHERE id = ? AND artifact_id = ?').get(commentId, id);
   if (!row) return { ok: false, status: 404, error: 'comment not found' };
 
-  if (status === 'resolved') {
-    db.prepare(`UPDATE comments SET status = 'resolved', resolved_at_revision = ?, resolved_by = 'human', resolved_at = ?, reopened_at = NULL WHERE id = ?`)
-      .run(artifact.meta.currentRevision, now(), commentId);
+  if (status === COMMENT_RESOLVED) {
+    db.prepare(`UPDATE comments SET status = ?, resolved_at_revision = ?, resolved_by = 'human', resolved_at = ?, reopened_at = NULL WHERE id = ?`)
+      .run(COMMENT_RESOLVED, artifact.meta.currentRevision, now(), commentId);
   } else {
-    db.prepare(`UPDATE comments SET status = 'open', resolved_at_revision = NULL, resolved_by = NULL, resolved_at = NULL, reopened_at = ? WHERE id = ?`)
-      .run(now(), commentId);
+    db.prepare(`UPDATE comments SET status = ?, resolved_at_revision = NULL, resolved_by = NULL, resolved_at = NULL, reopened_at = ? WHERE id = ?`)
+      .run(COMMENT_OPEN, now(), commentId);
   }
 
   const updated = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
@@ -280,7 +287,7 @@ export async function getFeedback(id) {
   const artifact = await getArtifact(id);
   if (!artifact) return null;
   const blocks = flattenBlocks(artifact.revision.model.blocks);
-  const comments = artifact.comments.filter(c => c.status === 'open' || c.status === 'orphaned');
+  const comments = artifact.comments.filter(c => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED);
   return {
     artifactId: id,
     currentRevision: artifact.meta.currentRevision,

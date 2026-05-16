@@ -72,7 +72,7 @@ pnpm verify:sqlite
 Latest evidence:
 
 ```text
-pnpm verify:contracts -> Results: 52 passed, 0 failed
+pnpm verify:contracts -> Results: 54 passed, 0 failed
 pnpm verify           -> Results: 213 passed, 0 failed
 ```
 

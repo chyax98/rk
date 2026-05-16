@@ -62,7 +62,7 @@ pnpm verify         -> Results: 213 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed
-pnpm verify:contracts -> Results: 52 passed, 0 failed
+pnpm verify:contracts -> Results: 54 passed, 0 failed
 ```
 
 Recent browser evidence:

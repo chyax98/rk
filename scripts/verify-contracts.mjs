@@ -59,6 +59,9 @@ assert('DSL validates diagram engines through shared contracts', dslSource.inclu
 assert('DSL validates model against shared contract', dslSource.includes('validateRenderKitModel(model)'));
 const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.jsx');
 assert('Web review surface logic imports shared contract helper', artifactViewSource.includes("@renderkit/shared/contracts") && artifactViewSource.includes('isWideReviewSurface(surface)'));
+const storeSource = read('apps/web/lib/store.mjs');
+assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
+assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
 
 console.log('\n== Example model contract validation ==');
 const examples = [
