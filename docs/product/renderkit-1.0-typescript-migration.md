@@ -1,6 +1,6 @@
 # RenderKit 1.0 TypeScript Migration Plan
 
-Status: Stage 1 implemented; later stages planned  
+Status: Stage 1 implemented; Stage 2 typed DSL boundary started  
 Date: 2026-05-17
 
 ## Decision
@@ -78,7 +78,7 @@ pnpm verify           -> Results: 213 passed, 0 failed
 
 `pnpm typecheck` remains a later gate after the first `.ts/.tsx` source module exists.
 
-### Stage 2 — DSL type boundary
+### Stage 2 — DSL type boundary（已开始）
 
 Migrate DSL compiler types first:
 
@@ -86,12 +86,19 @@ Migrate DSL compiler types first:
 packages/dsl/src/index.mjs -> index.ts or typed JSDoc bridge
 ```
 
-Focus:
+Implemented first boundary:
 
-- `parseRK()` return type.
+```text
+packages/dsl/src/index.d.ts
+```
+
+`@renderkit/dsl` now exposes a typed `parseRK(source, file?) -> ParseResult` surface backed by shared contracts.
+
+Remaining focus:
+
 - `BLOCK_COMPILERS` registry type.
 - per-block `props` discriminated unions.
-- diagnostics type and error codes.
+- diagnostics type and error codes inside implementation.
 
 ### Stage 3 — Store/API contracts
 
@@ -155,4 +162,4 @@ Current product flywheel remains higher priority:
 4. Diagram visual language and design assets.
 5. Browser verification with `pw`.
 
-Stage 1 shared contracts are now implemented. Remaining TypeScript work is Stage 2+ migration of DSL, Store/API, renderer, and high-state Web UI components.
+Stage 1 shared contracts are implemented. Stage 2 has begun with a typed `parseRK()` package boundary. Remaining TypeScript work is deeper DSL implementation typing plus Store/API, renderer, and high-state Web UI components.

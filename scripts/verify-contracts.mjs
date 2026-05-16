@@ -31,10 +31,14 @@ function objectKeysFromConst(source, constName) {
 
 console.log('\n== Shared contract surface ==');
 const sharedPkg = JSON.parse(read('packages/shared/package.json'));
+const dslPkg = JSON.parse(read('packages/dsl/package.json'));
 const contractsDts = read('packages/shared/src/contracts.d.ts');
+const dslDts = read('packages/dsl/src/index.d.ts');
 const contractsMjs = read('packages/shared/src/contracts.mjs');
 assert('@renderkit/shared exposes package types', sharedPkg.types === './src/contracts.d.ts');
 assert('@renderkit/shared exports ./contracts', Boolean(sharedPkg.exports?.['./contracts']));
+assert('@renderkit/dsl exposes package types', dslPkg.types === './src/index.d.ts');
+assert('@renderkit/dsl exports typed parseRK', dslDts.includes('parseRK(source: string') && dslDts.includes('ParseResult'));
 for (const symbol of ['RenderKitModel', 'RenderKitBlock', 'SourceRange', 'Diagnostic', 'ArtifactComment', 'FeedbackPayload', 'TextQuoteSelector']) {
   assert(`contracts.d.ts declares ${symbol}`, contractsDts.includes(symbol));
 }
