@@ -81,7 +81,7 @@ Standard Markdown headings (`#`, `##`, `###`) and paragraphs are automatically c
 
 ### Directive blocks
 
-All directive blocks require a stable `id`. The `id` must match `[a-zA-Z0-9_-]+` and must be unique within the artifact. **Never change an existing block id** — it is the anchor for human comments. If you need to restructure, delete the old block and create a new one with a new id.
+Directive block `id` is optional for draft/display-only blocks: RenderKit will generate a deterministic `auto-...` id when omitted. For any block likely to receive review comments, add a stable explicit `id` that matches `[a-zA-Z0-9_-]+` and is unique within the artifact. **Never change an existing explicit block id** — it is the anchor for human comments. If you need to restructure, delete the old block and create a new one with a new id.
 
 ### Shorthand aliases
 
@@ -457,7 +457,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 | Code | Fix |
 |------|-----|
 | `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs, stat, checklist, quote, comparison, timeline; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo, compare, roadmap |
-| `RK_BLOCK_ID_REQUIRED` | Add `id="..."` attribute to the directive |
+| `RK_BLOCK_ID_REQUIRED` | Legacy only. Current parser auto-generates missing directive ids; add explicit `id="..."` for comment-stable blocks. |
 | `RK_BLOCK_ID_INVALID` | Use only `[a-zA-Z0-9_-]+` characters in the id |
 | `RK_DUPLICATE_BLOCK_ID` | Each block id must be unique |
 | `RK_FRONTMATTER_INVALID` | Fix YAML syntax in frontmatter |

@@ -34,7 +34,7 @@
 | Requirement | Evidence | Current status | Gaps |
 |---|---|---:|---|
 | Local-first Agent-to-UI artifact flow | `packages/cli/bin/renderkit.mjs`, `apps/web/app/a/[id]/ArtifactView.jsx`, `apps/web/app/api/artifacts/**`, `~/.renderkit/data/renderkit.db`, `scripts/verify-browser.mjs` | Strong | Final audit still needed |
-| `.rk.md` block authoring | `packages/dsl/src/index.mjs`, `skills/renderkit-authoring/SKILL.md`, `examples/capabilities/*.rk.md` | Strong | TypeScript contracts pending |
+| `.rk.md` block authoring | `packages/dsl/src/index.mjs`, `skills/renderkit-authoring/SKILL.md`, `examples/capabilities/*.rk.md`, `examples/capabilities/auto-id.rk.md` | Strong | Optional `--freeze-ids` future enhancement |
 | Mature modules | `highlight.js`, `echarts`, `mermaid`, `@terrastruct/d2`, PlantUML server render, `better-sqlite3` | Strong | Dependency footprint/audit still needed |
 | Reading-first UI | Passes 1, 3, 4, 7, 10；`.pw-evidence/narrative-sqlite-reading-pass7.png`、`.pw-evidence/reading-a11y-skiplink-flywheel.png` | Good | 仍需自动化浏览器回归 |
 | Comments/review support | selection comments、quote selectors、persistent highlight、resolve/reopen、SQLite comments、filters、side markers、prefix/suffix re-anchor | Good | 仍需更多编辑后 re-anchor 回归 |
@@ -58,7 +58,7 @@
 Latest known green gates:
 
 ```text
-pnpm verify         -> Results: 218 passed, 0 failed
+pnpm verify         -> Results: 220 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed

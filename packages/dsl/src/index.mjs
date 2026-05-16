@@ -51,6 +51,8 @@ export function parseRK(source, file = '<source>') {
 
   const blocks = [];
   const ids = new Map();
+  const explicitDirectiveIds = collectDirectiveIds(tree);
+  const generatedDirectiveIds = new Set();
   const ctx = { source, file, errors, warnings };
   let paraN = 0;
   let headingN = 0;
@@ -85,21 +87,20 @@ export function parseRK(source, file = '<source>') {
       const originalName = node.name;
       const resolved = resolveDirective(originalName, node.attributes || {});
       const name = resolved.name;
-      const attrs = resolved.attrs;
+      let attrs = resolved.attrs;
       const r = pos(node);
       if (!KNOWN.has(name)) {
         errors.push(diag('RK_UNKNOWN_BLOCK_TYPE', `Unknown block type: ${originalName}`, file, r));
         continue;
       }
       if (!attrs.id) {
-        errors.push(diag('RK_BLOCK_ID_REQUIRED', `${originalName} block requires id`, file, r));
-        continue;
+        attrs = { ...attrs, id: generatedBlockId(name, node, source, explicitDirectiveIds, generatedDirectiveIds) };
       }
       if (!ID_FORMAT.test(attrs.id)) {
         errors.push(diag('RK_BLOCK_ID_INVALID', `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
         continue;
       }
-      const patched = resolved.name === originalName ? node : { ...node, name, attributes: attrs };
+      const patched = { ...node, name, attributes: attrs };
       let block;
       if (name === 'tab') errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
       else block = compileBlock(patched, attrs, ctx);
@@ -143,6 +144,45 @@ export function parseRK(source, file = '<source>') {
 
 function resolveDirective(name, attrs) {
   return resolveBlockAlias(name, attrs);
+}
+
+function collectDirectiveIds(tree) {
+  const ids = new Set();
+  walkNodes(tree, node => {
+    if ((node.type === 'containerDirective' || node.type === 'leafDirective') && node.attributes?.id) ids.add(String(node.attributes.id));
+  });
+  return ids;
+}
+
+function walkNodes(node, visit) {
+  if (!node) return;
+  visit(node);
+  for (const child of node.children || []) walkNodes(child, visit);
+}
+
+function generatedBlockId(name, node, source, explicitIds, generatedIds) {
+  const base = slugId(`auto-${name}-${autoIdSeed(node, source)}`);
+  let id = base;
+  let n = 2;
+  while (explicitIds.has(id) || generatedIds.has(id)) id = `${base}-${n++}`;
+  generatedIds.add(id);
+  return id;
+}
+
+function autoIdSeed(node, source) {
+  const attrs = node.attributes || {};
+  const attrSeed = attrs.title || attrs.label || attrs.q || attrs.question || attrs.chosen || attrs.source || '';
+  const bodySeed = attrSeed || plainText(node) || rawDirectiveBody(source, node) || directiveBodyText(node) || 'block';
+  return String(bodySeed).slice(0, 64);
+}
+
+function slugId(value) {
+  const slug = String(value || 'block')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 72);
+  return slug || 'auto-block';
 }
 
 function normalizeWidth(value) {

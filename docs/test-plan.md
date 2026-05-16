@@ -55,7 +55,6 @@ examples/fixtures/bad-id.rk.md
 examples/fixtures/duplicate-id.rk.md
 examples/fixtures/empty-code.rk.md
 examples/fixtures/heading-directive.rk.md
-examples/fixtures/missing-id.rk.md
 examples/fixtures/no-fence-code.rk.md
 examples/fixtures/paragraph-directive.rk.md
 examples/fixtures/unknown-block.rk.md
@@ -165,7 +164,6 @@ node packages/cli/bin/renderkit.mjs validate examples/plan.rk.md --json
 ```bash
 node packages/cli/bin/renderkit.mjs validate examples/fixtures/bad-id.rk.md --json
 node packages/cli/bin/renderkit.mjs validate examples/fixtures/unknown-block.rk.md --json
-node packages/cli/bin/renderkit.mjs validate examples/fixtures/missing-id.rk.md --json
 node packages/cli/bin/renderkit.mjs validate examples/fixtures/duplicate-id.rk.md --json
 node packages/cli/bin/renderkit.mjs validate examples/fixtures/heading-directive.rk.md --json
 node packages/cli/bin/renderkit.mjs validate examples/fixtures/paragraph-directive.rk.md --json
@@ -179,7 +177,6 @@ node packages/cli/bin/renderkit.mjs validate examples/fixtures/no-fence-code.rk.
 |---|---|
 | `bad-id.rk.md` | `RK_BLOCK_ID_INVALID` |
 | `unknown-block.rk.md` | `RK_UNKNOWN_BLOCK_TYPE` |
-| `missing-id.rk.md` | `RK_BLOCK_ID_REQUIRED` |
 | `duplicate-id.rk.md` | `RK_DUPLICATE_BLOCK_ID` |
 | `heading-directive.rk.md` | `RK_UNKNOWN_BLOCK_TYPE` |
 | `paragraph-directive.rk.md` | `RK_UNKNOWN_BLOCK_TYPE` |

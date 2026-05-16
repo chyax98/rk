@@ -163,6 +163,12 @@ assert("checklist parses checked and unchecked items", checklist?.props?.items?.
 
 // ── Section 6: Narrative blocks ──
 console.log("\n== Narrative blocks ==");
+const autoIdCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/auto-id.rk.md --json");
+let autoIdParsed;
+try { autoIdParsed = JSON.parse(autoIdCase.stdout); } catch { autoIdParsed = null; }
+assert("auto-id case validates", autoIdCase.code === 0 && autoIdParsed?.ok === true, `exit=${autoIdCase.code}`);
+assert("auto-id case generates deterministic directive id", (autoIdParsed?.model?.blocks || []).some(b => b.id === 'auto-callout-no-id'));
+
 const narrativeCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/narrative-blocks.rk.md --json");
 let narrativeParsed;
 try { narrativeParsed = JSON.parse(narrativeCase.stdout); } catch { narrativeParsed = null; }

@@ -964,7 +964,7 @@ ALL GOOD
 | `RK_PARSE_ERROR` | Markdown parse 失败 |
 | `RK_FRONTMATTER_INVALID` | frontmatter YAML 无效 |
 | `RK_UNKNOWN_BLOCK_TYPE` | 未知 directive block |
-| `RK_BLOCK_ID_REQUIRED` | directive block 缺 id |
+| `RK_BLOCK_ID_REQUIRED` | legacy：早期 directive block 缺 id；当前 parser 会自动生成 `auto-...` id |
 | `RK_BLOCK_ID_INVALID` | id 格式不合法 |
 | `RK_DUPLICATE_BLOCK_ID` | 重复 id |
 | `RK_PROP_REQUIRED` | 必填属性缺失 |
