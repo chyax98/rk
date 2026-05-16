@@ -55,13 +55,21 @@ assert('md2html exposes local path and commit', Boolean(md2html.resource?.localP
 assert('md2html records integration status', md2html.resource?.integrationStatus === 'partially-integrated');
 const p0 = runJson('node packages/cli/bin/renderkit.mjs design resources --priority P0 --json');
 assert('priority filter returns only P0', p0.resources?.length === 2 && p0.resources.every(r => r.priority === 'P0'), `got ${JSON.stringify(p0.resources?.map(r => r.priority))}`);
+const recommendation = runJson('node packages/cli/bin/renderkit.mjs design recommend --surface documentation --json');
+assert('design recommend documentation ok=true', recommendation.ok === true);
+assert('design recommend returns recipe theme and blocks', recommendation.recommendation?.theme === 'editorial-kami' && recommendation.recommendation?.blocks?.includes('quote'));
+assert('design recommend includes prioritized design resources', recommendation.recommendation?.designResources?.some(r => r.id === 'md2html') && recommendation.recommendation?.designResources?.some(r => r.id === 'html-anything'));
+assert('design recommend includes thesvg only as risk-visible reference for diagram surfaces', recommendation.recommendation?.designResources?.some(r => r.id === 'thesvg' && r.risks?.some(x => x.includes('商标'))));
+assert('design recommend includes suggested frontmatter', recommendation.recommendation?.suggestedFrontmatter?.surface === 'documentation' && recommendation.recommendation?.suggestedFrontmatter?.theme === 'editorial-kami');
+assert('design recommend includes suggested block order with aliases', recommendation.recommendation?.suggestedBlockOrder?.some(b => b.blockType === 'quote'));
+assert('design recommend includes Agent validation commands', recommendation.recommendation?.validation?.includes('renderkit validate <file> --json'));
 
 console.log('\n== Authoring skill ==');
 const skill = read('skills/renderkit-authoring/SKILL.md');
 for (const alias of ['sum', 'metric', 'todo', 'compare', 'roadmap']) {
   assert(`authoring skill documents alias ${alias}`, skill.includes(`\`${alias}\``));
 }
-for (const command of ['renderkit recipes list', 'renderkit design resources', 'renderkit surfaces', 'renderkit blocks', 'renderkit aliases', 'renderkit errors', 'renderkit feedback']) {
+for (const command of ['renderkit recipes list', 'renderkit design resources', 'renderkit design recommend', 'renderkit surfaces', 'renderkit blocks', 'renderkit aliases', 'renderkit errors', 'renderkit feedback']) {
   assert(`authoring skill documents CLI command: ${command}`, skill.includes(command));
 }
 

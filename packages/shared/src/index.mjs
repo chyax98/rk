@@ -1,3 +1,6 @@
+import { listDesignResources } from './design-assets.mjs';
+import { BLOCK_ALIASES } from './contracts.mjs';
+
 export * from './contracts.mjs';
 export * from './design-assets.mjs';
 
@@ -148,4 +151,94 @@ export function getRecipe(surface) {
  */
 export function listRecipeSurfaces() {
   return Object.keys(RECIPES);
+}
+
+export function getDesignRecommendation(surface = 'engineering-plan') {
+  const recipe = getRecipe(surface);
+  if (!recipe) return null;
+  const resources = resourcesForSurface(surface, recipe);
+  return {
+    surface,
+    recipe,
+    theme: recipe.recommendedTheme,
+    blocks: recipe.recommendedBlocks,
+    structure: recipe.structure,
+    antiPatterns: recipe.antiPatterns,
+    suggestedFrontmatter: {
+      title: '<填写标题>',
+      theme: recipe.recommendedTheme,
+      surface,
+    },
+    suggestedBlockOrder: recipe.recommendedBlocks.map(blockType => ({
+      blockType,
+      alias: aliasForBlock(blockType),
+      purpose: blockPurposeHint(blockType, surface),
+    })),
+    designResources: resources.map(resource => ({
+      id: resource.id,
+      priority: resource.priority,
+      primaryValue: resource.primaryValue,
+      integrationStatus: resource.integrationStatus,
+      recommendedUse: resource.recommendedUse,
+      risks: resource.risks,
+    })),
+    authoringRules: [
+      'Use .rk.md blocks; do not generate raw HTML or MDX.',
+      'Keep the Web artifact reading-first; comments and metadata stay secondary.',
+      'Prefer deterministic local renderers and mature modules already integrated by RenderKit.',
+      'Use stable block ids because human comments anchor to block ids and text selectors.',
+      'Use real data only; do not invent placeholder metrics or lorem ipsum.',
+    ],
+    validation: [
+      'renderkit validate <file> --json',
+      'renderkit push <file> --json',
+      'renderkit feedback <file> --json',
+    ],
+  };
+}
+
+function resourcesForSurface(surface, recipe) {
+  const resources = listDesignResources();
+  const always = new Set(['html-anything', 'md2html']);
+  const bySurface = {
+    'engineering-plan': ['fireworks-tech-graph', 'ui-ux-pro-max-skill', 'thesvg'],
+    'decision-brief': ['ui-ux-pro-max-skill'],
+    'review-report': ['md2html', 'ui-ux-pro-max-skill'],
+    'runbook': ['fireworks-tech-graph', 'md2html', 'thesvg'],
+    'data-report-lite': ['ui-ux-pro-max-skill', 'fireworks-tech-graph', 'thesvg'],
+    'proposal': ['ui-ux-pro-max-skill', 'md2html'],
+    'documentation': ['md2html', 'html-anything', 'fireworks-tech-graph', 'thesvg'],
+  };
+  const wanted = new Set([...(bySurface[surface] || []), ...always]);
+  if (recipe?.recommendedBlocks?.includes('diagram')) wanted.add('thesvg');
+  return resources.filter(resource => wanted.has(resource.id));
+}
+
+function aliasForBlock(blockType) {
+  const entries = Object.entries(BLOCK_ALIASES).filter(([, value]) => value.name === blockType).map(([alias]) => alias);
+  if (!entries.length) return undefined;
+  if (blockType === 'callout') return entries.join('/');
+  return entries[0];
+}
+
+function blockPurposeHint(blockType, surface) {
+  const hints = {
+    summary: 'State the conclusion and reading promise up front.',
+    stat: 'Surface key quantitative signals without turning the document into a dashboard.',
+    checklist: 'Make readiness gates and follow-up work reviewable.',
+    callout: 'Highlight risks, assumptions, caveats, or reviewer prompts.',
+    'decision-card': 'Capture the decision, chosen path, rationale, and alternatives.',
+    code: 'Show exact commands, APIs, configs, or snippets the Agent expects humans to verify.',
+    diagram: 'Explain architecture, flows, or data movement with a local-first visual block.',
+    image: 'Use a captioned screenshot or figure when it improves comprehension.',
+    table: 'Compare status, owners, risks, or options in a dense but readable matrix.',
+    tabs: 'Keep alternate reader/reviewer or before/after views dense without overwhelming the default read.',
+    grid: 'Compose dense technical sections while keeping each block commentable.',
+    comparison: 'Contrast alternatives and trade-offs explicitly.',
+    timeline: 'Show rollout, migration, or review sequence.',
+    quote: 'Create a blog-style pull quote or principle that anchors the narrative.',
+  };
+  if (surface === 'documentation' && blockType === 'quote') return 'Use a pull quote to create blog-style rhythm and emphasis.';
+  if (surface === 'proposal' && blockType === 'decision-card') return 'Make the recommendation concrete and reviewable.';
+  return hints[blockType] || 'Recommended block for this surface.';
 }

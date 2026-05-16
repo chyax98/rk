@@ -46,9 +46,10 @@ renderkit aliases --json
 renderkit errors --json
 renderkit design resources --json
 renderkit design resource md2html --json
+renderkit design recommend --surface documentation --json
 ```
 
-Use `renderkit recipes show <surface>` to choose block structure and anti-patterns. Use `renderkit design resources` to see the prioritized local design assets that informed RenderKit; do not copy external runtimes directly into `.rk.md`.
+Use `renderkit recipes show <surface>` to choose block structure and anti-patterns. Use `renderkit design recommend --surface <surface>` to get a compact, deterministic authoring bundle: theme, blocks, relevant design resources, rules, and validation commands. Use `renderkit design resources` to see the full prioritized local design assets that informed RenderKit; do not copy external runtimes directly into `.rk.md`.
 
 After review, pull comments for the Agent loop:
 

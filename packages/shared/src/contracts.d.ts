@@ -153,3 +153,46 @@ export function resolveBlockAlias(name: string, attrs?: Record<string, string>):
 export function validateRenderKitModel(model: unknown): ContractIssue[];
 export function validateBlock(block: unknown, path?: string, issues?: ContractIssue[]): ContractIssue[];
 export function validateTextQuoteSelector(selector: unknown): ContractIssue[];
+
+export interface Recipe {
+  label: string;
+  description: string;
+  recommendedTheme: ThemeName;
+  recommendedBlocks: BlockType[];
+  structure: string[];
+  antiPatterns: string[];
+}
+
+export interface DesignRecommendation {
+  surface: SurfaceName;
+  theme: ThemeName;
+  blocks: BlockType[];
+  structure: string[];
+  antiPatterns: string[];
+  recipe: Recipe;
+  designResources: Array<{
+    id: string;
+    priority: string;
+    primaryValue: string;
+    integrationStatus: string;
+    recommendedUse: readonly string[];
+    risks: readonly string[];
+  }>;
+  suggestedFrontmatter: {
+    title: string;
+    theme: ThemeName;
+    surface: SurfaceName;
+  };
+  suggestedBlockOrder: Array<{
+    blockType: BlockType;
+    alias?: string;
+    purpose: string;
+  }>;
+  authoringRules: string[];
+  validation: string[];
+}
+
+export const RECIPES: Record<SurfaceName, Recipe>;
+export function getRecipe(surface: string): Recipe | null;
+export function listRecipeSurfaces(): SurfaceName[];
+export function getDesignRecommendation(surface?: string): DesignRecommendation | null;

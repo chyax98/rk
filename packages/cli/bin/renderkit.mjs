@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseRK } from '@renderkit/dsl';
-import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, BLOCK_ALIASES, ERROR_CODES, getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities } from '@renderkit/shared';
+import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, BLOCK_ALIASES, ERROR_CODES, getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities, getDesignRecommendation } from '@renderkit/shared';
 
 const program = new Command();
 program.name('renderkit').description('Local Agent artifact renderer').version('0.0.1');
@@ -99,6 +99,11 @@ design.command('resource <id>').option('--json', 'json output').action((id, opts
   const resource = getDesignResource(id);
   if (!resource) { output({ ok: false, error: `Unknown design resource: ${id}`, resources: listDesignResources().map(r => r.id) }, opts.json); process.exit(1); }
   output({ ok: true, resource }, opts.json);
+});
+design.command('recommend').requiredOption('--surface <surface>', 'target surface').option('--json', 'json output').action((opts) => {
+  const recommendation = getDesignRecommendation(opts.surface);
+  if (!recommendation) { output({ ok: false, error: `Unknown surface: ${opts.surface}`, surfaces: listRecipeSurfaces() }, opts.json); process.exit(1); }
+  output({ ok: true, recommendation }, opts.json);
 });
 
 const server = program.command('server').description('manage local RenderKit server');
