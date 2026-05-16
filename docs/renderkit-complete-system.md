@@ -45,7 +45,7 @@ Agent 写 .rk.md
 | CLI validate/push/status/feedback/server | 已实现 | `packages/cli/bin/renderkit.mjs` |
 | 本地数据存储 | 已实现：`~/.renderkit/data` | `apps/web/lib/store.mjs` |
 | Web 文档渲染 | 已实现，文档优先 UI | `apps/web/app/a/[id]/ArtifactView.jsx` |
-| 评论/反馈闭环 | 已实现；支持 block comments、selection-aware quote comments、wide-surface supporting pane | `apps/web/app/api/artifacts/[id]/*`、`ArtifactView.jsx` |
+| 评论/反馈闭环 | 已实现；支持 block comments、selection-aware quote comments、persistent quote highlights、resolve/reopen、wide-surface supporting pane | `apps/web/app/api/artifacts/[id]/*`、`ArtifactView.jsx` |
 | block renderer 包 | 已拆出 | `packages/blocks/src/*` |
 | design token/theme/surface | 已实现 | `packages/design/src/*` |
 | 默认白色文档主题 | 已实现：`paper-light` | `packages/dsl/src/index.mjs`、`packages/design/src/themes.css` |
@@ -552,7 +552,7 @@ Copy source location
 
 注意：`Suggest edit as comment` 不会修改正文。它只是打开评论入口，让用户把编辑建议写成 comment。Agent 再通过 CLI feedback 拉取建议并修改 `.rk.md`。
 
-用户也可以选中文本并创建 selection-aware comment。RenderKit 会保存类似 W3C `TextQuoteSelector` 的 `exact`/`prefix`/`suffix` quote anchor，并在 feedback 中返回给 Agent。
+用户也可以选中文本并创建 selection-aware comment。RenderKit 会保存类似 W3C `TextQuoteSelector` 的 `exact`/`prefix`/`suffix` quote anchor，并在 feedback 中返回给 Agent。open selector comments 会在支持 Custom Highlight API 的浏览器里高亮对应文本；resolved comments 会从 Agent feedback 中移除。
 
 这是核心产品边界：**Web UI 不强行处理正文。**
 
@@ -843,7 +843,7 @@ pnpm verify:smoke
 当前结果：
 
 ```text
-Results: 21 passed, 0 failed
+Results: 24 passed, 0 failed
 ALL GOOD
 ```
 
@@ -854,8 +854,9 @@ ALL GOOD
 3. status。
 4. feedback。
 5. Selection comment API stores selector and feedback returns it.
-6. D2 render API 返回 SVG。
-7. PlantUML render API 返回 SVG。
+6. Resolve/reopen lifecycle affects feedback visibility.
+7. D2 render API 返回 SVG。
+8. PlantUML render API 返回 SVG。
 
 ### 13.3 Browser verification
 

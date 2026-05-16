@@ -92,6 +92,29 @@ export async function addComment(id, blockId, text, selector = null) {
   return { ok: true, comment: c };
 }
 
+export async function updateCommentStatus(id, commentId, status) {
+  const allowed = new Set(['open', 'resolved']);
+  if (!allowed.has(status)) return { ok: false, status: 400, error: 'invalid status' };
+  const artifact = await getArtifact(id);
+  if (!artifact) return { ok: false, status: 404, error: 'not found' };
+  const comments = artifact.comments;
+  const c = comments.find(x => x.id === commentId);
+  if (!c) return { ok: false, status: 404, error: 'comment not found' };
+  c.status = status;
+  if (status === 'resolved') {
+    c.resolvedAtRevision = artifact.meta.currentRevision;
+    c.resolvedBy = 'human';
+    c.resolvedAt = now();
+  } else {
+    delete c.resolvedAtRevision;
+    delete c.resolvedBy;
+    delete c.resolvedAt;
+    c.reopenedAt = now();
+  }
+  await writeComments(id, comments);
+  return { ok: true, comment: c };
+}
+
 export async function getFeedback(id) {
   const artifact = await getArtifact(id);
   if (!artifact) return null;

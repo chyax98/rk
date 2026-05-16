@@ -421,3 +421,36 @@ button, textarea { font: inherit; }
     z-index: var(--rk-z-overlay);
   }
 }
+
+/* RenderKit 1.0 product pass 4: persistent quote highlights and comment lifecycle. */
+.rk-comment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  margin-top: var(--rk-space-2);
+}
+.rk-comment-actions button {
+  border: var(--rk-border-width) solid var(--rk-border);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text-secondary);
+  padding: 2px var(--rk-space-2);
+  cursor: pointer;
+  font-size: var(--rk-text-xs);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-comment-actions button:hover {
+  border-color: var(--rk-border-hover);
+  color: var(--rk-text);
+  background: var(--rk-accent-subtle);
+}
+.rk-comment-card[data-status="resolved"] {
+  opacity: .68;
+}
+.rk-comment-card[data-status="resolved"] .rk-comment-quote,
+.rk-comment-card[data-status="resolved"] p {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--rk-border-hover);
+}

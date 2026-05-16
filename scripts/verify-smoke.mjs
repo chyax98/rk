@@ -93,6 +93,24 @@ const feedback2 = run(`${CLI} feedback ${FILE} --json`);
 let feedback2Parsed;
 try { feedback2Parsed = JSON.parse(feedback2.stdout); } catch { feedback2Parsed = null; }
 assert("feedback includes selector comment", (feedback2Parsed?.openComments || []).some(c => c.id === commentJson?.comment?.id && c.selector?.exact === "RenderKit"));
+const resolveRes = await fetch(`${srvParsed.endpoint}/api/artifacts/${pushParsed.artifactId}/comments/${commentJson.comment.id}`, {
+  method: "PATCH",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ status: "resolved" })
+});
+const resolveJson = await resolveRes.json();
+assert("selection comment resolve ok=true", resolveJson?.ok === true && resolveJson?.comment?.status === "resolved", resolveJson?.error || "");
+const feedbackResolved = run(`${CLI} feedback ${FILE} --json`);
+let feedbackResolvedParsed;
+try { feedbackResolvedParsed = JSON.parse(feedbackResolved.stdout); } catch { feedbackResolvedParsed = null; }
+assert("resolved selector comment leaves feedback", !(feedbackResolvedParsed?.openComments || []).some(c => c.id === commentJson?.comment?.id));
+const reopenRes = await fetch(`${srvParsed.endpoint}/api/artifacts/${pushParsed.artifactId}/comments/${commentJson.comment.id}`, {
+  method: "PATCH",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ status: "open" })
+});
+const reopenJson = await reopenRes.json();
+assert("selection comment reopen ok=true", reopenJson?.ok === true && reopenJson?.comment?.status === "open", reopenJson?.error || "");
 
 // ── Diagram render API ──
 console.log("\n== Diagram render API ==");
