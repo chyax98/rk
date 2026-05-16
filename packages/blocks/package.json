@@ -7,9 +7,9 @@
     ".": "./src/index.jsx"
   },
   "peerDependencies": {
-    "react": ">=18",
+    "echarts": ">=5",
     "mermaid": ">=10",
-    "echarts": ">=5"
+    "react": ">=18"
   },
   "peerDependenciesMeta": {
     "mermaid": {
@@ -18,5 +18,8 @@
     "echarts": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1"
   }
 }

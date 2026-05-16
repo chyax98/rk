@@ -134,6 +134,9 @@ for (const type of ["summary", "callout", "decision-card", "diagram", "table", "
 const productDiagram = (productParsed?.model?.blocks || []).find(b => b.id === "rollout-flow");
 assert("product system diagram shorthand infers mermaid", productDiagram?.props?.engine === "mermaid");
 assert("product system diagram shorthand has body", (productDiagram?.props?.code || "").includes("flowchart LR"));
+const productChart = (productParsed?.model?.blocks || []).find(b => b.id === "latency-trend");
+assert("product system chart shorthand supports echarts-line", productChart?.props?.engine === "echarts-line");
+assert("product system chart shorthand has csv-like data", (productChart?.props?.code || "").includes("window,p50,p95"));
 
 // ── Section 6: Web build ──
 console.log("\n== Web build ==");

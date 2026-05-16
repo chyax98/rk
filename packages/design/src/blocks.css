@@ -838,3 +838,73 @@
   color: var(--rk-muted);
   font-size: var(--rk-text-sm);
 }
+
+/* RenderKit 1.0 product pass 2: mature technical code/chart presentation. */
+.rk-code-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-3);
+  min-width: 0;
+}
+.rk-code-copy {
+  border: var(--rk-border-width) solid var(--rk-border);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text-secondary);
+  padding: var(--rk-space-1) var(--rk-space-3);
+  cursor: pointer;
+  font-size: var(--rk-text-xs);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-code-copy:hover {
+  border-color: var(--rk-border-hover);
+  color: var(--rk-text);
+  background: var(--rk-accent-subtle);
+}
+.rk-block-code .hljs {
+  display: block;
+  color: var(--rk-code-text);
+}
+.rk-block-code .hljs-keyword,
+.rk-block-code .hljs-selector-tag,
+.rk-block-code .hljs-literal,
+.rk-block-code .hljs-section,
+.rk-block-code .hljs-link { color: #7c3aed; }
+.rk-block-code .hljs-string,
+.rk-block-code .hljs-title,
+.rk-block-code .hljs-name,
+.rk-block-code .hljs-type,
+.rk-block-code .hljs-attribute,
+.rk-block-code .hljs-symbol,
+.rk-block-code .hljs-bullet,
+.rk-block-code .hljs-addition { color: #047857; }
+.rk-block-code .hljs-comment,
+.rk-block-code .hljs-quote,
+.rk-block-code .hljs-deletion,
+.rk-block-code .hljs-meta { color: var(--rk-muted); font-style: italic; }
+.rk-block-code .hljs-number,
+.rk-block-code .hljs-regexp,
+.rk-block-code .hljs-variable,
+.rk-block-code .hljs-template-variable { color: #b45309; }
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-keyword,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-selector-tag,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-literal,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-section,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-link { color: #c4b5fd; }
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-string,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-title,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-name,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-type,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-attribute,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-symbol,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-bullet,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-addition { color: #86efac; }
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-number,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-regexp,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-variable,
+[data-rk-theme="dark-pro"] .rk-block-code .hljs-template-variable { color: #fcd34d; }
+.rk-echarts[data-variant="line"] .rk-echarts-canvas,
+.rk-echarts[data-variant="bar"] .rk-echarts-canvas,
+.rk-echarts[data-variant="pie"] .rk-echarts-canvas {
+  min-height: clamp(320px, 30vw, 460px);
+}

@@ -50,6 +50,15 @@ flowchart LR
 | Rollback | Config-only tested | Safe to proceed | Release |
 :::
 
+:::fig{id="latency-trend" engine="echarts-line" caption="RND latency trend" width="wide"}
+window,p50,p95
+09:00,82,138
+10:00,79,142
+11:00,77,136
+12:00,80,144
+13:00,76,132
+:::
+
 :::src{id="rollback-command" language="bash" title="Rollback command"}
 ```bash
 renderkit validate examples/capabilities/product-system.rk.md --json

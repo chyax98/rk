@@ -198,7 +198,7 @@ function compileDiagram(node, attrs, source, errors, file) {
   const code = findCode(node);
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const engine = String(attrs.engine || code?.lang || 'mermaid').toLowerCase();
-  const supported = new Set(['mermaid', 'svg', 'plantuml', 'd2', 'echarts', 'infographic']);
+  const supported = new Set(['mermaid', 'svg', 'plantuml', 'd2', 'echarts', 'echarts-bar', 'echarts-line', 'echarts-pie', 'infographic']);
   if (!supported.has(engine)) errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Unsupported diagram engine: ${engine}`, file, pos(node)));
   const diagramCode = code?.value || stripFenceLikeBody(body);
   if (!diagramCode) errors.push(diag('RK_DIAGRAM_CODE_REQUIRED', 'diagram requires a fenced code block or inline diagram body', file, pos(node)));

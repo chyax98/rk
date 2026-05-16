@@ -8,7 +8,7 @@ export default function DiagramBlock({ engine = 'mermaid', code = '', caption })
   const normalized = String(engine || 'mermaid').toLowerCase();
   if (normalized === 'mermaid') return <MermaidDiagram code={code} caption={caption} />;
   if (normalized === 'svg') return <SvgDiagram code={code} caption={caption} />;
-  if (normalized === 'echarts') return <EChartsBlock code={code} caption={caption} />;
+  if (normalized === 'echarts' || normalized.startsWith('echarts-')) return <EChartsBlock code={code} caption={caption} variant={normalized.replace(/^echarts-?/, '') || 'auto'} />;
   if (normalized === 'infographic') return <InfographicBlock code={code} caption={caption} />;
   if (SERVER_RENDERED_ENGINES.has(normalized)) return <ServerDiagram engine={normalized} code={code} caption={caption} />;
   return <div className="rk-error-box">Unsupported diagram engine: {engine}</div>;

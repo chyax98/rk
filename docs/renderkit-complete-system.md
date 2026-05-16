@@ -55,7 +55,7 @@ Agent 写 .rk.md
 | subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
-| ECharts | 已实现浏览器渲染 | `EChartsBlock.jsx` |
+| ECharts | 已实现浏览器渲染，支持 raw JSON 和 `echarts-bar`/`echarts-line`/`echarts-pie` CSV-like shorthand | `EChartsBlock.jsx` |
 | infographic | 已实现轻量指标卡 | `DiagramBlock.jsx` |
 | D2 | 已实现本地 WASM server render | `apps/web/app/api/render/diagram/route.js` |
 | PlantUML | 已实现本地 PlantUML jar server render | `apps/web/app/api/render/diagram/route.js` |
@@ -341,7 +341,8 @@ renderkit push plan.rk.md --open --json
 |---|---|
 | `mermaid` | 浏览器内 Mermaid 渲染；可由 `fig` shorthand 默认推断 |
 | `svg` | 安全清洗后 inline SVG |
-| `echarts` | 浏览器内 ECharts 渲染 |
+| `echarts` | 浏览器内 ECharts 渲染，接受 raw option JSON |
+| `echarts-bar` / `echarts-line` / `echarts-pie` | 浏览器内 ECharts 渲染，接受 CSV-like data |
 | `infographic` | RenderKit 内置轻量指标卡渲染 |
 | `d2` | 本地 server 通过 `@terrastruct/d2` WASM 渲染 SVG |
 | `plantuml` | 本地 server 通过 `plantuml.jar` + Java 渲染 SVG |
@@ -811,7 +812,7 @@ pnpm verify
 当前结果：
 
 ```text
-Results: 161 passed, 0 failed
+Results: 163 passed, 0 failed
 ALL GOOD
 ```
 

@@ -157,11 +157,22 @@ flowchart LR
 :::
 ```
 
-Supported engines: `mermaid`, `svg`, `echarts`, `infographic`, `plantuml`, `d2`.
+Supported engines: `mermaid`, `svg`, `echarts`, `echarts-bar`, `echarts-line`, `echarts-pie`, `infographic`, `plantuml`, `d2`.
 
 - `engine` is optional when the fenced code language is present; RenderKit infers it.
 - Without a fence/body engine, RenderKit defaults to Mermaid.
-- `mermaid`, `svg`, `echarts`, and `infographic` render locally in the browser.
+- `echarts` accepts raw ECharts JSON option.
+- `echarts-bar`, `echarts-line`, and `echarts-pie` accept CSV-like data so the Agent does not need to write large option JSON:
+
+```md
+:::fig{id="latency" engine="echarts-line" caption="Latency trend"}
+window,p50,p95
+09:00,82,138
+10:00,79,142
+:::
+```
+
+- `mermaid`, `svg`, `echarts*`, and `infographic` render locally in the browser.
 - `plantuml` and `d2` render through the local RenderKit server (`/api/render/diagram`). PlantUML requires local Java and may require Graphviz for some diagram types; D2 uses local WASM.
 
 #### table
@@ -310,7 +321,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 | `RK_DECISION_YAML_INVALID` | Fix YAML syntax in decision-card body |
 | `RK_PROP_REQUIRED` | Add required fields (e.g. question, chosen for decision-card) |
 | `RK_DIAGRAM_CODE_REQUIRED` | Add a fenced code block or inline diagram body inside diagram |
-| `RK_UNSUPPORTED_DIAGRAM_ENGINE` | Use one of: mermaid, svg, echarts, infographic, plantuml, d2 |
+| `RK_UNSUPPORTED_DIAGRAM_ENGINE` | Use one of: mermaid, svg, echarts, echarts-bar, echarts-line, echarts-pie, infographic, plantuml, d2 |
 | `RK_CODE_BODY_REQUIRED` | Add a fenced code block inside code directive |
 | `RK_TABLE_BODY_REQUIRED` | Add a GitHub-flavored Markdown table inside table directive |
 | `RK_THEME_UNKNOWN` | (warning) Use a supported theme: paper-light, editorial-kami, dark-pro, amber-terminal. Falls back to paper-light. |

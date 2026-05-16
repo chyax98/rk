@@ -46,6 +46,9 @@ importers:
       echarts:
         specifier: '>=5'
         version: 6.0.0
+      highlight.js:
+        specifier: ^11.11.1
+        version: 11.11.1
       mermaid:
         specifier: '>=10'
         version: 11.15.0
@@ -716,6 +719,10 @@ packages:
 
   hachure-fill@0.5.2:
     resolution: {integrity: sha512-3GKBOn+m2LX9iq+JC1064cSFprJY4jL1jCXTcpnfER5HYE2l/4EfWSGzkPa/ZDBmYI0ZOEj5VHV/eKnPGkHuOg==}
+
+  highlight.js@11.11.1:
+    resolution: {integrity: sha512-Xwwo44whKBVCYoliBQwaPvtd/2tYFkRQtXDWj1nackaV2JPXx3L0+Jvd8/qCJ2p+ML0/XVkJ2q+Mr+UVdpJK5w==}
+    engines: {node: '>=12.0.0'}
 
   human-signals@1.1.1:
     resolution: {integrity: sha512-SEQu7vl8KjNL2eoGBLF3+wAjpsNfA9XMlXAYj/3EdaNfAlxKthD1xjEQfGOUhllCGGJVNY34bRr6lPINhNjyZw==}
@@ -1729,6 +1736,8 @@ snapshots:
       pump: 3.0.4
 
   hachure-fill@0.5.2: {}
+
+  highlight.js@11.11.1: {}
 
   human-signals@1.1.1: {}
 
