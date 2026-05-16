@@ -1,0 +1,17 @@
+{
+  "name": "@renderkit/cli",
+  "version": "0.0.2-alpha.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "renderkit": "./bin/renderkit.mjs"
+  },
+  "scripts": {
+    "start": "node ./bin/renderkit.mjs",
+    "build": "node -e \"console.log('cli: no build yet')\""
+  },
+  "dependencies": {
+    "@renderkit/dsl": "workspace:*",
+    "commander": "latest"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@renderkit/web",
+  "version": "0.0.2-alpha.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3737",
+    "start": "next start -p 3737",
+    "build": "next build"
+  },
+  "dependencies": {
+    "@renderkit/dsl": "workspace:*",
+    "@renderkit/design": "workspace:*",
+    "mermaid": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}

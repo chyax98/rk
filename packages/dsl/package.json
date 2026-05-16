@@ -1,0 +1,17 @@
+{
+  "name": "@renderkit/dsl",
+  "version": "0.0.2-alpha.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "js-yaml": "latest",
+    "remark-directive": "latest",
+    "remark-frontmatter": "latest",
+    "remark-gfm": "latest",
+    "remark-parse": "latest",
+    "unified": "latest"
+  }
+}

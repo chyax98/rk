@@ -1,0 +1,14 @@
+{
+  "name": "renderkit-workspace",
+  "version": "0.0.2-alpha.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @renderkit/web dev",
+    "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
+    "renderkit": "node packages/cli/bin/renderkit.mjs",
+
+    "push:example": "pnpm renderkit push examples/plan.rk.md --open"
+  },
+  "devDependencies": {}
+}
