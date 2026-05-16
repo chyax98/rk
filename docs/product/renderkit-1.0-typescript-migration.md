@@ -1,6 +1,6 @@
 # RenderKit 1.0 TypeScript Migration Plan
 
-Status: planned, late-stage architecture hardening  
+Status: Stage 1 implemented; later stages planned  
 Date: 2026-05-17
 
 ## Decision
@@ -27,7 +27,7 @@ TypeScript should be adopted before 1.0 architecture freeze, but it should not i
 
 ## Proposed stages
 
-### Stage 1 — Shared contracts
+### Stage 1 — Shared contracts（已完成）
 
 Add a shared type package surface:
 
@@ -53,13 +53,30 @@ TextQuoteSelector
 FeedbackPayload
 ```
 
-Success gate:
+Implemented files:
+
+```text
+packages/shared/src/contracts.d.ts
+packages/shared/src/contracts.mjs
+scripts/verify-contracts.mjs
+```
+
+Current success gate:
 
 ```bash
-pnpm typecheck
+pnpm verify:contracts
 pnpm verify
 pnpm verify:sqlite
 ```
+
+Latest evidence:
+
+```text
+pnpm verify:contracts -> Results: 52 passed, 0 failed
+pnpm verify           -> Results: 213 passed, 0 failed
+```
+
+`pnpm typecheck` remains a later gate after the first `.ts/.tsx` source module exists.
 
 ### Stage 2 — DSL type boundary
 
@@ -138,4 +155,4 @@ Current product flywheel remains higher priority:
 4. Diagram visual language and design assets.
 5. Browser verification with `pw`.
 
-TypeScript is queued as a late-stage 1.0 hardening task and tracked as todo `#36`.
+Stage 1 shared contracts are now implemented. Remaining TypeScript work is Stage 2+ migration of DSL, Store/API, renderer, and high-state Web UI components.

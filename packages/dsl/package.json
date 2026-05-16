@@ -7,6 +7,7 @@
     ".": "./src/index.mjs"
   },
   "dependencies": {
+    "@renderkit/shared": "workspace:*",
     "js-yaml": "latest",
     "remark-directive": "latest",
     "remark-frontmatter": "latest",

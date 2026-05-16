@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useEffect, useState, useCallback } from 'react';
 import { BlockFrame } from '@renderkit/blocks';
+import { isWideReviewSurface } from '@renderkit/shared/contracts';
 
 export default function ArtifactView({ artifactId, revision, comments: initialComments }) {
   const [comments, setComments] = useState(initialComments || []);
@@ -277,9 +278,6 @@ function blockLabel(block) {
   return block.id;
 }
 
-function isWideReviewSurface(surface) {
-  return ['engineering-plan', 'review-report', 'data-report-lite'].includes(surface);
-}
 
 function clearCommentHighlights() {
   try { CSS.highlights?.delete?.('rk-comment-quotes'); } catch {}

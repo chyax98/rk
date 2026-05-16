@@ -51,17 +51,18 @@
 | CLI/Agent feedback | `renderkit validate/push/status/feedback`, authoring skill | Good | Skill should absorb latest design directives |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
-| TypeScript | `docs/product/renderkit-1.0-typescript-migration.md`, todo `#36` | Planned | Implement late-stage contracts |
+| TypeScript / shared contracts | `packages/shared/src/contracts.d.ts`, `packages/shared/src/contracts.mjs`, `scripts/verify-contracts.mjs`, `docs/product/renderkit-1.0-typescript-migration.md` | Stage 1 done | Stage 2+ migration pending |
 
 ## 当前验证证据
 
 Latest known green gates:
 
 ```text
-pnpm verify         -> Results: 212 passed, 0 failed
+pnpm verify         -> Results: 213 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed
+pnpm verify:contracts -> Results: 52 passed, 0 failed
 ```
 
 Recent browser evidence:
@@ -90,7 +91,7 @@ e83a033 document design token source map
 
 当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
-1. **TypeScript contracts** are planned but not implemented.
+1. **TypeScript Stage 2+ migration** 尚未完成：shared contracts 已完成，但 DSL/Store/API/renderer/Web UI 还未迁移到 typed implementation。
 2. **更多外部设计资源的运行时集成**仍未完成：`md2html` / `html-anything` / `ui-ux-pro-max` / `guizang` 的分析已落文档，但仍有部分只停留在研究或 authoring guidance 层。
 3. **Final 1.0 audit** has not been run after all modules land.
 
@@ -102,7 +103,7 @@ e83a033 document design token source map
 
 ## 下一步
 
-1. 处理 TypeScript contracts / shared runtime schema，降低 DSL-Web-CLI 接口漂移风险。
+1. 继续 Stage 2：DSL compiler typed boundary / Store API contract adoption，降低实现层漂移风险。
 2. Verify with:
 
 ```bash

@@ -12,7 +12,8 @@
     "verify": "node scripts/verify.mjs",
     "verify:smoke": "node scripts/verify-smoke.mjs",
     "verify:sqlite": "node scripts/verify-sqlite.mjs",
-    "verify:browser": "node scripts/verify-browser.mjs"
+    "verify:browser": "node scripts/verify-browser.mjs",
+    "verify:contracts": "node scripts/verify-contracts.mjs"
   },
   "devDependencies": {}
 }

@@ -4,21 +4,7 @@ import remarkDirective from 'remark-directive';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
-
-const ALIASES = new Map([
-  ['sum', { name: 'summary' }],
-  ['note', { name: 'callout', attrs: { tone: 'info' } }],
-  ['warn', { name: 'callout', attrs: { tone: 'warning' } }],
-  ['alert', { name: 'callout', attrs: { tone: 'danger' } }],
-  ['ok', { name: 'callout', attrs: { tone: 'success' } }],
-  ['dec', { name: 'decision-card' }],
-  ['fig', { name: 'diagram' }],
-  ['src', { name: 'code' }],
-  ['metric', { name: 'stat' }],
-  ['todo', { name: 'checklist' }],
-  ['compare', { name: 'comparison' }],
-  ['roadmap', { name: 'timeline' }],
-]);
+import { DEFAULT_THEME, THEME_NAMES, SURFACE_NAMES, validateRenderKitModel, resolveBlockAlias, normalizeBlockWidth, isKnownDiagramEngine } from '@renderkit/shared/contracts';
 
 // Single source of truth for block compilation. To add a block:
 // 1. Add a compiler entry here.
@@ -42,9 +28,8 @@ const BLOCK_COMPILERS = {
   'timeline': (node, attrs, ctx) => compileTimeline(node, attrs, ctx.source, ctx.errors, ctx.file),
 };
 const KNOWN = new Set([...Object.keys(BLOCK_COMPILERS), 'tab']);
-const DEFAULT_THEME = 'paper-light';
-const VALID_THEMES = new Set(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
-const VALID_SURFACES = new Set(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
+const VALID_THEMES = new Set(THEME_NAMES);
+const VALID_SURFACES = new Set(SURFACE_NAMES);
 const ID_FORMAT = /^[a-zA-Z0-9_-]+$/;
 
 export function parseRK(source, file = '<source>') {
@@ -148,21 +133,20 @@ export function parseRK(source, file = '<source>') {
     surface: effectiveSurface,
     blocks
   };
+  const contractIssues = validateRenderKitModel(model);
+  for (const issue of contractIssues) {
+    errors.push(diag('RK_MODEL_CONTRACT_INVALID', `${issue.path}: ${issue.message}`, file));
+  }
   return { ok: errors.length === 0, model, errors, warnings };
 }
 
 
 function resolveDirective(name, attrs) {
-  const alias = ALIASES.get(name);
-  if (!alias) return { name, attrs };
-  return { name: alias.name, attrs: { ...(alias.attrs || {}), ...attrs } };
+  return resolveBlockAlias(name, attrs);
 }
 
 function normalizeWidth(value) {
-  if (!value) return 'full';
-  const v = String(value).trim().toLowerCase();
-  if (['full', 'wide', 'half', 'third', 'two-third'].includes(v)) return v;
-  return 'full';
+  return normalizeBlockWidth(value);
 }
 
 function compileCallout(node, attrs, source) {
@@ -219,8 +203,7 @@ function compileDiagram(node, attrs, source, errors, file) {
   const code = findCode(node);
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const engine = String(attrs.engine || code?.lang || 'mermaid').toLowerCase();
-  const supported = new Set(['mermaid', 'svg', 'plantuml', 'd2', 'echarts', 'echarts-bar', 'echarts-line', 'echarts-pie', 'infographic']);
-  if (!supported.has(engine)) errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Unsupported diagram engine: ${engine}`, file, pos(node)));
+  if (!isKnownDiagramEngine(engine)) errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Unsupported diagram engine: ${engine}`, file, pos(node)));
   const diagramCode = code?.value || stripFenceLikeBody(body);
   if (!diagramCode) errors.push(diag('RK_DIAGRAM_CODE_REQUIRED', 'diagram requires a fenced code block or inline diagram body', file, pos(node)));
   return {

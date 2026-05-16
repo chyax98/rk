@@ -181,7 +181,12 @@ assert("timeline has items", (tlBlock?.props?.items?.length || 0) >= 3, `got ${t
 const tlStatuses = new Set((tlBlock?.props?.items || []).map(i => i.status));
 assert("timeline items have varied statuses", tlStatuses.size >= 2, `got ${[...tlStatuses].join(",")}`);
 
-// ── Section 7: Web build ──
+// ── Section 7: Shared contracts ──
+console.log("\n== Shared contracts ==");
+const contractsCase = run("node scripts/verify-contracts.mjs");
+assert("shared contracts drift gate passes", contractsCase.code === 0, contractsCase.stdout || contractsCase.stderr);
+
+// ── Section 8: Web build ──
 console.log("\n== Web build ==");
 try {
   execSync("pnpm --filter @renderkit/web build", { cwd: root, stdio: "inherit", encoding: "utf8" });

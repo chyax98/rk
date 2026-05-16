@@ -12,6 +12,7 @@
     "@renderkit/blocks": "workspace:*",
     "@renderkit/design": "workspace:*",
     "@renderkit/dsl": "workspace:*",
+    "@renderkit/shared": "workspace:*",
     "@terrastruct/d2": "^0.1.33",
     "echarts": "latest",
     "mermaid": "latest",

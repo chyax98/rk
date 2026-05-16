@@ -19,6 +19,9 @@ importers:
       '@renderkit/dsl':
         specifier: workspace:*
         version: link:../../packages/dsl
+      '@renderkit/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@terrastruct/d2':
         specifier: ^0.1.33
         version: 0.1.33
@@ -72,6 +75,9 @@ importers:
 
   packages/dsl:
     dependencies:
+      '@renderkit/shared':
+        specifier: workspace:*
+        version: link:../shared
       js-yaml:
         specifier: latest
         version: 4.1.1
