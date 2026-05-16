@@ -1,6 +1,7 @@
 /* ─── Block base styles ─── */
 
 .rk-block {
+  overflow-wrap: break-word;
   background: var(--rk-surface);
   border: var(--rk-border-width) solid var(--rk-border);
   border-radius: var(--rk-radius-lg);
@@ -13,7 +14,7 @@
 
 .rk-block:hover { border-color: var(--rk-border-hover); }
 .rk-block:focus-within { border-color: var(--rk-border-hover); }
-.rk-block:focus-visible { outline: 2px solid var(--rk-accent); outline-offset: 2px; }
+.rk-block:focus-visible { outline: var(--rk-focus-ring-width) solid var(--rk-accent); outline-offset: var(--rk-focus-ring-offset); }
 
 /* ── Selected block ── */
 .rk-block[data-rk-selected] {
@@ -100,18 +101,21 @@
   right: auto;
 }
 .rk-block-heading h1 {
+  text-wrap: balance;
   font: var(--rk-type-h1);
   color: var(--rk-text);
   letter-spacing: var(--rk-tracking-tight);
   margin: var(--rk-space-6) 0 var(--rk-space-3);
 }
 .rk-block-heading h2 {
+  text-wrap: balance;
   font: var(--rk-type-h2);
   color: var(--rk-text);
   letter-spacing: var(--rk-tracking-tight);
   margin: var(--rk-space-5) 0 var(--rk-space-2);
 }
 .rk-block-heading h3 {
+  text-wrap: balance;
   font: var(--rk-type-h3);
   color: var(--rk-text);
   margin: var(--rk-space-4) 0 var(--rk-space-2);
@@ -718,6 +722,7 @@
 }
 .rk-block-heading h1 { margin-top: clamp(28px, 5vw, 56px); }
 .rk-block-paragraph {
+  text-wrap: pretty;
   max-width: 78ch;
   color: var(--rk-text-secondary);
 }
@@ -763,6 +768,8 @@
 }
 .rk-block-code pre,
 .rk-diagram-source pre {
+  overflow-wrap: normal;
+  word-break: normal;
   background:
     linear-gradient(90deg, rgba(125,125,125,.06) 1px, transparent 1px) 0 0 / 3ch 100%,
     var(--rk-code-bg);

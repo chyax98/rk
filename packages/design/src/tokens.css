@@ -100,6 +100,16 @@
   --rk-icon-md: 18px;
   --rk-icon-lg: 24px;
 
+  /* ── Interaction / accessibility ── */
+  --rk-focus-ring-width: 2px;
+  --rk-focus-ring-offset: 2px;
+  --rk-touch-target-min: 44px;
+
+  /* ── Print ── */
+  --rk-print-text: #1a1a1a;
+  --rk-print-border: #999;
+  --rk-print-link-color: #0000ee;
+
   /* ── Border ── */
   --rk-border-width: 1px;
   --rk-border-width-strong: 2px;

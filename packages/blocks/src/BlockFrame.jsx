@@ -13,6 +13,7 @@ export default function BlockFrame({
   onOpenMenu,
   selected = false,
   commentCount = 0,
+  commentStatus = null,
   reviewMode = false,
 }) {
   const cls = `rk-block rk-block-${block.type}${selected ? ' rk-selected' : ''}`;
@@ -25,7 +26,7 @@ export default function BlockFrame({
       data-block-type={block.type}
       data-rk-width={width}
       {...(selected ? { 'data-rk-selected': '' } : {})}
-      {...(commentCount > 0 ? { 'data-rk-has-comments': '', 'data-comment-count': commentCount } : {})}
+      {...(commentCount > 0 ? { 'data-rk-has-comments': '', 'data-comment-count': commentCount, 'data-rk-comment-status': commentStatus || '' } : {})}
       {...(block.props?.tone ? { 'data-tone': block.props.tone } : {})}
       tabIndex={reviewMode ? 0 : undefined}
       onClick={reviewMode ? onSelect : undefined}

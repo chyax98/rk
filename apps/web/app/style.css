@@ -11,8 +11,33 @@ body {
   line-height: var(--rk-lh);
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--rk-accent); }
+a {
+  color: var(--rk-accent);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+a:hover { text-decoration-thickness: 2px; }
 button, textarea { font: inherit; }
+:focus-visible {
+  outline: var(--rk-focus-ring-width) solid var(--rk-accent);
+  outline-offset: var(--rk-focus-ring-offset);
+}
+:focus:not(:focus-visible) { outline: none; }
+.rk-skip-link {
+  position: fixed;
+  top: var(--rk-space-3);
+  left: var(--rk-space-3);
+  z-index: var(--rk-z-toast);
+  transform: translateY(calc(-100% - var(--rk-space-6)));
+  border: var(--rk-border-width) solid var(--rk-border-hover);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  box-shadow: var(--rk-shadow-md);
+  transition: transform var(--rk-ease);
+}
+.rk-skip-link:focus { transform: translateY(0); }
 
 .rk-home {
   max-width: 920px;
@@ -67,8 +92,8 @@ button, textarea { font: inherit; }
   background: var(--rk-surface-solid);
   color: var(--rk-text-secondary);
   border-radius: var(--rk-radius-full);
-  min-width: 32px;
-  min-height: 32px;
+  min-width: var(--rk-touch-target-min);
+  min-height: var(--rk-touch-target-min);
   cursor: pointer;
 }
 .rk-floating-tools button:hover,
@@ -337,14 +362,73 @@ button, textarea { font: inherit; }
 }
 
 @media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  html,
+  body {
+    background: #fff !important;
+    color: var(--rk-print-text) !important;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
   .rk-floating-tools,
   .rk-outline-drawer,
   .rk-review-drawer,
+  .rk-review-pane,
+  .rk-selection-menu,
   .rk-context-menu,
-  .rk-block-tools { display: none !important; }
-  .rk-page { padding: 0; background: #fff; }
-  .rk-document { max-width: none; margin: 0; }
-  .rk-block { box-shadow: none !important; break-inside: avoid; }
+  .rk-block-tools,
+  .rk-comment-actions,
+  .rk-more-btn,
+  .rk-code-copy,
+  .rk-skip-link { display: none !important; }
+  .rk-page,
+  .rk-page-with-pane {
+    display: block !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .rk-document { max-width: none !important; margin: 0 !important; }
+  .rk-block {
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-color: var(--rk-print-border) !important;
+  }
+  .rk-block-heading,
+  .rk-block-paragraph {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+  .rk-block-heading h1 { font-size: 22pt; }
+  .rk-block-heading h2 { font-size: 16pt; }
+  .rk-block-heading h3 { font-size: 13pt; }
+  .rk-block-heading h1,
+  .rk-block-heading h2,
+  .rk-block-heading h3 { break-after: avoid; page-break-after: avoid; }
+  .rk-block-paragraph,
+  p { orphans: 3; widows: 3; }
+  .rk-block-code pre,
+  .rk-diagram-source pre,
+  .rk-source-excerpt {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    background: #f6f6f6 !important;
+    color: #111 !important;
+    font-size: 8.5pt !important;
+  }
+  .rk-block-summary,
+  .rk-block-callout,
+  .rk-block-decision-card {
+    background: #fff !important;
+    border-left-width: 3px !important;
+  }
+  .rk-table-scroll { overflow: visible !important; }
+  .rk-table-block table { font-size: 9pt; }
+  a[href]::after {
+    content: " (" attr(href) ")";
+    color: var(--rk-print-link-color);
+    font-size: 8pt;
+  }
 }
 
 /* RenderKit 1.0 product pass 3: supporting-pane comments. */
@@ -478,4 +562,108 @@ button, textarea { font: inherit; }
 }
 .rk-page:not(.rk-review-mode) .rk-floating-tools:hover {
   opacity: 1;
+}
+
+/* Flywheel: 阅读优先的评论筛选与辅助可访问性。 */
+.rk-comment-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rk-space-2);
+  padding: 0 0 var(--rk-space-3);
+  margin-bottom: var(--rk-space-3);
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+}
+.rk-comment-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-1);
+  min-height: 32px;
+  border: var(--rk-border-width) solid var(--rk-border);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text-secondary);
+  padding: 2px var(--rk-space-3);
+  cursor: pointer;
+  font-size: var(--rk-text-xs);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-comment-filters button:hover {
+  border-color: var(--rk-border-hover);
+  color: var(--rk-text);
+  background: var(--rk-accent-subtle);
+}
+.rk-comment-filters button.is-active {
+  border-color: transparent;
+  background: var(--rk-btn-primary);
+  color: var(--rk-btn-primary-text);
+}
+.rk-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-badge-bg);
+  color: var(--rk-badge-text);
+  font-size: 10px;
+  line-height: 1;
+}
+.rk-comment-filters button.is-active .rk-filter-count {
+  background: rgba(255,255,255,.25);
+  color: inherit;
+}
+.rk-agent-metadata summary {
+  cursor: pointer;
+  color: var(--rk-text-secondary);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-agent-metadata[open] summary { margin-bottom: var(--rk-space-3); }
+.rk-comment-card[data-status="orphaned"] {
+  opacity: .72;
+  border-left: 3px solid var(--rk-tone-warning-border);
+  background: var(--rk-tone-warning-bg);
+}
+.rk-page.rk-review-mode .rk-block[data-rk-has-comments]::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--rk-accent);
+  opacity: .35;
+}
+.rk-page.rk-review-mode .rk-block[data-rk-has-comments][data-rk-comment-status="resolved"]::before {
+  background: var(--rk-muted);
+  opacity: .28;
+}
+.rk-page.rk-review-mode .rk-block[data-rk-has-comments][data-rk-comment-status="orphaned"]::before {
+  background: var(--rk-tone-warning-border);
+  opacity: .55;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (prefers-contrast: more) {
+  .rk-block,
+  .rk-comment-card,
+  .rk-floating-tools,
+  .rk-outline-drawer,
+  .rk-review-drawer,
+  .rk-review-pane {
+    border-width: var(--rk-border-width-strong);
+  }
+  a { text-decoration: underline; }
+  .rk-floating-tools button:focus-visible,
+  .rk-comment-filters button:focus-visible {
+    outline-width: 3px;
+  }
 }
