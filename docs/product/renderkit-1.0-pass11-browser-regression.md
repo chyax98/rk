@@ -64,7 +64,7 @@ pnpm verify:browser
 输出：
 
 ```text
-Results: 36 passed, 0 failed
+Results: 37 passed, 0 failed
 ALL GOOD
 ```
 

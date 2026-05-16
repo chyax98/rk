@@ -47,7 +47,7 @@
 | External resources analyzed | `research/design-assets/renderkit-external-design-resources-analysis.md` | Done | Continue extracting concrete assets incrementally |
 | Integration prioritization | `docs/product/renderkit-1.0-design-resource-integration-plan.md` | Done | Execute remaining P1/P2 integrations |
 | Diagram visual language | `docs/renderkit-diagram-visual-language.md`, fixture, pw screenshot | Done as convention layer | No runtime `tech-graph` engine yet |
-| Browser verification with `pw` | `scripts/verify-browser.mjs`; `pnpm verify:browser -> 36 passed, 0 failed`; multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10/11 evidence | Strong | Add more cases as future blocks land |
+| Browser verification with `pw` | `scripts/verify-browser.mjs`; `pnpm verify:browser -> 37 passed, 0 failed`; multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10/11 evidence | Strong | Add more cases as future blocks land |
 | CLI/Agent feedback | `renderkit validate/push/status/feedback`, authoring skill | Good | Skill should absorb latest design directives |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
@@ -61,7 +61,7 @@ Latest known green gates:
 pnpm verify         -> Results: 212 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
-pnpm verify:browser -> Results: 36 passed, 0 failed
+pnpm verify:browser -> Results: 37 passed, 0 failed
 ```
 
 Recent browser evidence:

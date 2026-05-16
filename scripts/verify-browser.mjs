@@ -7,8 +7,9 @@
  * and page-error checks so the harness can fail deterministically.
  */
 import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,7 @@ const session = `rkbr${Date.now().toString(36).slice(-8)}`;
 let pass = 0;
 let fail = 0;
 let serverProcess = null;
+let tempDir = null;
 
 function logSection(title) { console.log(`\n== ${title} ==`); }
 function assert(label, ok, detail = '') {
@@ -61,6 +63,7 @@ async function healthOk() {
 }
 async function ensureServer() {
   if (await healthOk()) return 'existing';
+  rmSync(resolve(root, 'apps/web/.next/dev'), { recursive: true, force: true });
   serverProcess = spawn('pnpm', ['--filter', '@renderkit/web', 'dev'], {
     cwd: root,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -87,6 +90,33 @@ function textFromGet(stdout) {
   return m ? m[1] : stdout;
 }
 function pw(args, label, options = {}) { return must('pw', args, label, options); }
+function ensureTempDir() {
+  if (!tempDir) tempDir = mkdtempSync(join(tmpdir(), 'rk-verify-browser-'));
+  return tempDir;
+}
+function tempExample(sourcePath, name) {
+  const dest = join(ensureTempDir(), name);
+  writeFileSync(dest, readFileSync(resolve(root, sourcePath), 'utf8'));
+  return dest;
+}
+async function pushArtifact(file, label) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (!(await healthOk())) await ensureServer();
+    const r = run('node', ['packages/cli/bin/renderkit.mjs', 'push', file, '--json'], { timeout: 90_000 });
+    if (r.code === 0) {
+      assert(label, true);
+      return parseJson(r.stdout);
+    }
+    const detail = `${r.stderr}\n${r.stdout}`;
+    if (attempt === 1 && /fetch failed|ECONNREFUSED|ECONNRESET/.test(detail)) {
+      await ensureServer();
+      continue;
+    }
+    assert(label, false, detail);
+    return null;
+  }
+  return null;
+}
 async function postJson(path, body, method = 'POST') {
   const r = await fetch(`${endpoint}${path}`, {
     method,
@@ -109,7 +139,8 @@ async function main() {
   assert(`web server healthy (${serverMode})`, await healthOk());
 
   logSection('Seed artifact and comments');
-  const pushed = parseJson(must('node', ['packages/cli/bin/renderkit.mjs', 'push', 'examples/capabilities/product-system.rk.md', '--json'], 'push product-system artifact').stdout);
+  const productFixture = tempExample('examples/capabilities/product-system.rk.md', 'product-system.rk.md');
+  const pushed = await pushArtifact(productFixture, 'push product-system artifact');
   assert('push returns artifact url', Boolean(pushed?.url && pushed?.artifactId), JSON.stringify(pushed));
   const artifactId = pushed.artifactId;
   const openComment = await postJson(`/api/artifacts/${artifactId}/comments`, {
@@ -146,11 +177,13 @@ async function main() {
   const resolvedCards = countFromGet(pw(['get', '-s', session, '--selector', '.rk-comment-card[data-status="resolved"]', '--fact', 'count'], 'read resolved comment cards').stdout);
   assert('resolved filter shows resolved comment', resolvedCards >= 1, `count=${resolvedCards}`);
   pw(['click', '-s', session, '--text', '待处理'], 'switch back to open comments');
+  pw(['wait', '-s', session, '--selector', '.rk-block[data-rk-comment-status="open"]'], 'wait for open comment side rail block');
   const openRail = countFromGet(pw(['get', '-s', session, '--selector', '.rk-block[data-rk-comment-status="open"]', '--fact', 'count'], 'read open comment side rail blocks').stdout);
   assert('review mode marks blocks with open comment status', openRail >= 1, `count=${openRail}`);
 
   logSection('Diagram visual language page');
-  const diagramPushed = parseJson(must('node', ['packages/cli/bin/renderkit.mjs', 'push', 'examples/capabilities/diagram-visual-language.rk.md', '--json'], 'push diagram visual language artifact').stdout);
+  const diagramFixture = tempExample('examples/capabilities/diagram-visual-language.rk.md', 'diagram-visual-language.rk.md');
+  const diagramPushed = await pushArtifact(diagramFixture, 'push diagram visual language artifact');
   assert('diagram artifact url returned', Boolean(diagramPushed?.url), JSON.stringify(diagramPushed));
   pw(['session', 'recreate', session, '--open', diagramPushed.url], 'open diagram artifact', { timeout: 90_000 });
   pw(['wait', '-s', session, '--selector', '.rk-diagram-svg svg'], 'wait for inline svg diagram');
@@ -178,6 +211,7 @@ main().catch(err => {
   process.exit(1);
 }).finally(() => {
   run('pw', ['session', 'close', session]);
+  if (tempDir) rmSync(tempDir, { recursive: true, force: true });
   if (serverProcess && serverProcess.exitCode === null) {
     try { process.kill(-serverProcess.pid, 'SIGTERM'); } catch { serverProcess.kill('SIGTERM'); }
   }
