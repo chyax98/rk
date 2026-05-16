@@ -1,6 +1,6 @@
 # RenderKit 1.0 TypeScript Migration Plan
 
-Status: Stage 1 implemented; Stage 2/3 typed boundaries started  
+Status: Stage 1 implemented; Stage 2/3/4 typed boundaries started  
 Date: 2026-05-17
 
 ## Decision
@@ -72,8 +72,8 @@ pnpm verify:sqlite
 Latest evidence:
 
 ```text
-pnpm verify:contracts -> Results: 54 passed, 0 failed
-pnpm verify           -> Results: 213 passed, 0 failed
+pnpm verify:contracts -> Results: 69 passed, 0 failed
+pnpm verify           -> Results: 225 passed, 0 failed
 ```
 
 `pnpm typecheck` remains a later gate after the first `.ts/.tsx` source module exists.
@@ -127,7 +127,7 @@ Remaining focus:
 - feedback shape returned to Agents.
 - selector normalization.
 
-### Stage 4 — Blocks renderer
+### Stage 4 — Blocks renderer（已开始）
 
 Migrate renderer package:
 
@@ -135,11 +135,21 @@ Migrate renderer package:
 packages/blocks/src/*.jsx -> *.tsx
 ```
 
-Focus:
+Implemented first boundary:
+
+```text
+packages/blocks/src/index.d.ts
+packages/blocks/package.json
+```
+
+`@renderkit/blocks` now exposes typed `RenderBlockProps`, `BlockFrameProps`, `RenderKitRegistry`, `registry`, and component exports backed by shared `RenderKitBlock` / `BlockType` contracts.
+
+Remaining focus:
 
 - `RenderBlock` discriminated union.
-- block component props.
-- registry typing: every block type must have a renderer.
+- per-block component props.
+- registry typing inside runtime implementation.
+- eventual `.tsx` migration.
 
 ### Stage 5 — Web UI components
 

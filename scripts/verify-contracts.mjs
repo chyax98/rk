@@ -32,8 +32,10 @@ function objectKeysFromConst(source, constName) {
 console.log('\n== Shared contract surface ==');
 const sharedPkg = JSON.parse(read('packages/shared/package.json'));
 const dslPkg = JSON.parse(read('packages/dsl/package.json'));
+const blocksPkg = JSON.parse(read('packages/blocks/package.json'));
 const contractsDts = read('packages/shared/src/contracts.d.ts');
 const dslDts = read('packages/dsl/src/index.d.ts');
+const blocksDts = read('packages/blocks/src/index.d.ts');
 const storeDts = read('apps/web/lib/store.d.ts');
 const apiDts = read('apps/web/lib/api-contracts.d.ts');
 const contractsMjs = read('packages/shared/src/contracts.mjs');
@@ -41,6 +43,10 @@ assert('@renderkit/shared exposes package types', sharedPkg.types === './src/con
 assert('@renderkit/shared exports ./contracts', Boolean(sharedPkg.exports?.['./contracts']));
 assert('@renderkit/dsl exposes package types', dslPkg.types === './src/index.d.ts');
 assert('@renderkit/dsl exports typed parseRK', dslDts.includes('parseRK(source: string') && dslDts.includes('ParseResult'));
+assert('@renderkit/blocks exposes package types', blocksPkg.types === './src/index.d.ts');
+assert('@renderkit/blocks exports typed root entry', blocksPkg.exports?.['.']?.types === './src/index.d.ts');
+assert('@renderkit/blocks declares renderer registry boundary', ['RenderBlockProps', 'RenderKitRegistry', 'registry', 'RenderBlock'].every(name => blocksDts.includes(name)));
+assert('@renderkit/blocks typed boundary uses shared block contract', blocksDts.includes('RenderKitBlock') && blocksDts.includes('BlockType'));
 assert('Store exposes typed boundary for artifact/comment/feedback functions', ['createArtifact', 'addRevision', 'addComment', 'updateCommentStatus', 'getFeedback'].every(name => storeDts.includes(`function ${name}`)));
 assert('Store typed boundary uses shared contracts', ['ArtifactBundle', 'ArtifactComment', 'FeedbackPayload', 'TextQuoteSelector'].every(name => storeDts.includes(name)));
 assert('API contracts declare core request/response payloads', ['CreateArtifactRequest', 'AddRevisionRequest', 'AddCommentRequest', 'FeedbackResponse'].every(name => apiDts.includes(name)));

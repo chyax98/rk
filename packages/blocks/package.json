@@ -3,8 +3,12 @@
   "version": "0.0.2-alpha.0",
   "private": true,
   "type": "module",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./src/index.jsx"
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.jsx"
+    }
   },
   "peerDependencies": {
     "echarts": ">=5",
