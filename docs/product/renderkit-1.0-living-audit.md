@@ -33,7 +33,7 @@
 
 | Requirement | Evidence | Current status | Gaps |
 |---|---|---:|---|
-| Local-first Agent-to-UI artifact flow | `packages/cli/bin/renderkit.mjs`, `apps/web/app/a/[id]/ArtifactView.jsx`, `apps/web/app/api/artifacts/**`, `~/.renderkit/data/renderkit.db` | Mostly done | More automated e2e specs needed |
+| Local-first Agent-to-UI artifact flow | `packages/cli/bin/renderkit.mjs`, `apps/web/app/a/[id]/ArtifactView.jsx`, `apps/web/app/api/artifacts/**`, `~/.renderkit/data/renderkit.db`, `scripts/verify-browser.mjs` | Strong | Final audit still needed |
 | `.rk.md` block authoring | `packages/dsl/src/index.mjs`, `skills/renderkit-authoring/SKILL.md`, `examples/capabilities/*.rk.md` | Strong | TypeScript contracts pending |
 | Mature modules | `highlight.js`, `echarts`, `mermaid`, `@terrastruct/d2`, PlantUML server render, `better-sqlite3` | Strong | Dependency footprint/audit still needed |
 | Reading-first UI | Passes 1, 3, 4, 7, 10；`.pw-evidence/narrative-sqlite-reading-pass7.png`、`.pw-evidence/reading-a11y-skiplink-flywheel.png` | Good | 仍需自动化浏览器回归 |
@@ -47,7 +47,7 @@
 | External resources analyzed | `research/design-assets/renderkit-external-design-resources-analysis.md` | Done | Continue extracting concrete assets incrementally |
 | Integration prioritization | `docs/product/renderkit-1.0-design-resource-integration-plan.md` | Done | Execute remaining P1/P2 integrations |
 | Diagram visual language | `docs/renderkit-diagram-visual-language.md`, fixture, pw screenshot | Done as convention layer | No runtime `tech-graph` engine yet |
-| Browser verification with `pw` | multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10 evidence | Good | Need automated browser regression script/spec |
+| Browser verification with `pw` | `scripts/verify-browser.mjs`; `pnpm verify:browser -> 36 passed, 0 failed`; multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10/11 evidence | Strong | Add more cases as future blocks land |
 | CLI/Agent feedback | `renderkit validate/push/status/feedback`, authoring skill | Good | Skill should absorb latest design directives |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
@@ -58,9 +58,10 @@
 Latest known green gates:
 
 ```text
-pnpm verify        -> Results: 212 passed, 0 failed
-pnpm verify:sqlite -> Results: 102 passed, 0 failed
-pnpm verify:smoke  -> Results: 24 passed, 0 failed
+pnpm verify         -> Results: 212 passed, 0 failed
+pnpm verify:sqlite  -> Results: 102 passed, 0 failed
+pnpm verify:smoke   -> Results: 24 passed, 0 failed
+pnpm verify:browser -> Results: 36 passed, 0 failed
 ```
 
 Recent browser evidence:
@@ -72,6 +73,7 @@ Recent browser evidence:
 .pw-evidence/diagram-visual-language-flywheel.png
 .pw-evidence/comment-filters-flywheel-review.png
 .pw-evidence/reading-a11y-skiplink-flywheel.png
+.pw-evidence/verify-browser-diagram.png
 ```
 
 Recent commits:
@@ -88,10 +90,9 @@ e83a033 document design token source map
 
 当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
-1. **Automated browser specs** are still missing. `pw` command evidence exists, but there is no durable Playwright test suite yet.
-2. **TypeScript contracts** are planned but not implemented.
-3. **更多外部设计资源的运行时集成**仍未完成：`md2html` / `html-anything` / `ui-ux-pro-max` / `guizang` 的分析已落文档，但仍有部分只停留在研究或 authoring guidance 层。
-4. **Final 1.0 audit** has not been run after all modules land.
+1. **TypeScript contracts** are planned but not implemented.
+2. **更多外部设计资源的运行时集成**仍未完成：`md2html` / `html-anything` / `ui-ux-pro-max` / `guizang` 的分析已落文档，但仍有部分只停留在研究或 authoring guidance 层。
+3. **Final 1.0 audit** has not been run after all modules land.
 
 已在主线完成但仍需后续观察：
 
@@ -101,7 +102,7 @@ e83a033 document design token source map
 
 ## 下一步
 
-1. 整合当前 worker run `07ffd4c9` 的输出：自动化浏览器回归验证、外部设计资源中文化整理。
+1. 处理 TypeScript contracts / shared runtime schema，降低 DSL-Web-CLI 接口漂移风险。
 2. Verify with:
 
 ```bash
