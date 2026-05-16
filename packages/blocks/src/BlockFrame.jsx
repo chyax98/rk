@@ -13,6 +13,7 @@ export default function BlockFrame({
   onOpenMenu,
   selected = false,
   commentCount = 0,
+  reviewMode = false,
 }) {
   const cls = `rk-block rk-block-${block.type}${selected ? ' rk-selected' : ''}`;
   const width = block.props?.width || 'full';
@@ -26,12 +27,13 @@ export default function BlockFrame({
       {...(selected ? { 'data-rk-selected': '' } : {})}
       {...(commentCount > 0 ? { 'data-rk-has-comments': '', 'data-comment-count': commentCount } : {})}
       {...(block.props?.tone ? { 'data-tone': block.props.tone } : {})}
-      tabIndex={0}
-      onClick={onSelect}
-      onMouseDown={(e) => { if (e.button === 2 && onContextMenu) onContextMenu(e); }}
-      onContextMenu={onContextMenu}
+      tabIndex={reviewMode ? 0 : undefined}
+      onClick={reviewMode ? onSelect : undefined}
+      onMouseDown={(e) => { if (reviewMode && e.button === 2 && onContextMenu) onContextMenu(e); }}
+      onContextMenu={reviewMode ? onContextMenu : undefined}
+      {...(reviewMode ? { 'data-rk-review-mode': '' } : {})}
     >
-      <div className="rk-block-tools" aria-label="Block review tools">
+      {reviewMode && <div className="rk-block-tools" aria-label="Block review tools">
         <span className="rk-block-id">{block.id}</span>
         <span className="rk-block-type-badge">{block.type}</span>
         <button
@@ -50,7 +52,7 @@ export default function BlockFrame({
         >
           💬 {commentCount || ''}
         </button>
-      </div>
+      </div>}
       <RenderBlock block={block} />
     </section>
   );

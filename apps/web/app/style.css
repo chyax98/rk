@@ -300,3 +300,49 @@ button, textarea { font: inherit; }
   .rk-block-stream > .rk-block[data-rk-width="third"],
   .rk-block-stream > .rk-block[data-rk-width="two-third"] { grid-column: 1 / -1; }
 }
+
+/* RenderKit 1.0 product pass: surface-aware browser canvas. */
+.rk-page {
+  padding: clamp(28px, 4vw, 56px);
+}
+.rk-document {
+  width: 100%;
+  max-width: min(1120px, calc(100vw - clamp(36px, 8vw, 112px)));
+}
+.rk-page[data-rk-surface="engineering-plan"] .rk-document,
+.rk-page[data-rk-surface="review-report"] .rk-document,
+.rk-page[data-rk-surface="data-report-lite"] .rk-document {
+  max-width: min(1480px, calc(100vw - clamp(32px, 6vw, 96px)));
+}
+.rk-page[data-rk-surface="decision-brief"] .rk-document { max-width: 820px; }
+.rk-page[data-rk-surface="runbook"] .rk-document { max-width: 920px; }
+
+.rk-floating-tools button.is-active {
+  background: var(--rk-btn-primary);
+  color: var(--rk-btn-primary-text);
+  border-color: transparent;
+}
+.rk-floating-tools button[title="Toggle review mode"] {
+  min-width: 72px;
+  padding: 0 var(--rk-space-3);
+  font-weight: var(--rk-weight-semibold);
+}
+
+@media (max-width: 760px) {
+  .rk-page { padding: var(--rk-space-4); }
+  .rk-document { max-width: 100%; }
+  .rk-block-stream > .rk-block[data-rk-width="half"],
+  .rk-block-stream > .rk-block[data-rk-width="third"],
+  .rk-block-stream > .rk-block[data-rk-width="two-third"] { grid-column: 1 / -1; }
+}
+
+@media print {
+  .rk-floating-tools,
+  .rk-outline-drawer,
+  .rk-review-drawer,
+  .rk-context-menu,
+  .rk-block-tools { display: none !important; }
+  .rk-page { padding: 0; background: #fff; }
+  .rk-document { max-width: none; margin: 0; }
+  .rk-block { box-shadow: none !important; break-inside: avoid; }
+}

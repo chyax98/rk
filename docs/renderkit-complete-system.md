@@ -51,6 +51,7 @@ Agent 写 .rk.md
 | 默认白色文档主题 | 已实现：`paper-light` | `packages/dsl/src/index.mjs`、`packages/design/src/themes.css` |
 | 暗黑/终端/长文主题 | 已实现：`dark-pro`、`amber-terminal`、`editorial-kami` | `packages/design/src/themes.css` |
 | grid 二维布局 | 已实现 | `GridBlock.jsx`、`examples/capabilities/grid-layout.rk.md` |
+| table 技术表格 | 已实现 | `TableBlock.jsx`、`examples/capabilities/product-system.rk.md` |
 | subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
@@ -109,6 +110,7 @@ code
 summary
 subdocument
 grid
+table
 ```
 
 默认主题：
@@ -331,13 +333,13 @@ renderkit push plan.rk.md --open --json
 
 ### 5.5 `diagram`
 
-用于图表和信息图。必须包含 fenced code block。
+用于图表和信息图。推荐包含 fenced code block；Mermaid 也支持无 fence 的 inline body shorthand。
 
 支持 engine：
 
 | engine | 当前行为 |
 |---|---|
-| `mermaid` | 浏览器内 Mermaid 渲染 |
+| `mermaid` | 浏览器内 Mermaid 渲染；可由 `fig` shorthand 默认推断 |
 | `svg` | 安全清洗后 inline SVG |
 | `echarts` | 浏览器内 ECharts 渲染 |
 | `infographic` | RenderKit 内置轻量指标卡渲染 |
@@ -431,6 +433,21 @@ PlantUML 某些图类型需要 Graphviz。
 - 当前不允许 grid 嵌套 grid。
 - 子 block 保留 `data-block-id`，因此可右键、检查、评论。
 - `grid` 适合 KPI、对比项、双栏决策、报告摘要。
+
+### 5.8 `table`
+
+用于技术表格、风险矩阵、状态追踪、发布门禁和对比项。
+
+```md
+:::table{id="risk-table" title="Risk matrix" width="wide"}
+| Area | Current signal | Decision impact | Owner |
+|---|---|---|---|
+| Queue latency | p95 142ms | Continue rollout | SRE |
+| Rollback | Config-only tested | Safe to proceed | Release |
+:::
+```
+
+`table` 支持 GFM Markdown table body，并编译为 `columns`、`rows`、`align`，由 `TableBlock.jsx` 渲染为高密度技术表格。
 
 ---
 
@@ -794,7 +811,7 @@ pnpm verify
 当前结果：
 
 ```text
-Results: 146 passed, 0 failed
+Results: 161 passed, 0 failed
 ALL GOOD
 ```
 
@@ -863,6 +880,7 @@ ALL GOOD
 | `RK_DIAGRAM_CODE_REQUIRED` | diagram 缺 fenced code |
 | `RK_UNSUPPORTED_DIAGRAM_ENGINE` | diagram engine 不支持 |
 | `RK_CODE_BODY_REQUIRED` | code block 缺 fenced code |
+| `RK_TABLE_BODY_REQUIRED` | table block 缺 GFM Markdown table body |
 | `RK_GRID_CHILD_UNSUPPORTED` | grid 子 block 不支持 |
 | `RK_THEME_UNKNOWN` | theme 未知，fallback 到 `paper-light` |
 | `RK_SURFACE_UNKNOWN` | surface 未知，允许但 warning |

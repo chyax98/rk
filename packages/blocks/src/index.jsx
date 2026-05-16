@@ -11,4 +11,5 @@ export { default as DiagramBlock } from './DiagramBlock.jsx';
 export { default as MermaidDiagram } from './MermaidDiagram.jsx';
 export { default as SubdocumentBlock } from './SubdocumentBlock.jsx';
 export { default as GridBlock } from './GridBlock.jsx';
+export { default as TableBlock } from './TableBlock.jsx';
 export { default as EChartsBlock } from './EChartsBlock.jsx';

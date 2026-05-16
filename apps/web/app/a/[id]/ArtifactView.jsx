@@ -10,6 +10,7 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState('comment');
+  const [reviewMode, setReviewMode] = useState(false);
   const model = revision.model;
   const blocks = model.blocks;
   const theme = model.theme || 'paper-light';
@@ -24,10 +25,12 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
   function copyToClipboard(str) { navigator.clipboard?.writeText(str).catch(() => {}); }
   function openDrawer(mode, blockId = selected) {
     if (blockId) setSelected(blockId);
+    setReviewMode(true);
     setDrawerMode(mode);
     setDrawerOpen(true);
   }
   function openMenu(e, blockId) {
+    if (!reviewMode) return;
     e.preventDefault();
     e.stopPropagation();
     setSelected(blockId);
@@ -60,8 +63,9 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
   }, [menu, drawerOpen, outlineOpen]);
 
   return (
-    <div className="rk-page" data-rk-theme={theme} data-rk-surface={surface || undefined}>
+    <div className={`rk-page${reviewMode ? ' rk-review-mode' : ''}`} data-rk-theme={theme} data-rk-surface={surface || undefined}>
       <main className="rk-document" aria-label={model.title} onContextMenuCapture={(e) => {
+        if (!reviewMode) return;
         const el = e.target?.closest?.('[data-block-id]');
         if (el) openMenu(e, el.getAttribute('data-block-id'));
       }}>
@@ -70,8 +74,9 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
             <BlockFrame
               key={block.id}
               block={block}
-              selected={selected === block.id}
+              selected={reviewMode && selected === block.id}
               commentCount={commentsFor(block.id).length}
+              reviewMode={reviewMode}
               onSelect={() => setSelected(block.id)}
               onComment={() => openDrawer('comment', block.id)}
               onOpenMenu={(e) => openMenu(e, block.id)}
@@ -82,6 +87,7 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
       </main>
 
       <div className="rk-floating-tools" aria-label="Document tools">
+        <button onClick={() => setReviewMode(v => !v)} title="Toggle review mode" className={reviewMode ? 'is-active' : ''}>Review</button>
         <button onClick={() => setOutlineOpen(o => !o)} title="Outline">☰</button>
         <button onClick={() => openDrawer('comments', selected)} title="Comments">💬{comments.length ? ` ${comments.length}` : ''}</button>
         <button onClick={() => copyToClipboard(feedbackCmd)} title="Copy feedback command">⎘</button>

@@ -123,6 +123,18 @@ const grids = (gridParsed?.model?.blocks || []).filter(b => b.type === "grid");
 assert("grid layout case has grid blocks", grids.length >= 2, `got ${grids.length}`);
 assert("grid blocks have children", grids.every(g => (g.props?.children?.length ?? 0) >= 2));
 
+const productCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/product-system.rk.md --json");
+let productParsed;
+try { productParsed = JSON.parse(productCase.stdout); } catch { productParsed = null; }
+const productTypes = new Set((productParsed?.model?.blocks || []).flatMap(b => [b.type, ...(b.props?.children || []).map(c => c.type)]));
+assert("product system case validates", productCase.code === 0 && productParsed?.ok === true, `exit=${productCase.code}`);
+for (const type of ["summary", "callout", "decision-card", "diagram", "table", "code", "grid"]) {
+  assert(`product system case covers ${type}`, productTypes.has(type));
+}
+const productDiagram = (productParsed?.model?.blocks || []).find(b => b.id === "rollout-flow");
+assert("product system diagram shorthand infers mermaid", productDiagram?.props?.engine === "mermaid");
+assert("product system diagram shorthand has body", (productDiagram?.props?.code || "").includes("flowchart LR"));
+
 // ── Section 6: Web build ──
 console.log("\n== Web build ==");
 try {

@@ -5,7 +5,17 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table']);
+const ALIASES = new Map([
+  ['sum', { name: 'summary' }],
+  ['note', { name: 'callout', attrs: { tone: 'info' } }],
+  ['warn', { name: 'callout', attrs: { tone: 'warning' } }],
+  ['alert', { name: 'callout', attrs: { tone: 'danger' } }],
+  ['ok', { name: 'callout', attrs: { tone: 'success' } }],
+  ['dec', { name: 'decision-card' }],
+  ['fig', { name: 'diagram' }],
+  ['src', { name: 'code' }],
+]);
 const DEFAULT_THEME = 'paper-light';
 const VALID_THEMES = new Set(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
 const VALID_SURFACES = new Set(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
@@ -60,29 +70,33 @@ export function parseRK(source, file = '<source>') {
       continue;
     }
     if (node.type === 'containerDirective' || node.type === 'leafDirective') {
-      const name = node.name;
-      const attrs = node.attributes || {};
+      const originalName = node.name;
+      const resolved = resolveDirective(originalName, node.attributes || {});
+      const name = resolved.name;
+      const attrs = resolved.attrs;
       const r = pos(node);
       if (!KNOWN.has(name)) {
-        errors.push(diag('RK_UNKNOWN_BLOCK_TYPE', `Unknown block type: ${name}`, file, r));
+        errors.push(diag('RK_UNKNOWN_BLOCK_TYPE', `Unknown block type: ${originalName}`, file, r));
         continue;
       }
       if (!attrs.id) {
-        errors.push(diag('RK_BLOCK_ID_REQUIRED', `${name} block requires id`, file, r));
+        errors.push(diag('RK_BLOCK_ID_REQUIRED', `${originalName} block requires id`, file, r));
         continue;
       }
       if (!ID_FORMAT.test(attrs.id)) {
-        errors.push(diag('RK_BLOCK_ID_INVALID', `${name} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
+        errors.push(diag('RK_BLOCK_ID_INVALID', `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
         continue;
       }
+      const patched = resolved.name === originalName ? node : { ...node, name, attributes: attrs };
       let block;
-      if (name === 'callout') block = compileCallout(node, attrs, source);
-      if (name === 'decision-card') block = compileDecision(node, attrs, source, errors, file);
-      if (name === 'diagram') block = compileDiagram(node, attrs, source, errors, file);
-      if (name === 'code') block = compileCode(node, attrs, source, errors, file);
-      if (name === 'summary') block = compileSummary(node, attrs, source);
-      if (name === 'subdocument') block = compileSubdocument(node, attrs, source);
-      if (name === 'grid') block = compileGrid(node, attrs, source, errors, file);
+      if (name === 'callout') block = compileCallout(patched, attrs, source);
+      if (name === 'decision-card') block = compileDecision(patched, attrs, source, errors, file);
+      if (name === 'diagram') block = compileDiagram(patched, attrs, source, errors, file);
+      if (name === 'code') block = compileCode(patched, attrs, source, errors, file);
+      if (name === 'summary') block = compileSummary(patched, attrs, source);
+      if (name === 'subdocument') block = compileSubdocument(patched, attrs, source);
+      if (name === 'grid') block = compileGrid(patched, attrs, source, errors, file);
+      if (name === 'table') block = compileTable(patched, attrs, source, errors, file);
       if (block) blocks.push(block);
       continue;
     }
@@ -117,6 +131,12 @@ export function parseRK(source, file = '<source>') {
 }
 
 
+function resolveDirective(name, attrs) {
+  const alias = ALIASES.get(name);
+  if (!alias) return { name, attrs };
+  return { name: alias.name, attrs: { ...(alias.attrs || {}), ...attrs } };
+}
+
 function normalizeWidth(value) {
   if (!value) return 'full';
   const v = String(value).trim().toLowerCase();
@@ -142,8 +162,18 @@ function compileCallout(node, attrs, source) {
 function compileDecision(node, attrs, source, errors, file) {
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   let data = {};
-  try { data = yaml.load(body) || {}; }
-  catch (e) { errors.push(diag('RK_DECISION_YAML_INVALID', e.message, file, pos(node))); }
+  if (attrs.q || attrs.question || attrs.chosen) {
+    data = {
+      question: attrs.q || attrs.question || '',
+      chosen: attrs.chosen || '',
+      status: attrs.status || 'draft',
+      rationale: markdownBullets(body),
+      alternatives: []
+    };
+  } else {
+    try { data = yaml.load(body) || {}; }
+    catch (e) { errors.push(diag('RK_DECISION_YAML_INVALID', e.message, file, pos(node))); }
+  }
 
   for (const k of ['question', 'chosen']) {
     if (!data[k]) errors.push(diag('RK_PROP_REQUIRED', `decision-card requires ${k}`, file, pos(node)));
@@ -155,7 +185,7 @@ function compileDecision(node, attrs, source, errors, file) {
       question: data.question || '',
       chosen: data.chosen || '',
       width: normalizeWidth(attrs.width || attrs.span),
-      status: data.status || 'draft',
+      status: data.status || attrs.status || 'draft',
       rationale: data.rationale || [],
       alternatives: data.alternatives || []
     },
@@ -166,14 +196,16 @@ function compileDecision(node, attrs, source, errors, file) {
 
 function compileDiagram(node, attrs, source, errors, file) {
   const code = findCode(node);
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const engine = String(attrs.engine || code?.lang || 'mermaid').toLowerCase();
   const supported = new Set(['mermaid', 'svg', 'plantuml', 'd2', 'echarts', 'infographic']);
   if (!supported.has(engine)) errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Unsupported diagram engine: ${engine}`, file, pos(node)));
-  if (!code?.value) errors.push(diag('RK_DIAGRAM_CODE_REQUIRED', 'diagram requires a fenced code block', file, pos(node)));
+  const diagramCode = code?.value || stripFenceLikeBody(body);
+  if (!diagramCode) errors.push(diag('RK_DIAGRAM_CODE_REQUIRED', 'diagram requires a fenced code block or inline diagram body', file, pos(node)));
   return {
     id: attrs.id,
     type: 'diagram',
-    props: { engine, code: code?.value || '', caption: attrs.caption || '', width: normalizeWidth(attrs.width || attrs.span) },
+    props: { engine, code: diagramCode, caption: attrs.caption || '', width: normalizeWidth(attrs.width || attrs.span) },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };
@@ -199,20 +231,21 @@ function compileGrid(node, attrs, source, errors, file) {
   const children = [];
   for (const child of node.children || []) {
     if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
-    if (!KNOWN.has(child.name) || child.name === 'grid') {
+    const resolved = resolveDirective(child.name, child.attributes || {});
+    if (!KNOWN.has(resolved.name) || resolved.name === 'grid') {
       errors.push(diag('RK_GRID_CHILD_UNSUPPORTED', `grid child must be a supported non-grid block, got ${child.name}`, file, pos(child)));
       continue;
     }
-    const childAttrs = child.attributes || {};
-    const childId = childAttrs.id || `${attrs.id || 'grid'}-${children.length + 1}`;
-    const patched = { ...child, attributes: { ...childAttrs, id: childId } };
+    const childId = resolved.attrs.id || `${attrs.id || 'grid'}-${children.length + 1}`;
+    const patched = { ...child, name: resolved.name, attributes: { ...resolved.attrs, id: childId } };
     let block;
-    if (child.name === 'callout') block = compileCallout(patched, patched.attributes, source);
-    if (child.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
-    if (child.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
-    if (child.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
-    if (child.name === 'summary') block = compileSummary(patched, patched.attributes, source);
-    if (child.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
+    if (resolved.name === 'callout') block = compileCallout(patched, patched.attributes, source);
+    if (resolved.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'summary') block = compileSummary(patched, patched.attributes, source);
+    if (resolved.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
+    if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
     if (block) children.push(block);
   }
   return {
@@ -259,11 +292,72 @@ function compileSummary(node, attrs, source) {
   };
 }
 
+function compileTable(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  const parsed = parsePipeTable(body);
+  if (!parsed.headers.length || !parsed.rows.length) {
+    errors.push(diag('RK_TABLE_BODY_REQUIRED', 'table directive requires a GitHub-flavored Markdown table body', file, pos(node)));
+  }
+  return {
+    id: attrs.id,
+    type: 'table',
+    props: {
+      title: attrs.title || '',
+      caption: attrs.caption || '',
+      width: normalizeWidth(attrs.width || attrs.span || 'wide'),
+      columns: parsed.headers,
+      rows: parsed.rows,
+      align: parsed.align
+    },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
 function rawDirectiveBody(source, node) {
   const raw = excerpt(source, node.position);
   const lines = raw.split('\n');
   if (lines.length <= 2) return '';
   return lines.slice(1, -1).join('\n').trim();
+}
+
+function markdownBullets(body) {
+  return String(body || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => line.replace(/^[-*]\s+/, ''));
+}
+
+function stripFenceLikeBody(body) {
+  const text = String(body || '').trim();
+  if (!text) return '';
+  return text.replace(/^```[a-zA-Z0-9_-]*\n?/, '').replace(/\n?```$/, '').trim();
+}
+
+function parsePipeTable(body) {
+  const lines = String(body || '').split('\n').map(l => l.trim()).filter(Boolean);
+  const tableLines = lines.filter(l => l.includes('|'));
+  if (tableLines.length < 2) return { headers: [], rows: [], align: [] };
+  const header = splitTableRow(tableLines[0]);
+  const sep = splitTableRow(tableLines[1]);
+  if (!header.length || !sep.every(isSeparatorCell)) return { headers: [], rows: [], align: [] };
+  const align = sep.map(cell => {
+    const t = cell.trim();
+    if (t.startsWith(':') && t.endsWith(':')) return 'center';
+    if (t.endsWith(':')) return 'right';
+    return 'left';
+  });
+  const rows = tableLines.slice(2).map(splitTableRow).filter(r => r.length).map(r => header.map((_, i) => r[i] || ''));
+  return { headers: header, rows, align };
+}
+
+function splitTableRow(line) {
+  return String(line || '').replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+}
+
+function isSeparatorCell(cell) {
+  return /^:?-{3,}:?$/.test(String(cell || '').trim());
 }
 
 function findCode(node) {
