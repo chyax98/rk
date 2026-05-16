@@ -1,7 +1,11 @@
-# RenderKit Design Assets Research Index
+# RenderKit 设计资产研究索引
 
-Status: active research asset index  
-Date: 2026-05-17
+状态：持续维护  
+日期：2026-05-17
+
+本目录用于保存 RenderKit 1.0 的外部设计资源研究。用户明确要求：这些仓库必须完整 clone、分析、落文档、排序，并作为后续 review 的资产保留下来。
+
+> 中文区项目约定：后续新增研究文档默认中文；英文只保留 repo 名、路径、命令、API 名称等必要技术标识。
 
 This directory preserves external design-resource research for RenderKit 1.0. The user explicitly requested that these repositories be fully cloned, analyzed, documented, prioritized, and preserved for later review.
 
