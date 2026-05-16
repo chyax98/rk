@@ -1,172 +1,12 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import crypto from 'node:crypto';
-import os from 'node:os';
 import { parseRK } from '@renderkit/dsl';
+import { getDb } from './db.mjs';
 
-const root = path.join(os.homedir(), '.renderkit', 'data');
-const artifactsDir = path.join(root, 'artifacts');
-const indexPath = path.join(root, 'index.json');
+/* ── helpers ────────────────────────────────────────────── */
 
-export async function ensureStore() {
-  await fs.mkdir(artifactsDir, { recursive: true });
-  try { await fs.access(indexPath); } catch { await fs.writeFile(indexPath, JSON.stringify({ artifacts: [] }, null, 2)); }
-}
+function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
+function now() { return new Date().toISOString(); }
 
-export async function listArtifacts() {
-  await ensureStore();
-  const idx = JSON.parse(await fs.readFile(indexPath, 'utf8'));
-  return idx.artifacts || [];
-}
-
-export async function createArtifact(source, title) {
-  await ensureStore();
-  const parsed = parseRK(source);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: parsed.warnings };
-  const id = 'art_' + crypto.randomBytes(5).toString('hex');
-  const dir = path.join(artifactsDir, id);
-  await fs.mkdir(dir, { recursive: true });
-  const artifact = { id, title: title || parsed.model.title, currentRevision: 1, createdAt: now(), updatedAt: now() };
-  await writeRevision(id, 1, source, parsed.model);
-  await writeComments(id, []);
-  const idx = JSON.parse(await fs.readFile(indexPath, 'utf8'));
-  idx.artifacts = [artifact, ...(idx.artifacts || [])];
-  await fs.writeFile(indexPath, JSON.stringify(idx, null, 2));
-  return { ok: true, artifact, revision: 1, model: parsed.model, warnings: parsed.warnings };
-}
-
-export async function addRevision(id, source, resolvedCommentIds = []) {
-  await ensureStore();
-  const artifact = await getArtifactMeta(id);
-  if (!artifact) return { ok: false, status: 404, errors: [{ code: 'RK_ARTIFACT_NOT_FOUND', message: `Artifact not found: ${id}` }] };
-  const parsed = parseRK(source);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: parsed.warnings };
-  const current = await getRevision(id, artifact.currentRevision);
-  const next = artifact.currentRevision + 1;
-  const diff = diffBlocks(current.model, parsed.model);
-  await writeRevision(id, next, source, parsed.model);
-  const comments = await getComments(id);
-  const newIds = new Set(flattenBlocks(parsed.model.blocks).map(b => b.id));
-  for (const c of comments) {
-    if (resolvedCommentIds.includes(c.id)) { c.status = 'resolved'; c.resolvedAtRevision = next; c.resolvedBy = 'agent'; c.resolvedAt = now(); }
-    else if (c.status === 'open' && !newIds.has(c.blockId)) { c.status = 'orphaned'; }
-  }
-  await writeComments(id, comments);
-  await updateArtifact(id, { currentRevision: next, title: parsed.model.title, updatedAt: now() });
-  return { ok: true, revision: next, model: parsed.model, diff: { ...diff, orphanedComments: comments.filter(c => c.status === 'orphaned').map(c => c.id) }, resolved: resolvedCommentIds, warnings: parsed.warnings };
-}
-
-export async function getArtifactMeta(id) {
-  await ensureStore();
-  const idx = JSON.parse(await fs.readFile(indexPath, 'utf8'));
-  return (idx.artifacts || []).find(a => a.id === id) || null;
-}
-
-export async function getArtifact(id, rev = null) {
-  const meta = await getArtifactMeta(id);
-  if (!meta) return null;
-  const revision = await getRevision(id, rev || meta.currentRevision);
-  const comments = await getComments(id);
-  return { meta, revision, comments };
-}
-
-export async function getRevision(id, rev) {
-  const p = path.join(artifactsDir, id, `rev-${rev}.json`);
-  return JSON.parse(await fs.readFile(p, 'utf8'));
-}
-
-export async function getComments(id) {
-  try { return JSON.parse(await fs.readFile(path.join(artifactsDir, id, 'comments.json'), 'utf8')); }
-  catch { return []; }
-}
-
-export async function addComment(id, blockId, text, selector = null) {
-  const artifact = await getArtifact(id);
-  if (!artifact) return { ok: false, status: 404, error: 'not found' };
-  const block = findBlockById(artifact.revision.model.blocks, blockId);
-  if (!block) return { ok: false, status: 404, error: 'block not found' };
-  const comments = artifact.comments;
-  const c = { id: 'cmt_' + crypto.randomBytes(5).toString('hex'), artifactId: id, blockId, text, selector: normalizeSelector(selector), status: 'open', createdAtRevision: artifact.meta.currentRevision, blockSnapshot: block, createdAt: now() };
-  comments.push(c);
-  await writeComments(id, comments);
-  return { ok: true, comment: c };
-}
-
-export async function updateCommentStatus(id, commentId, status) {
-  const allowed = new Set(['open', 'resolved']);
-  if (!allowed.has(status)) return { ok: false, status: 400, error: 'invalid status' };
-  const artifact = await getArtifact(id);
-  if (!artifact) return { ok: false, status: 404, error: 'not found' };
-  const comments = artifact.comments;
-  const c = comments.find(x => x.id === commentId);
-  if (!c) return { ok: false, status: 404, error: 'comment not found' };
-  c.status = status;
-  if (status === 'resolved') {
-    c.resolvedAtRevision = artifact.meta.currentRevision;
-    c.resolvedBy = 'human';
-    c.resolvedAt = now();
-  } else {
-    delete c.resolvedAtRevision;
-    delete c.resolvedBy;
-    delete c.resolvedAt;
-    c.reopenedAt = now();
-  }
-  await writeComments(id, comments);
-  return { ok: true, comment: c };
-}
-
-export async function getFeedback(id) {
-  const artifact = await getArtifact(id);
-  if (!artifact) return null;
-  const blocks = artifact.revision.model.blocks;
-  const comments = artifact.comments.filter(c => c.status === 'open' || c.status === 'orphaned');
-  return {
-    artifactId: id,
-    currentRevision: artifact.meta.currentRevision,
-    url: `/a/${id}`,
-    openComments: comments.map(c => {
-      const idx = blocks.findIndex(b => b.id === c.blockId);
-      const block = idx >= 0 ? blocks[idx] : null;
-      return {
-        id: c.id,
-        blockId: c.blockId,
-        status: c.status,
-        text: c.text,
-        selector: c.selector || null,
-        createdAtRevision: c.createdAtRevision,
-        block: block || c.blockSnapshot,
-        blockSnapshot: c.blockSnapshot,
-        sourceRange: (block || c.blockSnapshot)?.sourceRange,
-        sourceExcerpt: (block || c.blockSnapshot)?.sourceExcerpt,
-        neighbors: { prev: idx > 0 ? [brief(blocks[idx - 1])] : [], next: idx >= 0 && idx < blocks.length - 1 ? [brief(blocks[idx + 1])] : [] }
-      };
-    })
-  };
-}
-
-async function writeRevision(id, number, source, model) {
-  const rev = { id: `rev_${number}`, artifactId: id, number, sourceText: source, sourceHash: sha(source), model, blockIds: flattenBlocks(model.blocks).map(b => b.id), createdAt: now() };
-  await fs.writeFile(path.join(artifactsDir, id, `rev-${number}.json`), JSON.stringify(rev, null, 2));
-}
-
-async function writeComments(id, comments) {
-  await fs.writeFile(path.join(artifactsDir, id, 'comments.json'), JSON.stringify(comments, null, 2));
-}
-
-async function updateArtifact(id, patch) {
-  const idx = JSON.parse(await fs.readFile(indexPath, 'utf8'));
-  idx.artifacts = (idx.artifacts || []).map(a => a.id === id ? { ...a, ...patch } : a);
-  await fs.writeFile(indexPath, JSON.stringify(idx, null, 2));
-}
-
-function diffBlocks(a, b) {
-  const am = new Map(flattenBlocks(a.blocks).map(x => [x.id, x]));
-  const bm = new Map(flattenBlocks(b.blocks).map(x => [x.id, x]));
-  const addedBlocks = [...bm.keys()].filter(k => !am.has(k));
-  const removedBlocks = [...am.keys()].filter(k => !bm.has(k));
-  const modifiedBlocks = [...bm.keys()].filter(k => am.has(k) && sha(JSON.stringify(am.get(k).props)) !== sha(JSON.stringify(bm.get(k).props)));
-  return { addedBlocks, removedBlocks, modifiedBlocks };
-}
 function flattenBlocks(blocks) {
   const out = [];
   for (const block of blocks || []) {
@@ -198,5 +38,256 @@ function normalizeSelector(selector) {
 }
 
 function brief(b) { return b ? { id: b.id, type: b.type } : null; }
-function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
-function now() { return new Date().toISOString(); }
+
+function diffBlocks(a, b) {
+  const am = new Map(flattenBlocks(a.blocks).map(x => [x.id, x]));
+  const bm = new Map(flattenBlocks(b.blocks).map(x => [x.id, x]));
+  const addedBlocks = [...bm.keys()].filter(k => !am.has(k));
+  const removedBlocks = [...am.keys()].filter(k => !bm.has(k));
+  const modifiedBlocks = [...bm.keys()].filter(k => am.has(k) && sha(JSON.stringify(am.get(k).props)) !== sha(JSON.stringify(bm.get(k).props)));
+  return { addedBlocks, removedBlocks, modifiedBlocks };
+}
+
+function rowToArtifact(r) {
+  return {
+    id: r.id,
+    title: r.title,
+    currentRevision: r.current_revision,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+function rowToRevision(r) {
+  return {
+    id: r.id,
+    artifactId: r.artifact_id,
+    number: r.number,
+    sourceText: r.source_text,
+    sourceHash: r.source_hash,
+    model: JSON.parse(r.model),
+    blockIds: JSON.parse(r.block_ids),
+    createdAt: r.created_at,
+  };
+}
+
+function rowToComment(r) {
+  const c = {
+    id: r.id,
+    artifactId: r.artifact_id,
+    blockId: r.block_id,
+    text: r.text,
+    selector: r.selector ? JSON.parse(r.selector) : null,
+    status: r.status,
+    createdAtRevision: r.created_at_revision,
+    blockSnapshot: r.block_snapshot ? JSON.parse(r.block_snapshot) : null,
+    createdAt: r.created_at,
+  };
+  if (r.resolved_at_revision != null) c.resolvedAtRevision = r.resolved_at_revision;
+  if (r.resolved_by != null) c.resolvedBy = r.resolved_by;
+  if (r.resolved_at != null) c.resolvedAt = r.resolved_at;
+  if (r.reopened_at != null) c.reopenedAt = r.reopened_at;
+  return c;
+}
+
+/* ── public API (signatures preserved) ──────────────────── */
+
+export async function ensureStore() {
+  getDb(); // triggers migration
+}
+
+export async function listArtifacts() {
+  const db = getDb();
+  const rows = db.prepare('SELECT * FROM artifacts ORDER BY created_at DESC').all();
+  return rows.map(rowToArtifact);
+}
+
+export async function createArtifact(source, title) {
+  const db = getDb();
+  const parsed = parseRK(source);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: parsed.warnings };
+
+  const id = 'art_' + crypto.randomBytes(5).toString('hex');
+  const artifact = { id, title: title || parsed.model.title, currentRevision: 1, createdAt: now(), updatedAt: now() };
+
+  const insertArt = db.prepare(`
+    INSERT INTO artifacts (id, title, current_revision, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  const insertRev = db.prepare(`
+    INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, block_ids, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const flatIds = flattenBlocks(parsed.model.blocks).map(b => b.id);
+  const revId = `${id}_rev_1`;
+
+  const txn = db.transaction(() => {
+    insertArt.run(id, artifact.title, 1, artifact.createdAt, artifact.updatedAt);
+    insertRev.run(revId, id, 1, source, sha(source), JSON.stringify(parsed.model), JSON.stringify(flatIds), artifact.createdAt);
+  });
+  txn();
+
+  return { ok: true, artifact, revision: 1, model: parsed.model, warnings: parsed.warnings };
+}
+
+export async function addRevision(id, source, resolvedCommentIds = []) {
+  const db = getDb();
+  const artRow = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
+  if (!artRow) return { ok: false, status: 404, errors: [{ code: 'RK_ARTIFACT_NOT_FOUND', message: `Artifact not found: ${id}` }] };
+
+  const parsed = parseRK(source);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: parsed.warnings };
+
+  const currentRev = db.prepare('SELECT * FROM revisions WHERE artifact_id = ? AND number = ?').get(id, artRow.current_revision);
+  const currentModel = JSON.parse(currentRev.model);
+  const next = artRow.current_revision + 1;
+  const diff = diffBlocks(currentModel, parsed.model);
+
+  const flatIds = flattenBlocks(parsed.model.blocks).map(b => b.id);
+  const newIds = new Set(flatIds);
+
+  // update comments
+  const commentRows = db.prepare('SELECT * FROM comments WHERE artifact_id = ?').all(id);
+  const updateCmt = db.prepare(`UPDATE comments SET status = ?, resolved_at_revision = ?, resolved_by = ?, resolved_at = ? WHERE id = ?`);
+  const orphanCmt = db.prepare(`UPDATE comments SET status = 'orphaned' WHERE id = ?`);
+
+  let orphanedIds = [];
+
+  const txn = db.transaction(() => {
+    // write revision
+    db.prepare(`
+      INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, block_ids, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(`${id}_rev_${next}`, id, next, source, sha(source), JSON.stringify(parsed.model), JSON.stringify(flatIds), now());
+
+    // resolve / orphan comments
+    orphanedIds = [];
+    for (const c of commentRows) {
+      if (resolvedCommentIds.includes(c.id)) {
+        updateCmt.run('resolved', next, 'agent', now(), c.id);
+      } else if (c.status === 'open' && !newIds.has(c.block_id)) {
+        orphanCmt.run(c.id);
+        orphanedIds.push(c.id);
+      }
+    }
+
+    // update artifact
+    db.prepare(`UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?`)
+      .run(next, parsed.model.title, now(), id);
+  });
+  txn();
+
+  return {
+    ok: true,
+    revision: next,
+    model: parsed.model,
+    diff: { ...diff, orphanedComments: orphanedIds },
+    resolved: resolvedCommentIds,
+    warnings: parsed.warnings,
+  };
+}
+
+export async function getArtifactMeta(id) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
+  return row ? rowToArtifact(row) : null;
+}
+
+export async function getArtifact(id, rev = null) {
+  const meta = await getArtifactMeta(id);
+  if (!meta) return null;
+  const revision = await getRevision(id, rev || meta.currentRevision);
+  const comments = await getComments(id);
+  return { meta, revision, comments };
+}
+
+export async function getRevision(id, rev) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM revisions WHERE artifact_id = ? AND number = ?').get(id, rev);
+  return row ? rowToRevision(row) : null;
+}
+
+export async function getComments(id) {
+  const db = getDb();
+  const rows = db.prepare('SELECT * FROM comments WHERE artifact_id = ?').all(id);
+  return rows.map(rowToComment);
+}
+
+export async function addComment(id, blockId, text, selector = null) {
+  const artifact = await getArtifact(id);
+  if (!artifact) return { ok: false, status: 404, error: 'not found' };
+  const block = findBlockById(artifact.revision.model.blocks, blockId);
+  if (!block) return { ok: false, status: 404, error: 'block not found' };
+
+  const db = getDb();
+  const c = {
+    id: 'cmt_' + crypto.randomBytes(5).toString('hex'),
+    artifactId: id,
+    blockId,
+    text,
+    selector: normalizeSelector(selector),
+    status: 'open',
+    createdAtRevision: artifact.meta.currentRevision,
+    blockSnapshot: block,
+    createdAt: now(),
+  };
+
+  db.prepare(`
+    INSERT INTO comments (id, artifact_id, block_id, text, selector, status, created_at_revision, block_snapshot, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(c.id, id, blockId, text, c.selector ? JSON.stringify(c.selector) : null, 'open', c.createdAtRevision, JSON.stringify(block), c.createdAt);
+
+  return { ok: true, comment: c };
+}
+
+export async function updateCommentStatus(id, commentId, status) {
+  const allowed = new Set(['open', 'resolved']);
+  if (!allowed.has(status)) return { ok: false, status: 400, error: 'invalid status' };
+  const artifact = await getArtifact(id);
+  if (!artifact) return { ok: false, status: 404, error: 'not found' };
+
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM comments WHERE id = ? AND artifact_id = ?').get(commentId, id);
+  if (!row) return { ok: false, status: 404, error: 'comment not found' };
+
+  if (status === 'resolved') {
+    db.prepare(`UPDATE comments SET status = 'resolved', resolved_at_revision = ?, resolved_by = 'human', resolved_at = ?, reopened_at = NULL WHERE id = ?`)
+      .run(artifact.meta.currentRevision, now(), commentId);
+  } else {
+    db.prepare(`UPDATE comments SET status = 'open', resolved_at_revision = NULL, resolved_by = NULL, resolved_at = NULL, reopened_at = ? WHERE id = ?`)
+      .run(now(), commentId);
+  }
+
+  const updated = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
+  return { ok: true, comment: rowToComment(updated) };
+}
+
+export async function getFeedback(id) {
+  const artifact = await getArtifact(id);
+  if (!artifact) return null;
+  const blocks = flattenBlocks(artifact.revision.model.blocks);
+  const comments = artifact.comments.filter(c => c.status === 'open' || c.status === 'orphaned');
+  return {
+    artifactId: id,
+    currentRevision: artifact.meta.currentRevision,
+    url: `/a/${id}`,
+    openComments: comments.map(c => {
+      const idx = blocks.findIndex(b => b.id === c.blockId);
+      const block = idx >= 0 ? blocks[idx] : null;
+      return {
+        id: c.id,
+        blockId: c.blockId,
+        status: c.status,
+        text: c.text,
+        selector: c.selector || null,
+        createdAtRevision: c.createdAtRevision,
+        block: block || c.blockSnapshot,
+        blockSnapshot: c.blockSnapshot,
+        sourceRange: (block || c.blockSnapshot)?.sourceRange,
+        sourceExcerpt: (block || c.blockSnapshot)?.sourceExcerpt,
+        neighbors: { prev: idx > 0 ? [brief(blocks[idx - 1])] : [], next: idx >= 0 && idx < blocks.length - 1 ? [brief(blocks[idx + 1])] : [] }
+      };
+    })
+  };
+}

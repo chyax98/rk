@@ -15,8 +15,9 @@
     "examples/capabilities/grid-layout.rk.md",
     "examples/capabilities/product-system.rk.md",
     "examples/capabilities/rich-media-tabs.rk.md",
-    "examples/capabilities/editorial-components.rk.md"
-  ],
+    "examples/capabilities/editorial-components.rk.md",
+    "examples/capabilities/narrative-blocks.rk.md"
+ ],
   "bad": {
     "examples/fixtures/bad-id.rk.md": "RK_BLOCK_ID_INVALID",
     "examples/fixtures/unknown-block.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
@@ -25,6 +26,8 @@
     "examples/fixtures/heading-directive.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
     "examples/fixtures/paragraph-directive.rk.md": "RK_UNKNOWN_BLOCK_TYPE",
     "examples/fixtures/empty-code.rk.md": "RK_CODE_BODY_REQUIRED",
-    "examples/fixtures/no-fence-code.rk.md": "RK_CODE_BODY_REQUIRED"
+    "examples/fixtures/no-fence-code.rk.md": "RK_CODE_BODY_REQUIRED",
+    "examples/fixtures/empty-comparison.rk.md": "RK_COMPARISON_BODY_REQUIRED",
+    "examples/fixtures/empty-timeline.rk.md": "RK_TIMELINE_BODY_REQUIRED"
   }
 }

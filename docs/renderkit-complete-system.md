@@ -43,7 +43,7 @@ Agent 写 .rk.md
 | frontmatter | 已实现：`title`、`theme`、`surface` | `packages/dsl/src/index.mjs` |
 | block 校验 | 已实现：未知 block、缺 id、重复 id、坏 id、代码块 body 等 | `scripts/verify.mjs`、`examples/fixtures/*` |
 | CLI validate/push/status/feedback/server | 已实现 | `packages/cli/bin/renderkit.mjs` |
-| 本地数据存储 | 已实现：`~/.renderkit/data` | `apps/web/lib/store.mjs` |
+| 本地数据存储 | 已实现：SQLite at `~/.renderkit/data/renderkit.db` | `apps/web/lib/db.mjs`、`apps/web/lib/store.mjs` |
 | Web 文档渲染 | 已实现，文档优先 UI | `apps/web/app/a/[id]/ArtifactView.jsx` |
 | 评论/反馈闭环 | 已实现；支持 block comments、selection-aware quote comments、persistent quote highlights、resolve/reopen、wide-surface supporting pane | `apps/web/app/api/artifacts/[id]/*`、`ArtifactView.jsx` |
 | block renderer 包 | 已拆出 | `packages/blocks/src/*` |
@@ -55,6 +55,7 @@ Agent 写 .rk.md
 | image 富媒体图片 | 已实现 | `ImageBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
 | tabs 多视图内容 | 已实现 | `TabsBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
 | stat/checklist/quote 编辑化组件 | 已实现 | `StatBlock.jsx`、`ChecklistBlock.jsx`、`QuoteBlock.jsx`、`examples/capabilities/editorial-components.rk.md` |
+| comparison/timeline 叙事组件 | 已实现 | `ComparisonBlock.jsx`、`TimelineBlock.jsx`、`examples/capabilities/narrative-blocks.rk.md` |
 | subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
@@ -84,7 +85,7 @@ RenderKit/
 │   └── shared/               # shared constants and recipe registry
 ├── examples/
 │   ├── alpha-showcase.rk.md  # 当前主 showcase
-│   ├── capabilities/         # 能力验证 case：diagram/grid
+│   ├── capabilities/         # 能力验证 case：diagram/grid/rich media/editorial/narrative
 │   ├── fixtures/             # bad fixture，用于验证错误码
 │   ├── surfaces/             # surface recipes 示例
 │   └── theme-cases/          # theme strategy 截图/验证 case
@@ -119,6 +120,8 @@ tabs
 stat
 checklist
 quote
+comparison
+timeline
 ```
 
 默认主题：
@@ -165,7 +168,7 @@ MermaidDiagram
 BlockFrame
 ```
 
-`BlockFrame` 是 review affordance 层。它负责：
+`BlockFrame` 是 review affordance 层。Reading mode 默认隐藏 heavy metadata；Review mode 才展示 block/review affordances。它负责：
 
 - `data-block-id`
 - `data-block-type`
@@ -880,7 +883,7 @@ pnpm verify
 当前结果：
 
 ```text
-Results: 183 passed, 0 failed
+207 passed, 0 failed
 ALL GOOD
 ```
 
@@ -1110,7 +1113,7 @@ D2 使用 `@terrastruct/d2` WASM，本地能力完整，但依赖体积较大。
 
 1. 单包发布。
 2. Standalone local server。
-3. 可选 SQLite store。
+3. SQLite migration/backfill tooling。
 4. 多项目 workspace。
 5. Agent task integration。
 6. 可插拔 renderer registry。

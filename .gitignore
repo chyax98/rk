@@ -7,3 +7,4 @@ node_modules
 *.rk.lock.json
 *.log
 .DS_Store
+research/design-assets/external-repos/

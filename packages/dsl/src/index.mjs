@@ -5,7 +5,6 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table', 'image', 'tabs', 'tab', 'stat', 'checklist', 'quote']);
 const ALIASES = new Map([
   ['sum', { name: 'summary' }],
   ['note', { name: 'callout', attrs: { tone: 'info' } }],
@@ -17,7 +16,32 @@ const ALIASES = new Map([
   ['src', { name: 'code' }],
   ['metric', { name: 'stat' }],
   ['todo', { name: 'checklist' }],
+  ['compare', { name: 'comparison' }],
+  ['roadmap', { name: 'timeline' }],
 ]);
+
+// Single source of truth for block compilation. To add a block:
+// 1. Add a compiler entry here.
+// 2. Add the React renderer in packages/blocks/src/registry.jsx.
+// 3. Add a capability fixture and verifier coverage.
+const BLOCK_COMPILERS = {
+  'callout': (node, attrs, ctx) => compileCallout(node, attrs, ctx.source),
+  'decision-card': (node, attrs, ctx) => compileDecision(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'diagram': (node, attrs, ctx) => compileDiagram(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'code': (node, attrs, ctx) => compileCode(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'summary': (node, attrs, ctx) => compileSummary(node, attrs, ctx.source),
+  'subdocument': (node, attrs, ctx) => compileSubdocument(node, attrs, ctx.source),
+  'grid': (node, attrs, ctx) => compileGrid(node, attrs, ctx),
+  'table': (node, attrs, ctx) => compileTable(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'image': (node, attrs, ctx) => compileImage(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'tabs': (node, attrs, ctx) => compileTabs(node, attrs, ctx),
+  'stat': (node, attrs, ctx) => compileStat(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'checklist': (node, attrs, ctx) => compileChecklist(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'quote': (node, attrs, ctx) => compileQuote(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'comparison': (node, attrs, ctx) => compileComparison(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'timeline': (node, attrs, ctx) => compileTimeline(node, attrs, ctx.source, ctx.errors, ctx.file),
+};
+const KNOWN = new Set([...Object.keys(BLOCK_COMPILERS), 'tab']);
 const DEFAULT_THEME = 'paper-light';
 const VALID_THEMES = new Set(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
 const VALID_SURFACES = new Set(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
@@ -42,6 +66,7 @@ export function parseRK(source, file = '<source>') {
 
   const blocks = [];
   const ids = new Map();
+  const ctx = { source, file, errors, warnings };
   let paraN = 0;
   let headingN = 0;
 
@@ -91,20 +116,8 @@ export function parseRK(source, file = '<source>') {
       }
       const patched = resolved.name === originalName ? node : { ...node, name, attributes: attrs };
       let block;
-      if (name === 'callout') block = compileCallout(patched, attrs, source);
-      if (name === 'decision-card') block = compileDecision(patched, attrs, source, errors, file);
-      if (name === 'diagram') block = compileDiagram(patched, attrs, source, errors, file);
-      if (name === 'code') block = compileCode(patched, attrs, source, errors, file);
-      if (name === 'summary') block = compileSummary(patched, attrs, source);
-      if (name === 'subdocument') block = compileSubdocument(patched, attrs, source);
-      if (name === 'grid') block = compileGrid(patched, attrs, source, errors, file);
-      if (name === 'table') block = compileTable(patched, attrs, source, errors, file);
-      if (name === 'image') block = compileImage(patched, attrs, source, errors, file);
-      if (name === 'tabs') block = compileTabs(patched, attrs, source, errors, file);
-      if (name === 'stat') block = compileStat(patched, attrs, source, errors, file);
-      if (name === 'checklist') block = compileChecklist(patched, attrs, source, errors, file);
-      if (name === 'quote') block = compileQuote(patched, attrs, source, errors, file);
       if (name === 'tab') errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
+      else block = compileBlock(patched, attrs, ctx);
       if (block) blocks.push(block);
       continue;
     }
@@ -235,30 +248,33 @@ function compileCode(node, attrs, source, errors, file) {
 
 
 
-function compileGrid(node, attrs, source, errors, file) {
+function compileBlock(node, attrs, ctx) {
+  return BLOCK_COMPILERS[node.name]?.(node, attrs, ctx) || null;
+}
+
+function compileChildBlock(child, attrs, ctx, options) {
+  const resolved = resolveDirective(child.name, child.attributes || {});
+  const name = resolved.name;
+  if (!KNOWN.has(name) || options.disallow?.has(name)) {
+    ctx.errors.push(diag(options.errorCode, options.message(child.name), ctx.file, pos(child)));
+    return null;
+  }
+  const id = resolved.attrs.id || options.idFor(attrs, options.index);
+  const patched = { ...child, name, attributes: { ...resolved.attrs, id } };
+  return compileBlock(patched, patched.attributes, ctx);
+}
+
+function compileGrid(node, attrs, ctx) {
   const children = [];
   for (const child of node.children || []) {
     if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
-    const resolved = resolveDirective(child.name, child.attributes || {});
-    if (!KNOWN.has(resolved.name) || resolved.name === 'grid') {
-      errors.push(diag('RK_GRID_CHILD_UNSUPPORTED', `grid child must be a supported non-grid block, got ${child.name}`, file, pos(child)));
-      continue;
-    }
-    const childId = resolved.attrs.id || `${attrs.id || 'grid'}-${children.length + 1}`;
-    const patched = { ...child, name: resolved.name, attributes: { ...resolved.attrs, id: childId } };
-    let block;
-    if (resolved.name === 'callout') block = compileCallout(patched, patched.attributes, source);
-    if (resolved.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'summary') block = compileSummary(patched, patched.attributes, source);
-    if (resolved.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
-    if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'tabs') block = compileTabs(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'stat') block = compileStat(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'checklist') block = compileChecklist(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'quote') block = compileQuote(patched, patched.attributes, source, errors, file);
+    const block = compileChildBlock(child, attrs, ctx, {
+      index: children.length + 1,
+      disallow: new Set(['grid']),
+      errorCode: 'RK_GRID_CHILD_UNSUPPORTED',
+      message: name => `grid child must be a supported non-grid block, got ${name}`,
+      idFor: (parentAttrs, index) => `${parentAttrs.id || 'grid'}-${index}`
+    });
     if (block) children.push(block);
   }
   return {
@@ -271,7 +287,7 @@ function compileGrid(node, attrs, source, errors, file) {
       children,
     },
     sourceRange: pos(node),
-    sourceExcerpt: excerpt(source, node.position)
+    sourceExcerpt: excerpt(ctx.source, node.position)
   };
 }
 
@@ -391,12 +407,46 @@ function compileQuote(node, attrs, source, errors, file) {
   };
 }
 
-function compileTabs(node, attrs, source, errors, file) {
+function compileComparison(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  const parsed = parsePipeTable(body);
+  if (parsed.headers.length < 2 || !parsed.rows.length) {
+    errors.push(diag('RK_COMPARISON_BODY_REQUIRED', 'comparison directive requires a Markdown table with at least two columns and one row', file, pos(node)));
+  }
+  return {
+    id: attrs.id,
+    type: 'comparison',
+    props: {
+      title: attrs.title || '',
+      caption: attrs.caption || '',
+      columns: parsed.headers,
+      rows: parsed.rows,
+      width: normalizeWidth(attrs.width || attrs.span || 'wide')
+    },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileTimeline(node, attrs, source, errors, file) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  const items = parseTimelineItems(body);
+  if (!items.length) errors.push(diag('RK_TIMELINE_BODY_REQUIRED', 'timeline directive requires list items', file, pos(node)));
+  return {
+    id: attrs.id,
+    type: 'timeline',
+    props: { title: attrs.title || '', items, width: normalizeWidth(attrs.width || attrs.span || 'wide') },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileTabs(node, attrs, ctx) {
   const tabs = [];
   for (const child of node.children || []) {
     if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
     if (child.name !== 'tab') {
-      errors.push(diag('RK_TABS_CHILD_UNSUPPORTED', `tabs child must be tab, got ${child.name}`, file, pos(child)));
+      ctx.errors.push(diag('RK_TABS_CHILD_UNSUPPORTED', `tabs child must be tab, got ${child.name}`, ctx.file, pos(child)));
       continue;
     }
     const tabAttrs = child.attributes || {};
@@ -404,55 +454,42 @@ function compileTabs(node, attrs, source, errors, file) {
     tabs.push({
       id: tabId,
       label: tabAttrs.label || tabAttrs.title || `Tab ${tabs.length + 1}`,
-      blocks: compileNestedBlocks(child, tabId, source, errors, file)
+      blocks: compileNestedBlocks(child, tabId, ctx)
     });
   }
-  if (!tabs.length) errors.push(diag('RK_TABS_CHILD_REQUIRED', 'tabs directive requires at least one tab child', file, pos(node)));
+  if (!tabs.length) ctx.errors.push(diag('RK_TABS_CHILD_REQUIRED', 'tabs directive requires at least one tab child', ctx.file, pos(node)));
   return {
     id: attrs.id,
     type: 'tabs',
     props: { title: attrs.title || '', width: normalizeWidth(attrs.width || attrs.span || 'wide'), tabs },
     sourceRange: pos(node),
-    sourceExcerpt: excerpt(source, node.position)
+    sourceExcerpt: excerpt(ctx.source, node.position)
   };
 }
 
-function compileNestedBlocks(node, prefix, source, errors, file) {
+function compileNestedBlocks(node, prefix, ctx) {
   const out = [];
   let paraN = 0;
   let headingN = 0;
   for (const child of node.children || []) {
     if (child.type === 'heading') {
       headingN++;
-      out.push({ id: `${prefix}-heading-${headingN}`, type: 'heading', props: { level: child.depth, text: plainText(child) }, sourceRange: pos(child), sourceExcerpt: excerpt(source, child.position) });
+      out.push({ id: `${prefix}-heading-${headingN}`, type: 'heading', props: { level: child.depth, text: plainText(child) }, sourceRange: pos(child), sourceExcerpt: excerpt(ctx.source, child.position) });
       continue;
     }
     if (child.type === 'paragraph') {
       const text = plainText(child).trim();
-      if (text) { paraN++; out.push({ id: `${prefix}-paragraph-${paraN}`, type: 'paragraph', props: { markdown: text }, sourceRange: pos(child), sourceExcerpt: excerpt(source, child.position) }); }
+      if (text) { paraN++; out.push({ id: `${prefix}-paragraph-${paraN}`, type: 'paragraph', props: { markdown: text }, sourceRange: pos(child), sourceExcerpt: excerpt(ctx.source, child.position) }); }
       continue;
     }
     if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
-    const resolved = resolveDirective(child.name, child.attributes || {});
-    if (resolved.name === 'tab' || !KNOWN.has(resolved.name)) {
-      errors.push(diag('RK_TABS_BLOCK_UNSUPPORTED', `unsupported block inside tab: ${child.name}`, file, pos(child)));
-      continue;
-    }
-    const nestedId = resolved.attrs.id || `${prefix}-${out.length + 1}`;
-    const patched = { ...child, name: resolved.name, attributes: { ...resolved.attrs, id: nestedId } };
-    let block;
-    if (resolved.name === 'callout') block = compileCallout(patched, patched.attributes, source);
-    if (resolved.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'summary') block = compileSummary(patched, patched.attributes, source);
-    if (resolved.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
-    if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'grid') block = compileGrid(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'stat') block = compileStat(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'checklist') block = compileChecklist(patched, patched.attributes, source, errors, file);
-    if (resolved.name === 'quote') block = compileQuote(patched, patched.attributes, source, errors, file);
+    const block = compileChildBlock(child, { id: prefix }, ctx, {
+      index: out.length + 1,
+      disallow: new Set(['tab']),
+      errorCode: 'RK_TABS_BLOCK_UNSUPPORTED',
+      message: name => `unsupported block inside tab: ${name}`,
+      idFor: (parentAttrs, index) => `${parentAttrs.id}-${index}`
+    });
     if (block) out.push(block);
   }
   return out;
@@ -463,6 +500,26 @@ function rawDirectiveBody(source, node) {
   const lines = raw.split('\n');
   if (lines.length <= 2) return '';
   return lines.slice(1, -1).join('\n').trim();
+}
+
+function parseTimelineItems(body) {
+  return String(body || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const cleaned = line.replace(/^[-*]\s+/, '').trim();
+      const m = cleaned.match(/^\[([^\]]+)\]\s*(.+)$/);
+      const status = (m?.[1] || 'next').trim().toLowerCase();
+      const rest = (m?.[2] || cleaned).trim();
+      const split = rest.indexOf(':');
+      return {
+        status,
+        label: split >= 0 ? rest.slice(0, split).trim() : rest,
+        body: split >= 0 ? rest.slice(split + 1).trim() : ''
+      };
+    })
+    .filter(item => item.label);
 }
 
 function parseChecklistItems(body) {

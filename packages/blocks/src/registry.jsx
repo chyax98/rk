@@ -13,6 +13,8 @@ import TabsBlock from './TabsBlock.jsx';
 import StatBlock from './StatBlock.jsx';
 import ChecklistBlock from './ChecklistBlock.jsx';
 import QuoteBlock from './QuoteBlock.jsx';
+import ComparisonBlock from './ComparisonBlock.jsx';
+import TimelineBlock from './TimelineBlock.jsx';
 
 /**
  * Block type → component registry.
@@ -34,4 +36,6 @@ export const registry = {
   'stat': StatBlock,
   'checklist': ChecklistBlock,
   'quote': QuoteBlock,
+  'comparison': ComparisonBlock,
+  'timeline': TimelineBlock,
 };

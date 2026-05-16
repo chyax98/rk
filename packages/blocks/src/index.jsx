@@ -17,4 +17,6 @@ export { default as TabsBlock } from './TabsBlock.jsx';
 export { default as StatBlock } from './StatBlock.jsx';
 export { default as ChecklistBlock } from './ChecklistBlock.jsx';
 export { default as QuoteBlock } from './QuoteBlock.jsx';
+export { default as ComparisonBlock } from './ComparisonBlock.jsx';
+export { default as TimelineBlock } from './TimelineBlock.jsx';
 export { default as EChartsBlock } from './EChartsBlock.jsx';

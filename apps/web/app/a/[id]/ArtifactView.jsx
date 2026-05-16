@@ -138,7 +138,7 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
       <div className="rk-floating-tools" aria-label="Document tools">
         <button onClick={() => setReviewMode(v => !v)} title="Toggle review mode" className={reviewMode ? 'is-active' : ''}>Review</button>
         <button onClick={() => setOutlineOpen(o => !o)} title="Outline">☰</button>
-        <button onClick={() => openDrawer('comments', selected)} title="Comments">💬{comments.length ? ` ${comments.length}` : ''}</button>
+<button onClick={() => openDrawer('comments', selected)} title="Comments">💬{reviewMode && comments.length ? ` ${comments.length}` : ''}</button>
         <button onClick={() => copyToClipboard(feedbackCmd)} title="Copy feedback command">⎘</button>
       </div>
 

@@ -454,3 +454,28 @@ button, textarea { font: inherit; }
   text-decoration-thickness: 1px;
   text-decoration-color: var(--rk-border-hover);
 }
+
+/* ─── Light reading mode: content-first, subtle markers ─── */
+
+/* Non-review: comment indicator → minimal dot, no count */
+.rk-page:not(.rk-review-mode) .rk-block[data-rk-has-comments]::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  opacity: .35;
+}
+/* Non-review + hover: restore count badge */
+.rk-page:not(.rk-review-mode) .rk-block[data-rk-has-comments]:hover::after {
+  content: attr(data-comment-count);
+  width: 20px;
+  height: 20px;
+  opacity: .9;
+}
+/* Floating tools: fade in reading mode, full on hover */
+.rk-page:not(.rk-review-mode) .rk-floating-tools {
+  opacity: .4;
+  transition: opacity .2s ease;
+}
+.rk-page:not(.rk-review-mode) .rk-floating-tools:hover {
+  opacity: 1;
+}

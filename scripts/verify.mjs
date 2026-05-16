@@ -161,7 +161,27 @@ for (const type of ["stat", "checklist", "quote"]) {
 const checklist = editorialBlocks.find(b => b.type === "checklist");
 assert("checklist parses checked and unchecked items", checklist?.props?.items?.some(i => i.checked) && checklist?.props?.items?.some(i => !i.checked));
 
-// ── Section 6: Web build ──
+// ── Section 6: Narrative blocks ──
+console.log("\n== Narrative blocks ==");
+const narrativeCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/narrative-blocks.rk.md --json");
+let narrativeParsed;
+try { narrativeParsed = JSON.parse(narrativeCase.stdout); } catch { narrativeParsed = null; }
+const narrativeBlocks = narrativeParsed?.model?.blocks || [];
+const narrativeTypes = new Set(narrativeBlocks.flatMap(b => [b.type, ...(b.props?.children || []).map(c => c.type)]));
+assert("narrative blocks case validates", narrativeCase.code === 0 && narrativeParsed?.ok === true, `exit=${narrativeCase.code}`);
+assert("narrative blocks case covers comparison", narrativeTypes.has("comparison"));
+assert("narrative blocks case covers timeline", narrativeTypes.has("timeline"));
+assert("narrative blocks case covers summary", narrativeTypes.has("summary"));
+assert("narrative blocks case covers quote", narrativeTypes.has("quote"));
+const compBlock = narrativeBlocks.find(b => b.type === "comparison");
+assert("comparison has columns from table headers", (compBlock?.props?.columns?.length || 0) >= 2, `got ${compBlock?.props?.columns?.length}`);
+assert("comparison has rows from table body", (compBlock?.props?.rows?.length || 0) >= 1, `got ${compBlock?.props?.rows?.length}`);
+const tlBlock = narrativeBlocks.find(b => b.type === "timeline");
+assert("timeline has items", (tlBlock?.props?.items?.length || 0) >= 3, `got ${tlBlock?.props?.items?.length}`);
+const tlStatuses = new Set((tlBlock?.props?.items || []).map(i => i.status));
+assert("timeline items have varied statuses", tlStatuses.size >= 2, `got ${[...tlStatuses].join(",")}`);
+
+// ── Section 7: Web build ──
 console.log("\n== Web build ==");
 try {
   execSync("pnpm --filter @renderkit/web build", { cwd: root, stdio: "inherit", encoding: "utf8" });

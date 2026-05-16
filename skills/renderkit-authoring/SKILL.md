@@ -59,6 +59,8 @@ Use aliases for faster Agent authoring. They compile to the canonical block type
 | `dec` | `decision-card` | — |
 | `fig` | `diagram` | engine inferred from fence/body; defaults to Mermaid |
 | `src` | `code` | — |
+| `compare` | `comparison` | — |
+| `roadmap` | `timeline` | — |
 
 Example:
 
@@ -274,6 +276,38 @@ Use `grid` when a document needs two-dimensional layout instead of one block per
 
 Grid children are ordinary RenderKit blocks. Keep grids shallow; do not nest a grid inside another grid.
 
+#### comparison / compare
+
+Use `comparison` or alias `compare` for side-by-side evaluation of options, alternatives, or trade-offs.
+
+```md
+:::compare{id="auth-comparison" title="Auth mechanism comparison" width="wide"}
+| Criterion | JWT + Redis | Session | mTLS |
+|---|---|---|---|
+| Scalability | Stateless | Stateful | Stateless |
+| Complexity | Medium | Low | High |
+| Best for | API-first | Server-rendered | Service mesh |
+:::
+```
+
+The body must be a GitHub-flavored Markdown table with at least two columns and one data row. The first row is treated as column headers. Supported attributes: `title`, `caption`, `width`.
+
+#### timeline / roadmap
+
+Use `timeline` or alias `roadmap` for sequential progress tracking, rollout plans, and milestone views.
+
+```md
+:::roadmap{id="launch-timeline" title="Launch roadmap" width="wide"}
+- [done] Alpha: Core pipeline stable
+- [done] Beta: 12 teams onboarded
+- [active] GA staged rollout: 10% → 25% → 100%
+- [next] Post-GA: Collaborative editing
+- [planned] v2.0: Plugin surface
+:::
+```
+
+Each list item uses the pattern `[status] label: optional body`. Status is free-form text; typical values: `done`, `active`, `next`, `planned`. Supported attributes: `title`, `width`.
+
 ## Stable ID rules
 
 - Every directive block MUST have an `id`.
@@ -343,11 +377,11 @@ If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKN
 
 | Surface | Recommended blocks |
 |---------|-------------------|
-| `engineering-plan` | summary, stat, checklist, callout, decision-card, code, diagram, image, table, tabs, grid |
-| `decision-brief` | summary, quote, decision-card, callout, image, table |
-| `review-report` | summary, stat, checklist, callout, code, image, table, tabs |
-| `runbook` | summary, checklist, code, callout, diagram, image, table, tabs |
-| `data-report-lite` | summary, stat, quote, checklist, code, diagram, image, table, tabs, grid |
+| `engineering-plan` | summary, stat, checklist, callout, decision-card, code, diagram, image, table, tabs, grid, comparison, timeline |
+| `decision-brief` | summary, quote, decision-card, callout, image, table, comparison |
+| `review-report` | summary, stat, checklist, callout, code, image, table, tabs, comparison |
+| `runbook` | summary, checklist, code, callout, diagram, image, table, tabs, timeline |
+| `data-report-lite` | summary, stat, quote, checklist, code, diagram, image, table, tabs, grid, comparison, timeline |
 
 If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected.
 
@@ -381,7 +415,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 
 | Code | Fix |
 |------|-----|
-| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs, stat, checklist, quote; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo |
+| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs, stat, checklist, quote, comparison, timeline; aliases: sum, note, warn, alert, ok, dec, fig, src, metric, todo, compare, roadmap |
 | `RK_BLOCK_ID_REQUIRED` | Add `id="..."` attribute to the directive |
 | `RK_BLOCK_ID_INVALID` | Use only `[a-zA-Z0-9_-]+` characters in the id |
 | `RK_DUPLICATE_BLOCK_ID` | Each block id must be unique |
@@ -391,6 +425,8 @@ When in doubt about how a surface should look, read the corresponding example fi
 | `RK_DIAGRAM_CODE_REQUIRED` | Add a fenced code block or inline diagram body inside diagram |
 | `RK_UNSUPPORTED_DIAGRAM_ENGINE` | Use one of: mermaid, svg, echarts, echarts-bar, echarts-line, echarts-pie, infographic, plantuml, d2 |
 | `RK_CODE_BODY_REQUIRED` | Add a fenced code block inside code directive |
+| `RK_COMPARISON_BODY_REQUIRED` | Add a Markdown table with at least two columns and one row inside comparison directive |
+| `RK_TIMELINE_BODY_REQUIRED` | Add list items inside timeline directive |
 | `RK_TABLE_BODY_REQUIRED` | Add a GitHub-flavored Markdown table inside table directive |
 | `RK_IMAGE_SRC_REQUIRED` | Add `src="..."` to image directive |
 | `RK_STAT_VALUE_REQUIRED` | Add `value="..."` to stat/metric directive |
