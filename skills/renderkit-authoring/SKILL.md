@@ -109,7 +109,7 @@ flowchart LR
 Supported engines: `mermaid`, `svg`, `echarts`, `infographic`, `plantuml`, `d2`.
 
 - `mermaid`, `svg`, `echarts`, and `infographic` render locally in the browser.
-- `plantuml` and `d2` preserve source with a clear fallback until optional local adapters are installed.
+- `plantuml` and `d2` render through the local RenderKit server (`/api/render/diagram`). PlantUML requires local Java and may require Graphviz for some diagram types; D2 uses local WASM.
 - Always include a fenced code block whose language matches the engine when possible.
 
 #### grid

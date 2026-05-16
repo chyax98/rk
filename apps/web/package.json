@@ -10,12 +10,14 @@
   },
   "dependencies": {
     "@renderkit/blocks": "workspace:*",
-    "@renderkit/dsl": "workspace:*",
     "@renderkit/design": "workspace:*",
+    "@renderkit/dsl": "workspace:*",
+    "@terrastruct/d2": "^0.1.33",
+    "echarts": "latest",
     "mermaid": "latest",
     "next": "latest",
+    "plantuml": "^0.0.2",
     "react": "latest",
-    "react-dom": "latest",
-    "echarts": "latest"
+    "react-dom": "latest"
   }
 }

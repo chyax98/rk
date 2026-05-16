@@ -75,6 +75,23 @@ assert("feedback exit 0", feedback.code === 0, `got ${feedback.code}`);
 assert("feedback ok=true", feedbackParsed?.ok === true, `got ${feedbackParsed?.ok}`);
 assert("feedback has openComments", Array.isArray(feedbackParsed?.openComments));
 
+// ── Diagram render API ──
+console.log("\n== Diagram render API ==");
+async function postDiagram(engine, code) {
+  const res = await fetch(`${srvParsed.endpoint}/api/render/diagram`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ engine, code })
+  });
+  return await res.json();
+}
+const d2 = await postDiagram("d2", "x -> y");
+assert("d2 render ok=true", d2?.ok === true, d2?.error || "");
+assert("d2 render returns svg", typeof d2?.svg === "string" && d2.svg.startsWith("<svg"), `len=${d2?.svg?.length ?? 0}`);
+const plantuml = await postDiagram("plantuml", "@startuml\nAlice -> Bob: hi\n@enduml");
+assert("plantuml render ok=true", plantuml?.ok === true, plantuml?.error || "");
+assert("plantuml render returns svg", typeof plantuml?.svg === "string" && plantuml.svg.startsWith("<svg"), `len=${plantuml?.svg?.length ?? 0}`);
+
 // ── Summary ──
 console.log(`\n${"=".repeat(40)}`);
 console.log(`Results: ${pass} passed, ${fail} failed`);

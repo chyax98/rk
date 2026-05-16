@@ -9,7 +9,7 @@ surface: engineering-plan
 This case constrains RenderKit's chart/diagram embedding strategy across Mermaid, PlantUML, D2, SVG, ECharts, and infographic blocks.
 
 :::summary{id="diagram-summary" title="Embedding policy"}
-Mermaid, SVG, ECharts, and infographic can render locally. PlantUML and D2 preserve source with a clear fallback until local adapters are added.
+Mermaid, SVG, ECharts, and infographic render in the browser. PlantUML and D2 render through the local RenderKit server adapter, with source fallback only if local dependencies fail.
 :::
 
 :::diagram{id="mermaid-flow" engine="mermaid" caption="Mermaid flow"}
@@ -54,7 +54,7 @@ flowchart LR
 ```
 :::
 
-:::diagram{id="plantuml-source" engine="plantuml" caption="PlantUML fallback"}
+:::diagram{id="plantuml-source" engine="plantuml" caption="PlantUML local server render"}
 ```plantuml
 @startuml
 Agent -> RenderKit: push artifact
@@ -64,7 +64,7 @@ Browser -> Agent: feedback comments
 ```
 :::
 
-:::diagram{id="d2-source" engine="d2" caption="D2 fallback"}
+:::diagram{id="d2-source" engine="d2" caption="D2 local WASM render"}
 ```d2
 agent -> renderkit: push
 renderkit -> browser: render
