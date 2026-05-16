@@ -186,7 +186,12 @@ console.log("\n== Shared contracts ==");
 const contractsCase = run("node scripts/verify-contracts.mjs");
 assert("shared contracts drift gate passes", contractsCase.code === 0, contractsCase.stdout || contractsCase.stderr);
 
-// ── Section 8: Web build ──
+// ── Section 8: Agent-facing CLI ──
+console.log("\n== Agent-facing CLI ==");
+const agentCase = run("node scripts/verify-agent.mjs");
+assert("agent-facing recipe/design CLI passes", agentCase.code === 0, agentCase.stdout || agentCase.stderr);
+
+// ── Section 9: Web build ──
 console.log("\n== Web build ==");
 try {
   execSync("pnpm --filter @renderkit/web build", { cwd: root, stdio: "inherit", encoding: "utf8" });

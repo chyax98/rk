@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@renderkit/dsl": "workspace:*",
+    "@renderkit/shared": "workspace:*",
     "commander": "latest"
   }
 }

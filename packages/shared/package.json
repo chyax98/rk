@@ -12,6 +12,10 @@
     "./contracts": {
       "types": "./src/contracts.d.ts",
       "import": "./src/contracts.mjs"
+    },
+    "./design-assets": {
+      "types": "./src/design-assets.d.ts",
+      "import": "./src/design-assets.mjs"
     }
   }
 }

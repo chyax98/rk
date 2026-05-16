@@ -1,4 +1,5 @@
 export * from './contracts.mjs';
+export * from './design-assets.mjs';
 
 export const RK_VERSION = '1.0';
 export const DEFAULT_PORT = 3737;

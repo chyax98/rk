@@ -48,7 +48,7 @@
 | Integration prioritization | `docs/product/renderkit-1.0-design-resource-integration-plan.md` | Done | Execute remaining P1/P2 integrations |
 | Diagram visual language | `docs/renderkit-diagram-visual-language.md`, fixture, pw screenshot | Done as convention layer | No runtime `tech-graph` engine yet |
 | Browser verification with `pw` | `scripts/verify-browser.mjs`; `pnpm verify:browser -> 37 passed, 0 failed`; multiple `.pw-evidence/*`; `pw -h`; Pass 7/8/10/11 evidence | Strong | Add more cases as future blocks land |
-| CLI/Agent feedback | `renderkit validate/push/status/feedback`, authoring skill | Good | Skill should absorb latest design directives |
+| CLI/Agent feedback | `renderkit validate/push/status/feedback`, `renderkit recipes`, `renderkit design resources`, authoring skill, `scripts/verify-agent.mjs` | Strong | Future `design recommend` optional |
 | Process docs preserved | `docs/product/renderkit-1.0-pass*.md`, `research/design-assets/*.md` | Good | Keep index/sorting updated |
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
 | TypeScript / shared contracts | `packages/shared/src/contracts.d.ts`, `packages/shared/src/contracts.mjs`, `scripts/verify-contracts.mjs`, `docs/product/renderkit-1.0-typescript-migration.md` | Stage 1 done | Stage 2+ migration pending |
@@ -58,11 +58,12 @@
 Latest known green gates:
 
 ```text
-pnpm verify         -> Results: 213 passed, 0 failed
+pnpm verify         -> Results: 214 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed
 pnpm verify:contracts -> Results: 54 passed, 0 failed
+pnpm verify:agent -> Results: 26 passed, 0 failed
 ```
 
 Recent browser evidence:
@@ -92,7 +93,7 @@ e83a033 document design token source map
 当前长期目标 **尚未完成**，因为以下要求仍未完成或验证不足：
 
 1. **TypeScript Stage 2+ migration** 尚未完成：shared contracts 已完成，但 DSL/Store/API/renderer/Web UI 还未迁移到 typed implementation。
-2. **更多外部设计资源的运行时集成**仍未完成：`md2html` / `html-anything` / `ui-ux-pro-max` / `guizang` 的分析已落文档，但仍有部分只停留在研究或 authoring guidance 层。
+2. **更多外部设计资源的运行时集成**仍未完成：六个资源已经以 CLI/shared manifest 形式机器可读，但 `ui-ux-pro-max` 的自动 design recommend、`thesvg` icon helper、`guizang` deck surface 仍是 future scope。
 3. **Final 1.0 audit** has not been run after all modules land.
 
 已在主线完成但仍需后续观察：

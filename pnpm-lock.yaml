@@ -67,6 +67,9 @@ importers:
       '@renderkit/dsl':
         specifier: workspace:*
         version: link:../dsl
+      '@renderkit/shared':
+        specifier: workspace:*
+        version: link:../shared
       commander:
         specifier: latest
         version: 14.0.3

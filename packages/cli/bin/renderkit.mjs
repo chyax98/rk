@@ -5,6 +5,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseRK } from '@renderkit/dsl';
+import { getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities } from '@renderkit/shared';
 
 const program = new Command();
 program.name('renderkit').description('Local Agent artifact renderer').version('0.0.1');
@@ -63,6 +64,26 @@ program.command('feedback <target>').option('--json', 'json output').action(asyn
   process.exit(res.ok ? 0 : 1);
 });
 
+const recipes = program.command('recipes').description('inspect Agent authoring recipes');
+recipes.command('list').option('--json', 'json output').action((opts) => {
+  const surfaces = listRecipeSurfaces().map(surface => ({ surface, ...getRecipe(surface) }));
+  output({ ok: true, surfaces }, opts.json);
+});
+recipes.command('show <surface>').option('--json', 'json output').action((surface, opts) => {
+  const recipe = getRecipe(surface);
+  if (!recipe) { output({ ok: false, error: `Unknown recipe surface: ${surface}`, surfaces: listRecipeSurfaces() }, opts.json); process.exit(1); }
+  output({ ok: true, surface, recipe }, opts.json);
+});
+
+const design = program.command('design').description('inspect local design resource assets');
+design.command('resources').option('--json', 'json output').option('--priority <priority>', 'filter priority, e.g. P0/P1/P2').action((opts) => {
+  output({ ok: true, priorities: listDesignResourcePriorities(), resources: listDesignResources({ priority: opts.priority }) }, opts.json);
+});
+design.command('resource <id>').option('--json', 'json output').action((id, opts) => {
+  const resource = getDesignResource(id);
+  if (!resource) { output({ ok: false, error: `Unknown design resource: ${id}`, resources: listDesignResources().map(r => r.id) }, opts.json); process.exit(1); }
+  output({ ok: true, resource }, opts.json);
+});
 
 const server = program.command('server').description('manage local RenderKit server');
 server.command('start').option('--port <port>', 'port', '3737').action(async (opts) => {

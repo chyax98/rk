@@ -32,6 +32,25 @@ These directives are adapted from the cloned `html-anything` design assets and a
 7. **Accessibility.** Preserve contrast, meaningful headings, alt text for images, captions for diagrams, and clear labels for tables/charts.
 8. **No body editing assumption.** Human feedback arrives as comments/selectors. The Agent updates `.rk.md` and pushes a new revision.
 
+## Agent planning CLI
+
+Before authoring a substantial artifact, ask the local CLI for the current recipe and design-resource guidance instead of relying on memory:
+
+```bash
+renderkit recipes list --json
+renderkit recipes show engineering-plan --json
+renderkit design resources --json
+renderkit design resource md2html --json
+```
+
+Use `renderkit recipes show <surface>` to choose block structure and anti-patterns. Use `renderkit design resources` to see the prioritized local design assets that informed RenderKit; do not copy external runtimes directly into `.rk.md`.
+
+After review, pull comments for the Agent loop:
+
+```bash
+renderkit feedback path/to/artifact.rk.md --json
+```
+
 ## File format: `.rk.md`
 
 RenderKit uses a Markdown-based DSL with frontmatter and directive blocks.
@@ -72,6 +91,8 @@ Use aliases for faster Agent authoring. They compile to the canonical block type
 | `dec` | `decision-card` | — |
 | `fig` | `diagram` | engine inferred from fence/body; defaults to Mermaid |
 | `src` | `code` | — |
+| `metric` | `stat` | — |
+| `todo` | `checklist` | — |
 | `compare` | `comparison` | — |
 | `roadmap` | `timeline` | — |
 
