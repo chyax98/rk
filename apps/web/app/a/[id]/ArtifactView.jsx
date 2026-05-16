@@ -1,14 +1,39 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
+import { BlockFrame } from '@renderkit/blocks';
 
 export default function ArtifactView({ artifactId, revision, comments: initialComments }) {
   const [comments, setComments] = useState(initialComments || []);
   const [selected, setSelected] = useState(null);
   const [text, setText] = useState('');
+  const [menu, setMenu] = useState(null);
+  const [outlineOpen, setOutlineOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState('comment');
   const model = revision.model;
   const blocks = model.blocks;
-  const theme = model.theme || 'dark-pro';
+  const theme = model.theme || 'paper-light';
   const surface = model.surface || '';
+  const allBlocks = flattenBlocks(blocks);
+  const selectedBlock = allBlocks.find(b => b.id === selected) || null;
+  const feedbackCmd = `rk feedback ${artifactId}`;
+
+  const commentsFor = useCallback((blockId) => comments.filter(c => c.blockId === blockId), [comments]);
+  const outlineItems = blocks.map((b) => ({ id: b.id, type: b.type, label: blockLabel(b) }));
+
+  function copyToClipboard(str) { navigator.clipboard?.writeText(str).catch(() => {}); }
+  function openDrawer(mode, blockId = selected) {
+    if (blockId) setSelected(blockId);
+    setDrawerMode(mode);
+    setDrawerOpen(true);
+  }
+  function openMenu(e, blockId) {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelected(blockId);
+    setMenu({ x: e.clientX || 260, y: e.clientY || 160, blockId });
+  }
+  function closeMenu() { setMenu(null); }
 
   async function submitComment() {
     if (!selected || !text.trim()) return;
@@ -18,182 +43,185 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
       body: JSON.stringify({ blockId: selected, text })
     });
     const json = await res.json();
-    if (json.ok) { setComments([...comments, json.comment]); setText(''); }
+    if (json.ok) { setComments(prev => [...prev, json.comment]); setText(''); }
   }
 
-  const commentCount = (blockId) => comments.filter(c => c.blockId === blockId).length;
-
-  return (
-    <div className="rk-artifact" data-rk-theme={theme} data-rk-surface={surface || undefined}>
-      <main className="rk-content">
-        <div className="rk-topbar">
-          <h1 className="rk-topbar-title">{model.title}</h1>
-          <div className="rk-topbar-meta">
-            <span>rev {revision.number}</span>
-            {theme && <><span>·</span><span>{theme}</span></>}
-            {surface && <><span>·</span><span>{surface}</span></>}
-            <span>·</span><code>{artifactId}</code>
-          </div>
-        </div>
-        {blocks.map(block => (
-          <BlockFrame
-            key={block.id}
-            block={block}
-            selected={selected === block.id}
-            commentCount={commentCount(block.id)}
-            onComment={() => setSelected(block.id)}
-          />
-        ))}
-      </main>
-      <aside className="rk-rail">
-        <h2>Comments</h2>
-        {selected ? (
-          <div className="rk-rail-section">
-            <div className="rk-muted">Comment on <code>{selected}</code></div>
-            <textarea value={text} onChange={e => setText(e.target.value)} placeholder="哪里不行？让 Agent 后续 feedback 后修改。" />
-            <button className="rk-primary-btn" onClick={submitComment}>Add comment</button>
-          </div>
-        ) : (
-          <p className="rk-muted">选择 block 后评论。</p>
-        )}
-        {comments.length === 0 ? <p className="rk-muted">暂无评论。</p> : comments.map(c => (
-          <div className="rk-comment-card" key={c.id} data-status={c.status}>
-            <div className="rk-comment-header">
-              <b>{c.blockId}</b>
-              <span className="rk-pill" data-status={c.status}>{c.status}</span>
-            </div>
-            <p>{c.text}</p>
-            <div className="rk-comment-id">{c.id}</div>
-          </div>
-        ))}
-      </aside>
-    </div>
-  );
-}
-
-function BlockFrame({ block, onComment, selected, commentCount }) {
-  const cls = `rk-block rk-block-${block.type}${selected ? ' rk-selected' : ''}`;
-  return (
-    <section
-      className={cls}
-      data-block-id={block.id}
-      data-block-type={block.type}
-      {...(selected ? { 'data-rk-selected': '' } : {})}
-      {...(commentCount > 0 ? { 'data-rk-has-comments': '' } : {})}
-      {...(block.props?.tone ? { 'data-tone': block.props.tone } : {})}
-      tabIndex={0}
-    >
-      <div className="rk-block-tools">
-        <span className="rk-block-id">{block.id}</span>
-        <button className="rk-comment-btn" onClick={onComment}>💬 {commentCount || ''}</button>
-      </div>
-      <RenderBlock block={block} />
-    </section>
-  );
-}
-
-function RenderBlock({ block }) {
-  try {
-    switch (block.type) {
-      case 'heading': return <HeadingBlock {...block.props} />;
-      case 'paragraph': return <ParagraphBlock {...block.props} />;
-      case 'summary': return <SummaryBlock {...block.props} />;
-      case 'callout': return <CalloutBlock {...block.props} />;
-      case 'decision-card': return <DecisionBlock {...block.props} />;
-      case 'code': return <CodeBlock {...block.props} />;
-      case 'diagram': return <DiagramBlock {...block.props} />;
-      default: return <div className="rk-error-box">Unknown block: {block.type}</div>;
-    }
-  } catch (e) {
-    return <div className="rk-error-box">Block render error: {String(e.message || e)}</div>;
-  }
-}
-
-function HeadingBlock({ level, text }) {
-  const Tag = `h${Math.min(Math.max(level || 2, 1), 3)}`;
-  return <Tag>{text}</Tag>;
-}
-
-function ParagraphBlock({ markdown }) {
-  return <div className="rk-block-paragraph">{markdown}</div>;
-}
-
-function SummaryBlock({ title, content }) {
-  return (
-    <div>
-      {title && <div className="rk-summary-title">{title}</div>}
-      <div className="rk-summary-body">{content}</div>
-    </div>
-  );
-}
-
-function CalloutBlock({ tone = 'info', title, content }) {
-  return (
-    <div>
-      <div className="rk-callout-title">{title || tone}</div>
-      <div className="rk-block-paragraph">{content}</div>
-    </div>
-  );
-}
-
-function DecisionBlock({ question, chosen, status, rationale, alternatives }) {
-  return (
-    <div>
-      <h3 className="rk-decision-question">{question}<span className="rk-decision-status">{status || 'draft'}</span></h3>
-      <div className="rk-decision-kv"><b>Chosen</b><span>{chosen}</span></div>
-      {Array.isArray(rationale) && rationale.length > 0 && (
-        <><b className="rk-muted">Rationale</b><ul className="rk-decision-list">{rationale.map((x, i) => <li key={i}>{x}</li>)}</ul></>
-      )}
-      {Array.isArray(alternatives) && alternatives.length > 0 && (
-        <><b className="rk-muted">Alternatives</b><ul className="rk-decision-list">{alternatives.map((x, i) => <li key={i}>{x.name || x}: {x.reason || ''}</li>)}</ul></>
-      )}
-    </div>
-  );
-}
-
-function CodeBlock({ language, title, code }) {
-  return (
-    <div>
-      {(title || language) && (
-        <div className="rk-code-header">
-          {title && <span className="rk-code-title">{title}</span>}
-          {language && <span className="rk-code-lang">{language}</span>}
-        </div>
-      )}
-      <pre><code>{code}</code></pre>
-    </div>
-  );
-}
-
-function DiagramBlock({ engine, code, caption }) {
-  if (engine !== 'mermaid') return <div className="rk-error-box">Unsupported diagram engine: {engine}</div>;
-  return <MermaidDiagram code={code} caption={caption} />;
-}
-
-function MermaidDiagram({ code, caption }) {
-  const ref = useRef(null);
-  const [err, setErr] = useState(null);
   useEffect(() => {
-    let alive = true;
-    import('mermaid').then(async ({ default: mermaid }) => {
-      try {
-        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
-        const id = 'm' + Math.random().toString(36).slice(2);
-        const { svg } = await mermaid.render(id, code);
-        if (alive && ref.current) ref.current.innerHTML = svg;
-      } catch (e) {
-        if (alive) setErr(String(e.message || e));
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        if (menu) closeMenu();
+        else if (drawerOpen) setDrawerOpen(false);
+        else if (outlineOpen) setOutlineOpen(false);
+        else setSelected(null);
       }
-    });
-    return () => { alive = false; };
-  }, [code]);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu, drawerOpen, outlineOpen]);
+
   return (
-    <div>
-      {caption && <div className="rk-diagram-caption">{caption}</div>}
-      {err
-        ? <div className="rk-diagram-error">{err}\n\n{code}</div>
-        : <div ref={ref}><div className="rk-diagram-fallback"><pre>{code}</pre></div></div>
-      }
+    <div className="rk-page" data-rk-theme={theme} data-rk-surface={surface || undefined}>
+      <main className="rk-document" aria-label={model.title} onContextMenuCapture={(e) => {
+        const el = e.target?.closest?.('[data-block-id]');
+        if (el) openMenu(e, el.getAttribute('data-block-id'));
+      }}>
+        <div className="rk-block-stream">
+          {blocks.map(block => (
+            <BlockFrame
+              key={block.id}
+              block={block}
+              selected={selected === block.id}
+              commentCount={commentsFor(block.id).length}
+              onSelect={() => setSelected(block.id)}
+              onComment={() => openDrawer('comment', block.id)}
+              onOpenMenu={(e) => openMenu(e, block.id)}
+              onContextMenu={(e) => openMenu(e, block.id)}
+            />
+          ))}
+        </div>
+      </main>
+
+      <div className="rk-floating-tools" aria-label="Document tools">
+        <button onClick={() => setOutlineOpen(o => !o)} title="Outline">☰</button>
+        <button onClick={() => openDrawer('comments', selected)} title="Comments">💬{comments.length ? ` ${comments.length}` : ''}</button>
+        <button onClick={() => copyToClipboard(feedbackCmd)} title="Copy feedback command">⎘</button>
+      </div>
+
+      {outlineOpen && (
+        <aside className="rk-outline-drawer">
+          <div className="rk-drawer-head">
+            <span>Outline</span>
+            <button onClick={() => setOutlineOpen(false)}>×</button>
+          </div>
+          <nav className="rk-outline-list">
+            {outlineItems.map(item => (
+              <button key={item.id} onClick={() => {
+                setSelected(item.id);
+                document.getElementById(`rk-block-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }} className={selected === item.id ? 'is-active' : ''}>
+                <span>{item.label}</span>
+                {commentsFor(item.id).length > 0 && <b>{commentsFor(item.id).length}</b>}
+              </button>
+            ))}
+          </nav>
+        </aside>
+      )}
+
+      {drawerOpen && (
+        <aside className="rk-review-drawer">
+          <div className="rk-drawer-head">
+            <span>{drawerMode === 'comments' ? 'Comments' : 'Comment'}</span>
+            <button onClick={() => setDrawerOpen(false)}>×</button>
+          </div>
+
+          {selectedBlock ? <BlockInspector
+            block={selectedBlock}
+            comments={commentsFor(selectedBlock.id)}
+            text={text}
+            setText={setText}
+            submitComment={submitComment}
+            feedbackCmd={feedbackCmd}
+            copyToClipboard={copyToClipboard}
+          /> : <p className="rk-muted">Select a block or right-click anywhere in the document.</p>}
+
+          <div className="rk-drawer-section">
+            <div className="rk-drawer-label">All comments</div>
+            {comments.length === 0 ? <p className="rk-muted rk-small">No comments yet.</p> : comments.map(c => (
+              <CommentCard key={c.id} comment={c} onClick={() => { setSelected(c.blockId); setDrawerMode('comment'); }} />
+            ))}
+          </div>
+        </aside>
+      )}
+
+      {menu && <ContextMenu
+        x={menu.x}
+        y={menu.y}
+        block={allBlocks.find(b => b.id === menu.blockId)}
+        artifactId={artifactId}
+        onInspect={() => { openDrawer('comment', menu.blockId); closeMenu(); }}
+        onComment={() => { openDrawer('comment', menu.blockId); closeMenu(); }}
+        onCopy={(value) => { copyToClipboard(value); closeMenu(); }}
+      />}
+    </div>
+  );
+}
+
+
+function flattenBlocks(blocks) {
+  const out = [];
+  for (const block of blocks || []) {
+    out.push(block);
+    if (Array.isArray(block.props?.children)) out.push(...flattenBlocks(block.props.children));
+  }
+  return out;
+}
+
+function blockLabel(block) {
+  if (block.type === 'heading') return block.props?.text || block.id;
+  if (block.props?.title) return block.props.title;
+  if (block.props?.question) return block.props.question;
+  if (block.type === 'subdocument') return block.props?.title || block.id;
+  return block.id;
+}
+
+function BlockInspector({ block, comments, text, setText, submitComment, feedbackCmd, copyToClipboard }) {
+  return (
+    <>
+      <div className="rk-drawer-section">
+        <div className="rk-drawer-label">Selected block</div>
+        <code>{block.id}</code> <span className="rk-type-chip">{block.type}</span>
+      </div>
+      {block.sourceRange && <div className="rk-drawer-section">
+        <div className="rk-drawer-label">Source</div>
+        <div className="rk-source-range">Lines {block.sourceRange.startLine}–{block.sourceRange.endLine}</div>
+        {block.sourceExcerpt && <pre className="rk-source-excerpt">{block.sourceExcerpt}</pre>}
+      </div>}
+      <div className="rk-drawer-section">
+        <div className="rk-drawer-label">Properties</div>
+        <div className="rk-props-grid">
+          {Object.entries(block.props || {}).map(([k, v]) => (
+            <Fragment key={k}><span className="rk-meta-key">{k}</span><span className="rk-meta-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span></Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="rk-drawer-section">
+        <div className="rk-drawer-label">Comments on this block</div>
+        {comments.length === 0 ? <p className="rk-muted rk-small">No comments yet.</p> : comments.map(c => <CommentCard key={c.id} comment={c} />)}
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Comment or suggest an edit. The agent edits the source; the web UI never mutates body content." />
+        <button className="rk-primary-btn" onClick={submitComment} disabled={!text.trim()}>Add comment</button>
+      </div>
+      <div className="rk-drawer-section rk-feedback-hint">
+        <div className="rk-drawer-label">Agent handoff</div>
+        <p className="rk-muted rk-small">Use feedback to route comments back to the authoring agent.</p>
+        <div className="rk-feedback-cmd"><code>{feedbackCmd}</code><button onClick={() => copyToClipboard(feedbackCmd)}>⎘</button></div>
+      </div>
+    </>
+  );
+}
+
+function ContextMenu({ x, y, block, artifactId, onInspect, onComment, onCopy }) {
+  if (!block) return null;
+  const style = { left: Math.min(x, window.innerWidth - 250), top: Math.min(y, window.innerHeight - 260) };
+  return (
+    <div className="rk-context-menu" style={style} onClick={e => e.stopPropagation()}>
+      <div className="rk-context-menu-header"><code>{block.id}</code><span className="rk-type-chip">{block.type}</span></div>
+      <button className="rk-context-menu-item" onClick={onInspect}>Inspect / source</button>
+      <button className="rk-context-menu-item" onClick={onComment}>💬 Comment</button>
+      <button className="rk-context-menu-item" onClick={onComment}>✎ Suggest edit as comment</button>
+      <div className="rk-context-menu-divider" />
+      <button className="rk-context-menu-item" onClick={() => onCopy(block.id)}>⎘ Copy block ID</button>
+      <button className="rk-context-menu-item" onClick={() => onCopy(`rk feedback ${artifactId} --block ${block.id}`)}>⎘ Copy feedback command</button>
+      {block.sourceRange && <button className="rk-context-menu-item" onClick={() => onCopy(`Lines ${block.sourceRange.startLine}–${block.sourceRange.endLine}`)}>⎘ Copy source location</button>}
+    </div>
+  );
+}
+
+function CommentCard({ comment: c, onClick }) {
+  return (
+    <div className={`rk-comment-card${onClick ? ' rk-clickable' : ''}`} data-status={c.status} onClick={onClick}>
+      <div className="rk-comment-header"><b>{c.blockId}</b><span className="rk-pill" data-status={c.status}>{c.status}</span></div>
+      <p>{c.text}</p>
+      <div className="rk-comment-id">{c.id}</div>
     </div>
   );
 }

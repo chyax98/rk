@@ -10,12 +10,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@renderkit/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
       '@renderkit/design':
         specifier: workspace:*
         version: link:../../packages/design
       '@renderkit/dsl':
         specifier: workspace:*
         version: link:../../packages/dsl
+      echarts:
+        specifier: latest
+        version: 6.0.0
       mermaid:
         specifier: latest
         version: 11.15.0
@@ -31,6 +37,12 @@ importers:
 
   packages/blocks:
     dependencies:
+      echarts:
+        specifier: '>=5'
+        version: 6.0.0
+      mermaid:
+        specifier: '>=10'
+        version: 11.15.0
       react:
         specifier: '>=18'
         version: 19.2.6
@@ -658,6 +670,9 @@ packages:
   dompurify@3.4.3:
     resolution: {integrity: sha512-VVwJidIJcp1hpg2OMXML3ZVRPYSZiq4aX7qBh83BSIpOaRDqI+qxhXjjIWnpzkOXhmp0L81lnoME1mnCc9H48A==}
 
+  echarts@6.0.0:
+    resolution: {integrity: sha512-Tte/grDQRiETQP4xz3iZWSvoHrkCQtwqd6hs+mifXcjrCuo2iKWbajFObuLJVBlDIJlOzgQPd1hsaKt/3+OMkQ==}
+
   es-toolkit@1.46.1:
     resolution: {integrity: sha512-5eNtXOs3tbfxXOj04tjjseeWkRWaoCjdEI+96DgwzZoe6c9juL49pXlzAFTI72aWC9Y8p7168g6XIKjh7k6pyQ==}
 
@@ -1004,6 +1019,9 @@ packages:
     resolution: {integrity: sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==}
     engines: {node: '>=6.10'}
 
+  tslib@2.3.0:
+    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -1031,6 +1049,9 @@ packages:
 
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
+
+  zrender@6.0.0:
+    resolution: {integrity: sha512-41dFXEEXuJpNecuUQq6JlbybmnHaqqpGlbH1yxnA5V9MMP4SbohSVZsJIwz+zdjQXSSlR1Vc34EgH1zxyTDvhg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -1575,6 +1596,11 @@ snapshots:
   dompurify@3.4.3:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
+
+  echarts@6.0.0:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 6.0.0
 
   es-toolkit@1.46.1: {}
 
@@ -2172,6 +2198,8 @@ snapshots:
 
   ts-dedent@2.2.0: {}
 
+  tslib@2.3.0: {}
+
   tslib@2.8.1: {}
 
   unified@11.0.5:
@@ -2214,5 +2242,9 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
+
+  zrender@6.0.0:
+    dependencies:
+      tslib: 2.3.0
 
   zwitch@2.0.4: {}

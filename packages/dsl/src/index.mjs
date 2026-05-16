@@ -5,8 +5,9 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary']);
-const VALID_THEMES = new Set(['dark-pro', 'paper-light', 'amber-terminal']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid']);
+const DEFAULT_THEME = 'paper-light';
+const VALID_THEMES = new Set(['paper-light', 'editorial-kami', 'dark-pro', 'amber-terminal']);
 const VALID_SURFACES = new Set(['engineering-plan', 'decision-brief', 'review-report', 'runbook', 'data-report-lite']);
 const ID_FORMAT = /^[a-zA-Z0-9_-]+$/;
 
@@ -80,6 +81,8 @@ export function parseRK(source, file = '<source>') {
       if (name === 'diagram') block = compileDiagram(node, attrs, source, errors, file);
       if (name === 'code') block = compileCode(node, attrs, source, errors, file);
       if (name === 'summary') block = compileSummary(node, attrs, source);
+      if (name === 'subdocument') block = compileSubdocument(node, attrs, source);
+      if (name === 'grid') block = compileGrid(node, attrs, source, errors, file);
       if (block) blocks.push(block);
       continue;
     }
@@ -95,8 +98,8 @@ export function parseRK(source, file = '<source>') {
   let effectiveSurface = frontmatter.surface || null;
 
   if (effectiveTheme && !VALID_THEMES.has(effectiveTheme)) {
-    warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${effectiveTheme}", falling back to "dark-pro"`, file));
-    effectiveTheme = 'dark-pro';
+    warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${effectiveTheme}", falling back to "${DEFAULT_THEME}"`, file));
+    effectiveTheme = DEFAULT_THEME;
   }
   if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface)) {
     warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
@@ -106,11 +109,19 @@ export function parseRK(source, file = '<source>') {
     rk: '1.0',
     title: frontmatter.title || firstHeading(blocks) || 'Untitled Artifact',
     template: frontmatter.template,
-    theme: effectiveTheme,
+    theme: effectiveTheme || DEFAULT_THEME,
     surface: effectiveSurface,
     blocks
   };
   return { ok: errors.length === 0, model, errors, warnings };
+}
+
+
+function normalizeWidth(value) {
+  if (!value) return 'full';
+  const v = String(value).trim().toLowerCase();
+  if (['full', 'wide', 'half', 'third', 'two-third'].includes(v)) return v;
+  return 'full';
 }
 
 function compileCallout(node, attrs, source) {
@@ -120,6 +131,7 @@ function compileCallout(node, attrs, source) {
     props: {
       tone: attrs.tone || 'info',
       title: attrs.title || '',
+      width: normalizeWidth(attrs.width || attrs.span),
       content: rawDirectiveBody(source, node) || directiveBodyText(node)
     },
     sourceRange: pos(node),
@@ -142,6 +154,7 @@ function compileDecision(node, attrs, source, errors, file) {
     props: {
       question: data.question || '',
       chosen: data.chosen || '',
+      width: normalizeWidth(attrs.width || attrs.span),
       status: data.status || 'draft',
       rationale: data.rationale || [],
       alternatives: data.alternatives || []
@@ -153,13 +166,14 @@ function compileDecision(node, attrs, source, errors, file) {
 
 function compileDiagram(node, attrs, source, errors, file) {
   const code = findCode(node);
-  const engine = attrs.engine || code?.lang || 'mermaid';
-  if (engine !== 'mermaid') errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Only mermaid is supported now, got ${engine}`, file, pos(node)));
+  const engine = String(attrs.engine || code?.lang || 'mermaid').toLowerCase();
+  const supported = new Set(['mermaid', 'svg', 'plantuml', 'd2', 'echarts', 'infographic']);
+  if (!supported.has(engine)) errors.push(diag('RK_UNSUPPORTED_DIAGRAM_ENGINE', `Unsupported diagram engine: ${engine}`, file, pos(node)));
   if (!code?.value) errors.push(diag('RK_DIAGRAM_CODE_REQUIRED', 'diagram requires a fenced code block', file, pos(node)));
   return {
     id: attrs.id,
     type: 'diagram',
-    props: { engine, code: code?.value || '', caption: attrs.caption || '' },
+    props: { engine, code: code?.value || '', caption: attrs.caption || '', width: normalizeWidth(attrs.width || attrs.span) },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };
@@ -173,7 +187,63 @@ function compileCode(node, attrs, source, errors, file) {
   return {
     id: attrs.id,
     type: 'code',
-    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || '' },
+    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || '', width: normalizeWidth(attrs.width || attrs.span) },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+
+
+function compileGrid(node, attrs, source, errors, file) {
+  const children = [];
+  for (const child of node.children || []) {
+    if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
+    if (!KNOWN.has(child.name) || child.name === 'grid') {
+      errors.push(diag('RK_GRID_CHILD_UNSUPPORTED', `grid child must be a supported non-grid block, got ${child.name}`, file, pos(child)));
+      continue;
+    }
+    const childAttrs = child.attributes || {};
+    const childId = childAttrs.id || `${attrs.id || 'grid'}-${children.length + 1}`;
+    const patched = { ...child, attributes: { ...childAttrs, id: childId } };
+    let block;
+    if (child.name === 'callout') block = compileCallout(patched, patched.attributes, source);
+    if (child.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
+    if (child.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
+    if (child.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
+    if (child.name === 'summary') block = compileSummary(patched, patched.attributes, source);
+    if (child.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
+    if (block) children.push(block);
+  }
+  return {
+    id: attrs.id,
+    type: 'grid',
+    props: {
+      columns: Number(attrs.columns || attrs.cols || 2),
+      gap: attrs.gap || 'normal',
+      title: attrs.title || '',
+      children,
+    },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileSubdocument(node, attrs, source) {
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  return {
+    id: attrs.id,
+    type: 'subdocument',
+    props: {
+      title: attrs.title || attrs.source || attrs.artifactId || 'Untitled subdocument',
+      source: attrs.source || '',
+      artifactId: attrs.artifactId || '',
+      revision: attrs.revision || '',
+      surface: attrs.surface || '',
+      status: attrs.status || 'linked',
+      width: normalizeWidth(attrs.width || attrs.span),
+      summary: body.trim()
+    },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };
@@ -183,7 +253,7 @@ function compileSummary(node, attrs, source) {
   return {
     id: attrs.id,
     type: 'summary',
-    props: { title: attrs.title || '', content: rawDirectiveBody(source, node) || directiveBodyText(node) },
+    props: { title: attrs.title || '', width: normalizeWidth(attrs.width || attrs.span), content: rawDirectiveBody(source, node) || directiveBodyText(node) },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };

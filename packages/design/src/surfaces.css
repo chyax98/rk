@@ -1,31 +1,104 @@
-/* ─── Surface layout hints ─── */
+/* ─── Surface layout & density system ─── */
 
-/* Default: full-width reading layout */
+/* ── Base surface context ── */
 [data-rk-surface] .rk-content {
   max-width: 100%;
 }
 
-/* Engineering plans: wider, denser */
+/* ── Engineering plans: full-width, dense grid, compact spacing ── */
 [data-rk-surface="engineering-plan"] .rk-content {
   max-width: 100%;
+  --rk-density: var(--rk-density-compact);
+}
+[data-rk-surface="engineering-plan"] .rk-block {
+  padding: var(--rk-space-3) var(--rk-space-4);
+  margin: var(--rk-space-2) 0;
+}
+[data-rk-surface="engineering-plan"] .rk-block-heading h2 {
+  font: var(--rk-type-h3);
+}
+[data-rk-surface="engineering-plan"] .rk-block-paragraph {
+  font-size: var(--rk-text-sm);
 }
 
-/* Decision briefs: narrower, more centered */
+/* ── Decision briefs: narrow, centered, emphasis on decision cards ── */
 [data-rk-surface="decision-brief"] .rk-content {
-  max-width: 780px;
+  max-width: 760px;
+  margin: 0 auto;
+  --rk-density: var(--rk-density-comfortable);
+}
+[data-rk-surface="decision-brief"] .rk-block {
+  padding: var(--rk-space-5) var(--rk-space-6);
+}
+[data-rk-surface="decision-brief"] .rk-block-decision-card {
+  border-left: 4px solid var(--rk-accent);
+  background: var(--rk-accent-subtle);
+  padding: var(--rk-space-6);
+}
+[data-rk-surface="decision-brief"] .rk-block-heading h1 {
+  font: var(--rk-type-h1);
+  letter-spacing: var(--rk-tracking-tight);
 }
 
-/* Review reports: wider for tables */
+/* ── Review reports: wide, table-friendly, emphasis on callouts ── */
 [data-rk-surface="review-report"] .rk-content {
   max-width: 100%;
+  --rk-density: var(--rk-density-normal);
+}
+[data-rk-surface="review-report"] .rk-block-callout {
+  border-left-width: 4px;
+  font-size: var(--rk-text-base);
+}
+[data-rk-surface="review-report"] .rk-block-callout[data-tone="danger"],
+[data-rk-surface="review-report"] .rk-block-callout[data-tone="error"] {
+  border-left-width: 5px;
+  font-weight: var(--rk-weight-medium);
 }
 
-/* Runbooks: step-oriented */
+/* ── Runbooks: step-oriented, readable, numbered emphasis ── */
 [data-rk-surface="runbook"] .rk-content {
-  max-width: 860px;
+  max-width: 840px;
+  margin: 0 auto;
+  --rk-density: var(--rk-density-comfortable);
+}
+[data-rk-surface="runbook"] .rk-block {
+  margin: var(--rk-space-5) 0;
+}
+[data-rk-surface="runbook"] .rk-block-code {
+  background: var(--rk-code-bg);
+  border: 1px solid var(--rk-code-border);
+}
+[data-rk-surface="runbook"] .rk-block-callout[data-tone="warning"] {
+  border-left-width: 4px;
 }
 
-/* Data reports: wide for tables/charts */
+/* ── Data reports: wide, dense for tables/charts ── */
 [data-rk-surface="data-report-lite"] .rk-content {
   max-width: 100%;
+  --rk-density: var(--rk-density-compact);
+}
+[data-rk-surface="data-report-lite"] .rk-block {
+  padding: var(--rk-space-3) var(--rk-space-4);
+  margin: var(--rk-space-2) 0;
+}
+[data-rk-surface="data-report-lite"] .rk-block-heading {
+  margin-bottom: var(--rk-space-1);
+}
+
+/* ── General proposal (readable, balanced) ── */
+[data-rk-surface="proposal"] .rk-content {
+  max-width: 820px;
+  margin: 0 auto;
+  --rk-density: var(--rk-density-comfortable);
+}
+
+/* ── Documentation (readable, balanced, serif-friendly) ── */
+[data-rk-surface="documentation"] .rk-content {
+  max-width: 780px;
+  margin: 0 auto;
+  --rk-density: var(--rk-density-comfortable);
+}
+[data-rk-surface="documentation"] .rk-block-paragraph {
+  font-size: var(--rk-text-base);
+  line-height: var(--rk-lh-relaxed);
 }

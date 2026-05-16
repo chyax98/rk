@@ -7,6 +7,16 @@
     ".": "./src/index.jsx"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "mermaid": ">=10",
+    "echarts": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "mermaid": {
+      "optional": true
+    },
+    "echarts": {
+      "optional": true
+    }
   }
 }

@@ -1,0 +1,202 @@
+/* ─── App chrome layout system ─── */
+
+/* ── Shell (full app frame) ── */
+.rk-shell {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  background: var(--rk-bg-grad, var(--rk-bg));
+  background-color: var(--rk-bg);
+}
+
+/* ── Topbar ── */
+.rk-topbar {
+  grid-column: 1 / -1;
+  position: sticky;
+  top: 0;
+  z-index: var(--rk-z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-4);
+  padding: var(--rk-space-3) var(--rk-space-6);
+  background: var(--rk-topbar-bg);
+  border-bottom: var(--rk-border-width) solid var(--rk-topbar-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.rk-topbar-title {
+  font: var(--rk-type-h3);
+  margin: 0;
+  color: var(--rk-text);
+}
+.rk-topbar-meta {
+  display: flex;
+  gap: var(--rk-space-3);
+  align-items: center;
+  font: var(--rk-type-body-sm);
+  color: var(--rk-muted);
+}
+.rk-topbar-meta code {
+  font: var(--rk-type-mono);
+  font-size: var(--rk-text-xs);
+}
+.rk-topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--rk-space-2);
+  align-items: center;
+}
+
+/* ── Left sidebar ── */
+.rk-sidebar-left {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  width: 260px;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--rk-sidebar-bg);
+  border-right: var(--rk-border-width) solid var(--rk-sidebar-border);
+  padding: var(--rk-space-4) 0;
+  z-index: var(--rk-z-raised);
+}
+.rk-sidebar-left-header {
+  padding: 0 var(--rk-space-4) var(--rk-space-3);
+  font: var(--rk-type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--rk-tracking-wide);
+  color: var(--rk-muted);
+}
+.rk-sidebar-left-item {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  color: var(--rk-text-secondary);
+  font-size: var(--rk-text-sm);
+  cursor: pointer;
+  transition: background var(--rk-ease), color var(--rk-ease);
+  border-radius: 0;
+}
+.rk-sidebar-left-item:hover {
+  background: var(--rk-menu-item-hover);
+  color: var(--rk-text);
+}
+.rk-sidebar-left-item[data-active="true"] {
+  background: var(--rk-accent-muted);
+  color: var(--rk-accent);
+  font-weight: var(--rk-weight-medium);
+}
+
+/* ── Right rail ── */
+.rk-rail {
+  position: sticky;
+  top: var(--rk-space-5);
+  align-self: start;
+  width: 320px;
+  background: var(--rk-rail-bg);
+  border: var(--rk-border-width) solid var(--rk-rail-border);
+  border-radius: var(--rk-radius-lg);
+  box-shadow: var(--rk-shadow-sm);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+}
+.rk-rail-header {
+  padding: var(--rk-space-4);
+  border-bottom: var(--rk-border-width) solid var(--rk-border);
+  font: var(--rk-type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--rk-tracking-wide);
+  color: var(--rk-muted);
+}
+.rk-rail-section {
+  border-top: var(--rk-border-width) solid var(--rk-border);
+  padding: var(--rk-space-3) var(--rk-space-4);
+}
+.rk-rail-section textarea {
+  width: 100%;
+  min-height: 80px;
+  background: var(--rk-code-bg);
+  color: var(--rk-code-text, var(--rk-text));
+  border: var(--rk-border-width) solid var(--rk-border);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-3);
+  font-family: var(--rk-font-sans);
+  font-size: var(--rk-text-sm);
+  resize: vertical;
+}
+.rk-rail-section textarea:focus {
+  outline: 2px solid var(--rk-focus-ring);
+  border-color: var(--rk-accent);
+}
+
+/* ── Content column (main) ── */
+.rk-content {
+  min-width: 0;
+  padding: var(--rk-space-6);
+}
+
+/* ── Artifact layout (2-column content + rail) ── */
+.rk-artifact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--rk-space-6);
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: var(--rk-space-8) var(--rk-space-6);
+}
+
+/* ── Buttons ── */
+.rk-primary-btn {
+  background: var(--rk-btn-primary);
+  border: 0;
+  color: var(--rk-btn-primary-text);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  cursor: pointer;
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-medium);
+  width: 100%;
+  transition: opacity var(--rk-ease);
+}
+.rk-primary-btn:hover { opacity: var(--rk-opacity-hover); }
+
+.rk-secondary-btn {
+  background: var(--rk-btn-secondary-bg);
+  border: var(--rk-border-width) solid var(--rk-btn-secondary-border);
+  color: var(--rk-btn-secondary-text);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  cursor: pointer;
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-medium);
+  transition: background var(--rk-ease), border-color var(--rk-ease);
+}
+.rk-secondary-btn:hover {
+  background: var(--rk-accent-muted);
+  border-color: var(--rk-accent);
+}
+
+.rk-ghost-btn {
+  background: transparent;
+  border: none;
+  color: var(--rk-btn-ghost-text);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  cursor: pointer;
+  font-size: var(--rk-text-sm);
+  transition: background var(--rk-ease), color var(--rk-ease);
+}
+.rk-ghost-btn:hover {
+  background: var(--rk-btn-ghost-hover);
+  color: var(--rk-text-secondary);
+}
+
+/* ── Mobile ── */
+@media (max-width: 900px) {
+  .rk-artifact { grid-template-columns: 1fr; }
+  .rk-rail { position: static; }
+  .rk-shell { grid-template-columns: 1fr; }
+  .rk-sidebar-left { display: none; }
+}

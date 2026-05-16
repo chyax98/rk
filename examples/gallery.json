@@ -1,0 +1,41 @@
+{
+  "title": "RenderKit Surface Gallery",
+  "description": "Example artifacts for each supported surface type. Each file is a valid .rk.md that passes validation.",
+  "surfaces": [
+    {
+      "id": "engineering-plan",
+      "label": "Engineering Plan",
+      "file": "examples/surfaces/engineering-plan.rk.md",
+      "theme": "paper-light",
+      "description": "Structured technical proposal with decisions, diagrams, and risk callouts."
+    },
+    {
+      "id": "decision-brief",
+      "label": "Decision Brief",
+      "file": "examples/surfaces/decision-brief.rk.md",
+      "theme": "paper-light",
+      "description": "Focused decision document with alternatives analysis and blockers."
+    },
+    {
+      "id": "review-report",
+      "label": "Review Report",
+      "file": "examples/surfaces/review-report.rk.md",
+      "theme": "paper-light",
+      "description": "Audit findings with severity-mapped callouts and code snippets."
+    },
+    {
+      "id": "runbook",
+      "label": "Runbook",
+      "file": "examples/surfaces/runbook.rk.md",
+      "theme": "amber-terminal",
+      "description": "Step-by-step operational procedure with rollback and diagrams."
+    },
+    {
+      "id": "data-report-lite",
+      "label": "Data Report Lite",
+      "file": "examples/surfaces/data-report-lite.rk.md",
+      "theme": "paper-light",
+      "description": "Lightweight data summary with key metrics and methodology."
+    }
+  ]
+}

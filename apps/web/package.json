@@ -9,11 +9,13 @@
     "build": "next build"
   },
   "dependencies": {
+    "@renderkit/blocks": "workspace:*",
     "@renderkit/dsl": "workspace:*",
     "@renderkit/design": "workspace:*",
     "mermaid": "latest",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "echarts": "latest"
   }
 }

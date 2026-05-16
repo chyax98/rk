@@ -8,6 +8,7 @@
     "./themes.css": "./src/themes.css",
     "./surfaces.css": "./src/surfaces.css",
     "./blocks.css": "./src/blocks.css",
+    "./chrome.css": "./src/chrome.css",
     "./index.css": "./src/index.css"
   }
 }
