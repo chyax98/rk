@@ -75,6 +75,25 @@ assert("feedback exit 0", feedback.code === 0, `got ${feedback.code}`);
 assert("feedback ok=true", feedbackParsed?.ok === true, `got ${feedbackParsed?.ok}`);
 assert("feedback has openComments", Array.isArray(feedbackParsed?.openComments));
 
+// ── Selection comment API ──
+console.log("\n== Selection comment API ==");
+const commentRes = await fetch(`${srvParsed.endpoint}/api/artifacts/${pushParsed.artifactId}/comments`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    blockId: "project-summary",
+    text: "Smoke test quote comment",
+    selector: { type: "TextQuoteSelector", exact: "RenderKit", prefix: "", suffix: " is local" }
+  })
+});
+const commentJson = await commentRes.json();
+assert("selection comment post ok=true", commentJson?.ok === true, commentJson?.error || "");
+assert("selection comment stores selector", commentJson?.comment?.selector?.exact === "RenderKit", JSON.stringify(commentJson?.comment?.selector || null));
+const feedback2 = run(`${CLI} feedback ${FILE} --json`);
+let feedback2Parsed;
+try { feedback2Parsed = JSON.parse(feedback2.stdout); } catch { feedback2Parsed = null; }
+assert("feedback includes selector comment", (feedback2Parsed?.openComments || []).some(c => c.id === commentJson?.comment?.id && c.selector?.exact === "RenderKit"));
+
 // ── Diagram render API ──
 console.log("\n== Diagram render API ==");
 async function postDiagram(engine, code) {

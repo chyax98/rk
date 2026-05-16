@@ -46,7 +46,7 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
   const diff = diffBlocks(current.model, parsed.model);
   await writeRevision(id, next, source, parsed.model);
   const comments = await getComments(id);
-  const newIds = new Set(parsed.model.blocks.map(b => b.id));
+  const newIds = new Set(flattenBlocks(parsed.model.blocks).map(b => b.id));
   for (const c of comments) {
     if (resolvedCommentIds.includes(c.id)) { c.status = 'resolved'; c.resolvedAtRevision = next; c.resolvedBy = 'agent'; c.resolvedAt = now(); }
     else if (c.status === 'open' && !newIds.has(c.blockId)) { c.status = 'orphaned'; }
@@ -80,13 +80,13 @@ export async function getComments(id) {
   catch { return []; }
 }
 
-export async function addComment(id, blockId, text) {
+export async function addComment(id, blockId, text, selector = null) {
   const artifact = await getArtifact(id);
   if (!artifact) return { ok: false, status: 404, error: 'not found' };
-  const block = artifact.revision.model.blocks.find(b => b.id === blockId);
+  const block = findBlockById(artifact.revision.model.blocks, blockId);
   if (!block) return { ok: false, status: 404, error: 'block not found' };
   const comments = artifact.comments;
-  const c = { id: 'cmt_' + crypto.randomBytes(5).toString('hex'), artifactId: id, blockId, text, status: 'open', createdAtRevision: artifact.meta.currentRevision, blockSnapshot: block, createdAt: now() };
+  const c = { id: 'cmt_' + crypto.randomBytes(5).toString('hex'), artifactId: id, blockId, text, selector: normalizeSelector(selector), status: 'open', createdAtRevision: artifact.meta.currentRevision, blockSnapshot: block, createdAt: now() };
   comments.push(c);
   await writeComments(id, comments);
   return { ok: true, comment: c };
@@ -109,6 +109,7 @@ export async function getFeedback(id) {
         blockId: c.blockId,
         status: c.status,
         text: c.text,
+        selector: c.selector || null,
         createdAtRevision: c.createdAtRevision,
         block: block || c.blockSnapshot,
         blockSnapshot: c.blockSnapshot,
@@ -121,7 +122,7 @@ export async function getFeedback(id) {
 }
 
 async function writeRevision(id, number, source, model) {
-  const rev = { id: `rev_${number}`, artifactId: id, number, sourceText: source, sourceHash: sha(source), model, blockIds: model.blocks.map(b => b.id), createdAt: now() };
+  const rev = { id: `rev_${number}`, artifactId: id, number, sourceText: source, sourceHash: sha(source), model, blockIds: flattenBlocks(model.blocks).map(b => b.id), createdAt: now() };
   await fs.writeFile(path.join(artifactsDir, id, `rev-${number}.json`), JSON.stringify(rev, null, 2));
 }
 
@@ -136,13 +137,43 @@ async function updateArtifact(id, patch) {
 }
 
 function diffBlocks(a, b) {
-  const am = new Map(a.blocks.map(x => [x.id, x]));
-  const bm = new Map(b.blocks.map(x => [x.id, x]));
+  const am = new Map(flattenBlocks(a.blocks).map(x => [x.id, x]));
+  const bm = new Map(flattenBlocks(b.blocks).map(x => [x.id, x]));
   const addedBlocks = [...bm.keys()].filter(k => !am.has(k));
   const removedBlocks = [...am.keys()].filter(k => !bm.has(k));
   const modifiedBlocks = [...bm.keys()].filter(k => am.has(k) && sha(JSON.stringify(am.get(k).props)) !== sha(JSON.stringify(bm.get(k).props)));
   return { addedBlocks, removedBlocks, modifiedBlocks };
 }
+function flattenBlocks(blocks) {
+  const out = [];
+  for (const block of blocks || []) {
+    out.push(block);
+    if (Array.isArray(block.props?.children)) out.push(...flattenBlocks(block.props.children));
+  }
+  return out;
+}
+
+function findBlockById(blocks, id) {
+  for (const block of blocks || []) {
+    if (block.id === id) return block;
+    const child = findBlockById(block.props?.children || [], id);
+    if (child) return child;
+  }
+  return null;
+}
+
+function normalizeSelector(selector) {
+  if (!selector || typeof selector !== 'object') return null;
+  const exact = String(selector.exact || '').trim().slice(0, 500);
+  if (!exact) return null;
+  return {
+    type: selector.type || 'TextQuoteSelector',
+    exact,
+    prefix: String(selector.prefix || '').slice(-80),
+    suffix: String(selector.suffix || '').slice(0, 80)
+  };
+}
+
 function brief(b) { return b ? { id: b.id, type: b.type } : null; }
 function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function now() { return new Date().toISOString(); }

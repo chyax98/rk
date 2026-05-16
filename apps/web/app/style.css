@@ -346,3 +346,78 @@ button, textarea { font: inherit; }
   .rk-document { max-width: none; margin: 0; }
   .rk-block { box-shadow: none !important; break-inside: avoid; }
 }
+
+/* RenderKit 1.0 product pass 3: supporting-pane comments. */
+.rk-page-with-pane {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  gap: var(--rk-space-5);
+  align-items: start;
+}
+.rk-page-with-pane .rk-document {
+  max-width: none;
+  margin: 0;
+}
+.rk-review-pane {
+  position: sticky;
+  top: var(--rk-space-5);
+  max-height: calc(100vh - var(--rk-space-10));
+  overflow: auto;
+  padding: var(--rk-space-4);
+  border: var(--rk-border-width) solid var(--rk-rail-border);
+  border-radius: var(--rk-radius-xl);
+  background: var(--rk-rail-bg);
+  box-shadow: var(--rk-shadow-lg);
+  backdrop-filter: blur(18px);
+}
+.rk-selection-menu {
+  position: fixed;
+  z-index: var(--rk-z-popover);
+  transform: translateX(-50%);
+  padding: var(--rk-space-1);
+  border: var(--rk-border-width) solid var(--rk-menu-border);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-menu-bg);
+  box-shadow: var(--rk-shadow-xl);
+}
+.rk-selection-menu button {
+  border: 0;
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-btn-primary);
+  color: var(--rk-btn-primary-text);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  cursor: pointer;
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-quote-anchor,
+.rk-comment-quote {
+  margin: var(--rk-space-2) 0;
+  border-left: 3px solid var(--rk-accent);
+  background: var(--rk-selection-bg);
+  color: var(--rk-text-secondary);
+  border-radius: var(--rk-radius-md);
+}
+.rk-quote-anchor { padding: var(--rk-space-3); }
+.rk-quote-anchor blockquote,
+.rk-comment-quote {
+  padding: var(--rk-space-2) var(--rk-space-3);
+  font-size: var(--rk-text-sm);
+}
+.rk-quote-anchor blockquote { margin: 0; }
+.rk-comment-quote { display: block; }
+
+@media (max-width: 1180px) {
+  .rk-page-with-pane {
+    display: block;
+  }
+  .rk-review-pane {
+    position: fixed;
+    top: var(--rk-space-5);
+    right: var(--rk-space-5);
+    bottom: var(--rk-space-5);
+    width: min(380px, calc(100vw - 32px));
+    max-height: none;
+    z-index: var(--rk-z-overlay);
+  }
+}

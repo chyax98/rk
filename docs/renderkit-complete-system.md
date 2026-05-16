@@ -45,7 +45,7 @@ Agent 写 .rk.md
 | CLI validate/push/status/feedback/server | 已实现 | `packages/cli/bin/renderkit.mjs` |
 | 本地数据存储 | 已实现：`~/.renderkit/data` | `apps/web/lib/store.mjs` |
 | Web 文档渲染 | 已实现，文档优先 UI | `apps/web/app/a/[id]/ArtifactView.jsx` |
-| 评论/反馈闭环 | 已实现 | `apps/web/app/api/artifacts/[id]/*` |
+| 评论/反馈闭环 | 已实现；支持 block comments、selection-aware quote comments、wide-surface supporting pane | `apps/web/app/api/artifacts/[id]/*`、`ArtifactView.jsx` |
 | block renderer 包 | 已拆出 | `packages/blocks/src/*` |
 | design token/theme/surface | 已实现 | `packages/design/src/*` |
 | 默认白色文档主题 | 已实现：`paper-light` | `packages/dsl/src/index.mjs`、`packages/design/src/themes.css` |
@@ -518,8 +518,10 @@ CSS 用 12 栏网格控制宽度：
 - Comments。
 - Feedback command。
 - Block source inspector。
+- Wide-surface supporting pane。
+- Selection-aware quote comments。
 
-它们默认不占主位置，而是通过右上角浮动控件和抽屉打开。
+它们默认不占主位置，而是通过右上角浮动控件、抽屉或 Review 模式 supporting pane 打开。
 
 浮动控件：
 
@@ -550,17 +552,20 @@ Copy source location
 
 注意：`Suggest edit as comment` 不会修改正文。它只是打开评论入口，让用户把编辑建议写成 comment。Agent 再通过 CLI feedback 拉取建议并修改 `.rk.md`。
 
+用户也可以选中文本并创建 selection-aware comment。RenderKit 会保存类似 W3C `TextQuoteSelector` 的 `exact`/`prefix`/`suffix` quote anchor，并在 feedback 中返回给 Agent。
+
 这是核心产品边界：**Web UI 不强行处理正文。**
 
-### 7.4 Drawer 内容
+### 7.4 Drawer / Supporting Pane 内容
 
-选择 block 后，review drawer 展示：
+选择 block 后，review drawer 或 wide-surface supporting pane 展示：
 
 - Selected block。
 - Source range。
 - Source excerpt。
 - Properties。
 - Comments on this block。
+- Selected quote（如果评论来自文本选择）。
 - Add comment。
 - Agent handoff / feedback command。
 - All comments。
@@ -838,7 +843,7 @@ pnpm verify:smoke
 当前结果：
 
 ```text
-Results: 18 passed, 0 failed
+Results: 21 passed, 0 failed
 ALL GOOD
 ```
 
@@ -848,8 +853,9 @@ ALL GOOD
 2. push。
 3. status。
 4. feedback。
-5. D2 render API 返回 SVG。
-6. PlantUML render API 返回 SVG。
+5. Selection comment API stores selector and feedback returns it.
+6. D2 render API 返回 SVG。
+7. PlantUML render API 返回 SVG。
 
 ### 13.3 Browser verification
 

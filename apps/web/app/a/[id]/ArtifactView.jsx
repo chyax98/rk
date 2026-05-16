@@ -11,6 +11,8 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState('comment');
   const [reviewMode, setReviewMode] = useState(false);
+  const [quoteAnchor, setQuoteAnchor] = useState(null);
+  const [selectionMenu, setSelectionMenu] = useState(null);
   const model = revision.model;
   const blocks = model.blocks;
   const theme = model.theme || 'paper-light';
@@ -18,6 +20,7 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
   const allBlocks = flattenBlocks(blocks);
   const selectedBlock = allBlocks.find(b => b.id === selected) || null;
   const feedbackCmd = `rk feedback ${artifactId}`;
+  const wideReviewSurface = isWideReviewSurface(surface);
 
   const commentsFor = useCallback((blockId) => comments.filter(c => c.blockId === blockId), [comments]);
   const outlineItems = blocks.map((b) => ({ id: b.id, type: b.type, label: blockLabel(b) }));
@@ -43,28 +46,59 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
     const res = await fetch(`/api/artifacts/${artifactId}/comments`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ blockId: selected, text })
+      body: JSON.stringify({ blockId: selected, text, selector: quoteAnchor?.blockId === selected ? quoteAnchor.selector : null })
     });
     const json = await res.json();
-    if (json.ok) { setComments(prev => [...prev, json.comment]); setText(''); }
+    if (json.ok) { setComments(prev => [...prev, json.comment]); setText(''); setQuoteAnchor(null); setSelectionMenu(null); }
+  }
+
+  function captureSelection() {
+    const selection = window.getSelection?.();
+    const exact = selection?.toString?.().trim();
+    if (!exact || exact.length < 2) { setSelectionMenu(null); return; }
+    const range = selection.rangeCount ? selection.getRangeAt(0) : null;
+    const container = range?.commonAncestorContainer?.nodeType === Node.ELEMENT_NODE ? range.commonAncestorContainer : range?.commonAncestorContainer?.parentElement;
+    const el = container?.closest?.('[data-block-id]');
+    if (!el) { setSelectionMenu(null); return; }
+    const blockId = el.getAttribute('data-block-id');
+    const blockText = el.innerText || '';
+    const start = blockText.indexOf(exact);
+    const selector = {
+      type: 'TextQuoteSelector',
+      exact: exact.slice(0, 500),
+      prefix: start > 0 ? blockText.slice(Math.max(0, start - 80), start) : '',
+      suffix: start >= 0 ? blockText.slice(start + exact.length, start + exact.length + 80) : ''
+    };
+    const rect = range.getBoundingClientRect();
+    setSelected(blockId);
+    setQuoteAnchor({ blockId, selector });
+    setSelectionMenu({ x: Math.min(rect.left + rect.width / 2, window.innerWidth - 220), y: Math.max(16, rect.top - 48), blockId });
+  }
+
+  function commentOnSelection() {
+    if (!quoteAnchor?.blockId) return;
+    setReviewMode(true);
+    openDrawer('comment', quoteAnchor.blockId);
+    setSelectionMenu(null);
   }
 
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape') {
         if (menu) closeMenu();
+        else if (selectionMenu) setSelectionMenu(null);
         else if (drawerOpen) setDrawerOpen(false);
         else if (outlineOpen) setOutlineOpen(false);
-        else setSelected(null);
+        else { setSelected(null); setQuoteAnchor(null); }
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [menu, drawerOpen, outlineOpen]);
+  }, [menu, drawerOpen, outlineOpen, selectionMenu]);
 
   return (
-    <div className={`rk-page${reviewMode ? ' rk-review-mode' : ''}`} data-rk-theme={theme} data-rk-surface={surface || undefined}>
-      <main className="rk-document" aria-label={model.title} onContextMenuCapture={(e) => {
+    <div className={`rk-page${reviewMode ? ' rk-review-mode' : ''}${wideReviewSurface && reviewMode ? ' rk-page-with-pane' : ''}`} data-rk-theme={theme} data-rk-surface={surface || undefined}>
+      <main className="rk-document" aria-label={model.title} onMouseUp={captureSelection} onContextMenuCapture={(e) => {
         if (!reviewMode) return;
         const el = e.target?.closest?.('[data-block-id]');
         if (el) openMenu(e, el.getAttribute('data-block-id'));
@@ -113,31 +147,54 @@ export default function ArtifactView({ artifactId, revision, comments: initialCo
         </aside>
       )}
 
-      {drawerOpen && (
+      {wideReviewSurface && reviewMode && (
+        <aside className="rk-review-pane">
+          <ReviewPanel
+            mode={drawerMode}
+            selectedBlock={selectedBlock}
+            selected={selected}
+            comments={comments}
+            commentsFor={commentsFor}
+            text={text}
+            setText={setText}
+            submitComment={submitComment}
+            feedbackCmd={feedbackCmd}
+            copyToClipboard={copyToClipboard}
+            quoteAnchor={quoteAnchor}
+            setSelected={setSelected}
+            setDrawerMode={setDrawerMode}
+          />
+        </aside>
+      )}
+
+      {drawerOpen && !(wideReviewSurface && reviewMode) && (
         <aside className="rk-review-drawer">
           <div className="rk-drawer-head">
             <span>{drawerMode === 'comments' ? 'Comments' : 'Comment'}</span>
             <button onClick={() => setDrawerOpen(false)}>×</button>
           </div>
 
-          {selectedBlock ? <BlockInspector
-            block={selectedBlock}
-            comments={commentsFor(selectedBlock.id)}
+          <ReviewPanel
+            mode={drawerMode}
+            selectedBlock={selectedBlock}
+            selected={selected}
+            comments={comments}
+            commentsFor={commentsFor}
             text={text}
             setText={setText}
             submitComment={submitComment}
             feedbackCmd={feedbackCmd}
             copyToClipboard={copyToClipboard}
-          /> : <p className="rk-muted">Select a block or right-click anywhere in the document.</p>}
-
-          <div className="rk-drawer-section">
-            <div className="rk-drawer-label">All comments</div>
-            {comments.length === 0 ? <p className="rk-muted rk-small">No comments yet.</p> : comments.map(c => (
-              <CommentCard key={c.id} comment={c} onClick={() => { setSelected(c.blockId); setDrawerMode('comment'); }} />
-            ))}
-          </div>
+            quoteAnchor={quoteAnchor}
+            setSelected={setSelected}
+            setDrawerMode={setDrawerMode}
+          />
         </aside>
       )}
+
+      {selectionMenu && <div className="rk-selection-menu" style={{ left: selectionMenu.x, top: selectionMenu.y }}>
+        <button onClick={commentOnSelection}>Comment on selection</button>
+      </div>}
 
       {menu && <ContextMenu
         x={menu.x}
@@ -170,7 +227,35 @@ function blockLabel(block) {
   return block.id;
 }
 
-function BlockInspector({ block, comments, text, setText, submitComment, feedbackCmd, copyToClipboard }) {
+function isWideReviewSurface(surface) {
+  return ['engineering-plan', 'review-report', 'data-report-lite'].includes(surface);
+}
+
+function ReviewPanel({ mode, selectedBlock, comments, commentsFor, text, setText, submitComment, feedbackCmd, copyToClipboard, quoteAnchor, setSelected, setDrawerMode }) {
+  return (
+    <>
+      {selectedBlock ? <BlockInspector
+        block={selectedBlock}
+        comments={commentsFor(selectedBlock.id)}
+        text={text}
+        setText={setText}
+        submitComment={submitComment}
+        feedbackCmd={feedbackCmd}
+        copyToClipboard={copyToClipboard}
+        quoteAnchor={quoteAnchor}
+      /> : <p className="rk-muted">Select a block, right-click a block, or select text to comment.</p>}
+
+      <div className="rk-drawer-section">
+        <div className="rk-drawer-label">All comments</div>
+        {comments.length === 0 ? <p className="rk-muted rk-small">No comments yet.</p> : comments.map(c => (
+          <CommentCard key={c.id} comment={c} onClick={() => { setSelected(c.blockId); setDrawerMode('comment'); }} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function BlockInspector({ block, comments, text, setText, submitComment, feedbackCmd, copyToClipboard, quoteAnchor }) {
   return (
     <>
       <div className="rk-drawer-section">
@@ -192,6 +277,10 @@ function BlockInspector({ block, comments, text, setText, submitComment, feedbac
       </div>
       <div className="rk-drawer-section">
         <div className="rk-drawer-label">Comments on this block</div>
+        {quoteAnchor?.blockId === block.id && <div className="rk-quote-anchor">
+          <div className="rk-drawer-label">Selected text</div>
+          <blockquote>{quoteAnchor.selector.exact}</blockquote>
+        </div>}
         {comments.length === 0 ? <p className="rk-muted rk-small">No comments yet.</p> : comments.map(c => <CommentCard key={c.id} comment={c} />)}
         <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Comment or suggest an edit. The agent edits the source; the web UI never mutates body content." />
         <button className="rk-primary-btn" onClick={submitComment} disabled={!text.trim()}>Add comment</button>
@@ -226,6 +315,7 @@ function CommentCard({ comment: c, onClick }) {
   return (
     <div className={`rk-comment-card${onClick ? ' rk-clickable' : ''}`} data-status={c.status} onClick={onClick}>
       <div className="rk-comment-header"><b>{c.blockId}</b><span className="rk-pill" data-status={c.status}>{c.status}</span></div>
+      {c.selector?.exact && <blockquote className="rk-comment-quote">{c.selector.exact}</blockquote>}
       <p>{c.text}</p>
       <div className="rk-comment-id">{c.id}</div>
     </div>
