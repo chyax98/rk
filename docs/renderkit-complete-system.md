@@ -52,6 +52,8 @@ Agent 写 .rk.md
 | 暗黑/终端/长文主题 | 已实现：`dark-pro`、`amber-terminal`、`editorial-kami` | `packages/design/src/themes.css` |
 | grid 二维布局 | 已实现 | `GridBlock.jsx`、`examples/capabilities/grid-layout.rk.md` |
 | table 技术表格 | 已实现 | `TableBlock.jsx`、`examples/capabilities/product-system.rk.md` |
+| image 富媒体图片 | 已实现 | `ImageBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
+| tabs 多视图内容 | 已实现 | `TabsBlock.jsx`、`examples/capabilities/rich-media-tabs.rk.md` |
 | subdocument 子文档块 | 已实现 | `SubdocumentBlock.jsx` |
 | Mermaid | 已实现浏览器渲染 | `MermaidDiagram.jsx` |
 | SVG | 已实现安全内嵌 | `DiagramBlock.jsx` |
@@ -111,6 +113,8 @@ summary
 subdocument
 grid
 table
+image
+tabs
 ```
 
 默认主题：
@@ -449,6 +453,30 @@ PlantUML 某些图类型需要 Graphviz。
 ```
 
 `table` 支持 GFM Markdown table body，并编译为 `columns`、`rows`、`align`，由 `TableBlock.jsx` 渲染为高密度技术表格。
+
+### 5.9 `image`
+
+用于截图、架构图、生成 SVG、产品 mockup 和 blog-style hero figure。
+
+```md
+:::image{id="architecture" src="./architecture.png" alt="System architecture" title="Architecture" aspect="16:9" width="wide"}
+Optional caption text.
+:::
+```
+
+### 5.10 `tabs`
+
+用于高密度多视图内容，例如 Reader/Reviewer、Before/After、Option A/B/C、平台差异步骤。
+
+````md
+:::::tabs{id="delivery-tabs" title="Delivery views" width="wide"}
+::::tab{id="reader" label="Reader view"}
+:::note{id="reader-note" title="Reader-first"}
+Default view should read like a finished document.
+:::
+::::
+:::::
+````
 
 ---
 
@@ -817,7 +845,7 @@ pnpm verify
 当前结果：
 
 ```text
-Results: 163 passed, 0 failed
+Results: 173 passed, 0 failed
 ALL GOOD
 ```
 
@@ -889,6 +917,10 @@ ALL GOOD
 | `RK_UNSUPPORTED_DIAGRAM_ENGINE` | diagram engine 不支持 |
 | `RK_CODE_BODY_REQUIRED` | code block 缺 fenced code |
 | `RK_TABLE_BODY_REQUIRED` | table block 缺 GFM Markdown table body |
+| `RK_IMAGE_SRC_REQUIRED` | image block 缺 `src` |
+| `RK_TABS_CHILD_REQUIRED` | tabs block 缺 tab child |
+| `RK_TABS_CHILD_UNSUPPORTED` | tabs 下出现非 tab child |
+| `RK_TABS_BLOCK_UNSUPPORTED` | tab 内出现不支持的 nested block |
 | `RK_GRID_CHILD_UNSUPPORTED` | grid 子 block 不支持 |
 | `RK_THEME_UNKNOWN` | theme 未知，fallback 到 `paper-light` |
 | `RK_SURFACE_UNKNOWN` | surface 未知，允许但 warning |

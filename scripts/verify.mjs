@@ -138,6 +138,17 @@ const productChart = (productParsed?.model?.blocks || []).find(b => b.id === "la
 assert("product system chart shorthand supports echarts-line", productChart?.props?.engine === "echarts-line");
 assert("product system chart shorthand has csv-like data", (productChart?.props?.code || "").includes("window,p50,p95"));
 
+const richCase = run("node packages/cli/bin/renderkit.mjs validate examples/capabilities/rich-media-tabs.rk.md --json");
+let richParsed;
+try { richParsed = JSON.parse(richCase.stdout); } catch { richParsed = null; }
+const richBlocks = richParsed?.model?.blocks || [];
+assert("rich media tabs case validates", richCase.code === 0 && richParsed?.ok === true, `exit=${richCase.code}`);
+assert("rich media tabs case has image block", richBlocks.some(b => b.type === "image"));
+const tabsBlock = richBlocks.find(b => b.type === "tabs");
+assert("rich media tabs case has tabs block", !!tabsBlock);
+assert("tabs block has two tabs", (tabsBlock?.props?.tabs?.length || 0) === 2, `got ${tabsBlock?.props?.tabs?.length || 0}`);
+assert("tabs contain nested blocks", (tabsBlock?.props?.tabs || []).every(t => (t.blocks?.length || 0) >= 2));
+
 // ── Section 6: Web build ──
 console.log("\n== Web build ==");
 try {

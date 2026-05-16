@@ -13,7 +13,8 @@
     "examples/theme-cases/amber-terminal-runbook.rk.md",
     "examples/capabilities/diagram-engines.rk.md",
     "examples/capabilities/grid-layout.rk.md",
-    "examples/capabilities/product-system.rk.md"
+    "examples/capabilities/product-system.rk.md",
+    "examples/capabilities/rich-media-tabs.rk.md"
   ],
   "bad": {
     "examples/fixtures/bad-id.rk.md": "RK_BLOCK_ID_INVALID",

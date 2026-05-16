@@ -908,3 +908,83 @@
 .rk-echarts[data-variant="pie"] .rk-echarts-canvas {
   min-height: clamp(320px, 30vw, 460px);
 }
+
+/* RenderKit 1.0 product pass 5: rich media and tabbed narrative blocks. */
+.rk-block-image,
+.rk-block-tabs {
+  border: var(--rk-border-width) solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  box-shadow: var(--rk-shadow-sm);
+}
+.rk-image-block,
+.rk-tabs-block {
+  margin: 0;
+}
+.rk-image-title,
+.rk-tabs-title {
+  margin-bottom: var(--rk-space-3);
+  color: var(--rk-text);
+  font: var(--rk-type-label);
+  letter-spacing: var(--rk-tracking-wide);
+  text-transform: uppercase;
+}
+.rk-image-frame {
+  overflow: hidden;
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-xl);
+  background: linear-gradient(135deg, var(--rk-surface-raised), var(--rk-surface-sunken));
+}
+.rk-image-block[data-aspect="16:9"] .rk-image-frame { aspect-ratio: 16 / 9; }
+.rk-image-block[data-aspect="4:3"] .rk-image-frame { aspect-ratio: 4 / 3; }
+.rk-image-block[data-aspect="1:1"] .rk-image-frame { aspect-ratio: 1 / 1; }
+.rk-image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rk-image-caption {
+  margin-top: var(--rk-space-2);
+  color: var(--rk-muted);
+  font-size: var(--rk-text-sm);
+  text-align: center;
+}
+.rk-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-1);
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-full);
+  background: var(--rk-surface-raised);
+  width: fit-content;
+  max-width: 100%;
+}
+.rk-tabs-list button {
+  border: 0;
+  border-radius: var(--rk-radius-full);
+  background: transparent;
+  color: var(--rk-text-secondary);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  cursor: pointer;
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-tabs-list button:hover {
+  background: var(--rk-accent-subtle);
+  color: var(--rk-text);
+}
+.rk-tabs-list button.is-active {
+  background: var(--rk-surface-solid);
+  color: var(--rk-accent);
+  box-shadow: var(--rk-shadow-sm);
+}
+.rk-tabs-panel {
+  display: grid;
+  gap: var(--rk-space-4);
+  margin-top: var(--rk-space-4);
+}
+.rk-tabs-panel > .rk-block,
+.rk-tabs-panel > .rk-block-paragraph,
+.rk-tabs-panel > .rk-block-heading {
+  margin: 0;
+}

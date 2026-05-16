@@ -8,6 +8,8 @@ import DiagramBlock from './DiagramBlock.jsx';
 import SubdocumentBlock from './SubdocumentBlock.jsx';
 import GridBlock from './GridBlock.jsx';
 import TableBlock from './TableBlock.jsx';
+import ImageBlock from './ImageBlock.jsx';
+import TabsBlock from './TabsBlock.jsx';
 
 /**
  * Block type → component registry.
@@ -24,4 +26,6 @@ export const registry = {
   'subdocument': SubdocumentBlock,
   'grid': GridBlock,
   'table': TableBlock,
+  'image': ImageBlock,
+  'tabs': TabsBlock,
 };

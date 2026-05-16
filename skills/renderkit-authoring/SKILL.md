@@ -175,6 +175,18 @@ window,p50,p95
 - `mermaid`, `svg`, `echarts*`, and `infographic` render locally in the browser.
 - `plantuml` and `d2` render through the local RenderKit server (`/api/render/diagram`). PlantUML requires local Java and may require Graphviz for some diagram types; D2 uses local WASM.
 
+#### image
+
+Use `image` for architecture snapshots, screenshots, mockups, generated SVGs, and blog-style hero figures.
+
+```md
+:::image{id="architecture" src="./architecture.png" alt="System architecture" title="Architecture" aspect="16:9" width="wide"}
+Optional caption text.
+:::
+```
+
+Supported attributes: `src` (required), `alt`, `title`, `caption`, `aspect` (`16:9`, `4:3`, `1:1`), `width`.
+
 #### table
 
 Use `table` for comparison matrices, status trackers, release gates, and review findings.
@@ -187,6 +199,30 @@ Use `table` for comparison matrices, status trackers, release gates, and review 
 | Rollback | Config-only tested | Safe to proceed | Release |
 :::
 ```
+
+#### tabs
+
+Use `tabs` to keep a technical document dense without making the reader scroll through every branch. Good uses: Reader/Reviewer views, Before/After, Option A/B/C, platform-specific instructions.
+
+````md
+:::::tabs{id="delivery-tabs" title="Delivery views" width="wide"}
+::::tab{id="reader" label="Reader view"}
+:::note{id="reader-note" title="Reader-first"}
+Default view should read like a finished document.
+:::
+::::
+
+::::tab{id="reviewer" label="Reviewer view"}
+:::src{id="feedback-command" language="bash" title="Feedback"}
+```bash
+renderkit feedback plan.rk.md --json
+```
+:::
+::::
+:::::
+````
+
+Keep tabs shallow. Each tab should contain a few RenderKit blocks, not a whole separate document.
 
 #### grid
 
@@ -275,11 +311,11 @@ If an unsupported `theme` value is used, validation emits warning `RK_THEME_UNKN
 
 | Surface | Recommended blocks |
 |---------|-------------------|
-| `engineering-plan` | summary, callout, decision-card, code, diagram, table, grid |
-| `decision-brief` | summary, decision-card, callout, table |
-| `review-report` | summary, callout, code, table |
-| `runbook` | summary, code, callout, diagram, table |
-| `data-report-lite` | summary, code, diagram, table, grid |
+| `engineering-plan` | summary, callout, decision-card, code, diagram, image, table, tabs, grid |
+| `decision-brief` | summary, decision-card, callout, image, table |
+| `review-report` | summary, callout, code, image, table, tabs |
+| `runbook` | summary, code, callout, diagram, image, table, tabs |
+| `data-report-lite` | summary, code, diagram, image, table, tabs, grid |
 
 If an unsupported `surface` value is used, validation emits warning `RK_SURFACE_UNKNOWN`. The value passes through but may not render as expected.
 
@@ -313,7 +349,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 
 | Code | Fix |
 |------|-----|
-| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table; aliases: sum, note, warn, alert, ok, dec, fig, src |
+| `RK_UNKNOWN_BLOCK_TYPE` | Use a known block type: callout, decision-card, diagram, code, summary, subdocument, grid, table, image, tabs; aliases: sum, note, warn, alert, ok, dec, fig, src |
 | `RK_BLOCK_ID_REQUIRED` | Add `id="..."` attribute to the directive |
 | `RK_BLOCK_ID_INVALID` | Use only `[a-zA-Z0-9_-]+` characters in the id |
 | `RK_DUPLICATE_BLOCK_ID` | Each block id must be unique |
@@ -324,5 +360,7 @@ When in doubt about how a surface should look, read the corresponding example fi
 | `RK_UNSUPPORTED_DIAGRAM_ENGINE` | Use one of: mermaid, svg, echarts, echarts-bar, echarts-line, echarts-pie, infographic, plantuml, d2 |
 | `RK_CODE_BODY_REQUIRED` | Add a fenced code block inside code directive |
 | `RK_TABLE_BODY_REQUIRED` | Add a GitHub-flavored Markdown table inside table directive |
+| `RK_IMAGE_SRC_REQUIRED` | Add `src="..."` to image directive |
+| `RK_TABS_CHILD_REQUIRED` | Add at least one `tab` child inside tabs directive |
 | `RK_THEME_UNKNOWN` | (warning) Use a supported theme: paper-light, editorial-kami, dark-pro, amber-terminal. Falls back to paper-light. |
 | `RK_SURFACE_UNKNOWN` | (warning) Use a supported surface: engineering-plan, decision-brief, review-report, runbook, data-report-lite. |

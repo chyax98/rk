@@ -5,7 +5,7 @@ import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
 import yaml from 'js-yaml';
 
-const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table']);
+const KNOWN = new Set(['callout', 'decision-card', 'diagram', 'code', 'summary', 'subdocument', 'grid', 'table', 'image', 'tabs', 'tab']);
 const ALIASES = new Map([
   ['sum', { name: 'summary' }],
   ['note', { name: 'callout', attrs: { tone: 'info' } }],
@@ -97,6 +97,9 @@ export function parseRK(source, file = '<source>') {
       if (name === 'subdocument') block = compileSubdocument(patched, attrs, source);
       if (name === 'grid') block = compileGrid(patched, attrs, source, errors, file);
       if (name === 'table') block = compileTable(patched, attrs, source, errors, file);
+      if (name === 'image') block = compileImage(patched, attrs, source, errors, file);
+      if (name === 'tabs') block = compileTabs(patched, attrs, source, errors, file);
+      if (name === 'tab') errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
       if (block) blocks.push(block);
       continue;
     }
@@ -246,6 +249,8 @@ function compileGrid(node, attrs, source, errors, file) {
     if (resolved.name === 'summary') block = compileSummary(patched, patched.attributes, source);
     if (resolved.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
     if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'tabs') block = compileTabs(patched, patched.attributes, source, errors, file);
     if (block) children.push(block);
   }
   return {
@@ -312,6 +317,89 @@ function compileTable(node, attrs, source, errors, file) {
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };
+}
+
+function compileImage(node, attrs, source, errors, file) {
+  if (!attrs.src) errors.push(diag('RK_IMAGE_SRC_REQUIRED', 'image directive requires src', file, pos(node)));
+  const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+  return {
+    id: attrs.id,
+    type: 'image',
+    props: {
+      src: attrs.src || '',
+      alt: attrs.alt || attrs.title || '',
+      title: attrs.title || '',
+      caption: attrs.caption || body,
+      aspect: attrs.aspect || '',
+      width: normalizeWidth(attrs.width || attrs.span || 'wide')
+    },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileTabs(node, attrs, source, errors, file) {
+  const tabs = [];
+  for (const child of node.children || []) {
+    if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
+    if (child.name !== 'tab') {
+      errors.push(diag('RK_TABS_CHILD_UNSUPPORTED', `tabs child must be tab, got ${child.name}`, file, pos(child)));
+      continue;
+    }
+    const tabAttrs = child.attributes || {};
+    const tabId = tabAttrs.id || `${attrs.id || 'tabs'}-${tabs.length + 1}`;
+    tabs.push({
+      id: tabId,
+      label: tabAttrs.label || tabAttrs.title || `Tab ${tabs.length + 1}`,
+      blocks: compileNestedBlocks(child, tabId, source, errors, file)
+    });
+  }
+  if (!tabs.length) errors.push(diag('RK_TABS_CHILD_REQUIRED', 'tabs directive requires at least one tab child', file, pos(node)));
+  return {
+    id: attrs.id,
+    type: 'tabs',
+    props: { title: attrs.title || '', width: normalizeWidth(attrs.width || attrs.span || 'wide'), tabs },
+    sourceRange: pos(node),
+    sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileNestedBlocks(node, prefix, source, errors, file) {
+  const out = [];
+  let paraN = 0;
+  let headingN = 0;
+  for (const child of node.children || []) {
+    if (child.type === 'heading') {
+      headingN++;
+      out.push({ id: `${prefix}-heading-${headingN}`, type: 'heading', props: { level: child.depth, text: plainText(child) }, sourceRange: pos(child), sourceExcerpt: excerpt(source, child.position) });
+      continue;
+    }
+    if (child.type === 'paragraph') {
+      const text = plainText(child).trim();
+      if (text) { paraN++; out.push({ id: `${prefix}-paragraph-${paraN}`, type: 'paragraph', props: { markdown: text }, sourceRange: pos(child), sourceExcerpt: excerpt(source, child.position) }); }
+      continue;
+    }
+    if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
+    const resolved = resolveDirective(child.name, child.attributes || {});
+    if (resolved.name === 'tab' || !KNOWN.has(resolved.name)) {
+      errors.push(diag('RK_TABS_BLOCK_UNSUPPORTED', `unsupported block inside tab: ${child.name}`, file, pos(child)));
+      continue;
+    }
+    const nestedId = resolved.attrs.id || `${prefix}-${out.length + 1}`;
+    const patched = { ...child, name: resolved.name, attributes: { ...resolved.attrs, id: nestedId } };
+    let block;
+    if (resolved.name === 'callout') block = compileCallout(patched, patched.attributes, source);
+    if (resolved.name === 'decision-card') block = compileDecision(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'diagram') block = compileDiagram(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'code') block = compileCode(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'summary') block = compileSummary(patched, patched.attributes, source);
+    if (resolved.name === 'subdocument') block = compileSubdocument(patched, patched.attributes, source);
+    if (resolved.name === 'table') block = compileTable(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'image') block = compileImage(patched, patched.attributes, source, errors, file);
+    if (resolved.name === 'grid') block = compileGrid(patched, patched.attributes, source, errors, file);
+    if (block) out.push(block);
+  }
+  return out;
 }
 
 function rawDirectiveBody(source, node) {
