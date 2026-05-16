@@ -10,7 +10,8 @@
 
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
     "verify": "node scripts/verify.mjs",
-    "verify:smoke": "node scripts/verify-smoke.mjs"
+    "verify:smoke": "node scripts/verify-smoke.mjs",
+    "verify:sqlite": "node scripts/verify-sqlite.mjs"
   },
   "devDependencies": {}
 }

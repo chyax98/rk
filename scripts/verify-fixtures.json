@@ -16,8 +16,9 @@
     "examples/capabilities/product-system.rk.md",
     "examples/capabilities/rich-media-tabs.rk.md",
     "examples/capabilities/editorial-components.rk.md",
-    "examples/capabilities/narrative-blocks.rk.md"
- ],
+    "examples/capabilities/narrative-blocks.rk.md",
+    "examples/capabilities/diagram-visual-language.rk.md"
+  ],
   "bad": {
     "examples/fixtures/bad-id.rk.md": "RK_BLOCK_ID_INVALID",
     "examples/fixtures/unknown-block.rk.md": "RK_UNKNOWN_BLOCK_TYPE",

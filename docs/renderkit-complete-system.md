@@ -63,6 +63,7 @@ Agent 写 .rk.md
 | infographic | 已实现轻量指标卡 | `DiagramBlock.jsx` |
 | D2 | 已实现本地 WASM server render | `apps/web/app/api/render/diagram/route.js` |
 | PlantUML | 已实现本地 PlantUML jar server render | `apps/web/app/api/render/diagram/route.js` |
+| diagram visual language | 已实现规范与 fixture | `docs/renderkit-diagram-visual-language.md`、`examples/capabilities/diagram-visual-language.rk.md` |
 | gallery/examples | 已实现 | `examples/gallery.json`、`apps/web/app/gallery/page.jsx` |
 | authoring skill | 已实现 | `skills/renderkit-authoring/SKILL.md` |
 | 验证脚本 | 已实现 | `scripts/verify.mjs`、`scripts/verify-smoke.mjs` |
@@ -883,7 +884,7 @@ pnpm verify
 当前结果：
 
 ```text
-207 passed, 0 failed
+212 passed, 0 failed
 ALL GOOD
 ```
 
@@ -924,7 +925,24 @@ ALL GOOD
 7. D2 render API 返回 SVG。
 8. PlantUML render API 返回 SVG。
 
-### 13.3 Browser verification
+### 13.3 `pnpm verify:sqlite`
+
+命令：
+
+```bash
+pnpm verify:sqlite
+```
+
+当前结果：
+
+```text
+Results: 102 passed, 0 failed
+ALL GOOD
+```
+
+覆盖范围：多 artifact、多 revision、selector comments、resolve/reopen、nested tabs/grid feedback、orphaned comments、agent auto-resolve、selector normalization 和 cleanup。
+
+### 13.4 Browser verification
 
 使用 `pw` 做过真实浏览器验证：
 

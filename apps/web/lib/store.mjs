@@ -12,6 +12,12 @@ function flattenBlocks(blocks) {
   for (const block of blocks || []) {
     out.push(block);
     if (Array.isArray(block.props?.children)) out.push(...flattenBlocks(block.props.children));
+    // tabs: each tab has a blocks array
+    if (Array.isArray(block.props?.tabs)) {
+      for (const tab of block.props.tabs) {
+        if (Array.isArray(tab.blocks)) out.push(...flattenBlocks(tab.blocks));
+      }
+    }
   }
   return out;
 }
@@ -21,6 +27,13 @@ function findBlockById(blocks, id) {
     if (block.id === id) return block;
     const child = findBlockById(block.props?.children || [], id);
     if (child) return child;
+    // tabs: each tab has a blocks array
+    if (Array.isArray(block.props?.tabs)) {
+      for (const tab of block.props.tabs) {
+        const found = findBlockById(tab.blocks || [], id);
+        if (found) return found;
+      }
+    }
   }
   return null;
 }
