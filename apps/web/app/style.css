@@ -2019,11 +2019,8 @@ textarea {
 
 /* ═══ Comment Rail ═══════════════════════════════════════════════ */
 .rk-comment-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding-top: 0.5rem;
+  position: relative;
+  width: 40px;
 }
 
 .rk-rail-dot {

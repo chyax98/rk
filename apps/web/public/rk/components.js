@@ -823,36 +823,32 @@ customElements.define("rk-tabs", RkTabs);
 
 // packages/components/src/elements/rk-grid.ts
 var RkGrid = class extends HTMLElement {
-  _cols = [];
   _rendered = false;
   static get observedAttributes() {
     return ["cols", "gap"];
   }
   connectedCallback() {
     if (this._rendered) return;
-    const cols = Array.from(this.querySelectorAll("rk-col"));
-    if (cols.length > 0) {
-      this._cols = cols.map((c) => c.innerHTML);
-    } else {
-      this._cols = [this.innerHTML];
-    }
     this._rendered = true;
-    this._render();
+    this._build();
   }
-  attributeChangedCallback() {
-    if (this._rendered) this._render();
-  }
-  _render() {
+  _build() {
     const cols = this.getAttribute("cols") || "2";
     const gap = this.getAttribute("gap") || "md";
     const colCount = ["2", "3", "4"].includes(cols) ? cols : "2";
-    const content = this._cols.map((html) => `<div class="rk-grid__cell">${html}</div>`).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}">
-        ${content}
-      </div>
-    `;
+    const children = Array.from(this.children);
+    const isColBased = children.some((c) => c.tagName.toLowerCase() === "rk-col");
+    const cells = isColBased ? children.filter((c) => c.tagName.toLowerCase() === "rk-col") : children;
+    const grid = document.createElement("div");
+    grid.className = `rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}`;
+    for (const cell of cells) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "rk-grid__cell";
+      wrapper.appendChild(cell);
+      grid.appendChild(wrapper);
+    }
+    this.innerHTML = "";
+    this.appendChild(grid);
   }
 };
 customElements.define("rk-grid", RkGrid);
