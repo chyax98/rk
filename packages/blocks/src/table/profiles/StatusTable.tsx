@@ -1,7 +1,7 @@
 import { TableBlockProps } from '../types';
 
 const STATUS_COLORS: Record<string, string> = {
-  '🔴': 'critical', 'red': 'critical', 'critical': 'critical', 'blocked': 'critical', '✗': 'critical', 'no': 'critical', 'blocked': 'critical',
+  '🔴': 'critical', 'red': 'critical', 'critical': 'critical', '✗': 'critical', 'no': 'critical', 'blocked': 'critical',
   '🟡': 'warning', 'yellow': 'warning', 'warning': 'warning', 'in progress': 'warning', 'wip': 'warning', 'pending': 'warning',
   '🟢': 'success', 'green': 'success', 'success': 'success', 'done': 'success', '✓': 'success', 'closed': 'success', 'complete': 'success', 'yes': 'success',
   'open': 'neutral', 'todo': 'neutral', 'blue': 'neutral',
