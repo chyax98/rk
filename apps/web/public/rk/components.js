@@ -370,12 +370,31 @@ var RkChart = class extends HTMLElement {
       </div>
     `;
   }
+  /** Parse data: try JSON array first, then pipe table */
+  _parseData() {
+    const raw = this._raw.trim();
+    if (raw.startsWith("[") || raw.startsWith("{")) {
+      try {
+        const json = JSON.parse(raw);
+        const arr = Array.isArray(json) ? json : [json];
+        if (arr.length === 0) return null;
+        const header = Object.keys(arr[0]);
+        const body = arr.map((row) => header.map((k) => String(row[k] ?? "")));
+        return { header, body };
+      } catch {
+      }
+    }
+    const rows = parsePipeTable2(raw);
+    if (rows.length < 2) return null;
+    return { header: rows[0], body: rows.slice(1) };
+  }
   async _renderEcharts(type, title, caption) {
-    const rows = parsePipeTable2(this._raw);
-    if (rows.length < 2) {
+    const parsed = this._parseData();
+    if (!parsed) {
       this.innerHTML = `<div class="rk-chart"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">Insufficient data for chart</p></div>`;
       return;
     }
+    const { header, body } = parsed;
     this.innerHTML = /* html */
     `
       <div class="rk-chart">
@@ -390,8 +409,6 @@ var RkChart = class extends HTMLElement {
       const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js");
       const chart = echarts.init(container);
       this._chartInstance = chart;
-      const header = rows[0];
-      const body = rows.slice(1);
       const xField = this.getAttribute("xfield") || header[0] || "x";
       const yField = this.getAttribute("yfield") || header[1] || "y";
       const xIdx = header.indexOf(xField);
@@ -399,25 +416,32 @@ var RkChart = class extends HTMLElement {
       const xi = xIdx >= 0 ? xIdx : 0;
       const yi = yIdx >= 0 ? yIdx : 1;
       const xData = body.map((r) => r[xi] || "");
-      const yData = body.map((r) => parseFloat(r[yi] || "0"));
-      const seriesType = type === "scatter" ? "scatter" : type === "pie" ? "pie" : type;
+      const seriesType = type === "scatter" ? "scatter" : type === "pie" ? "pie" : type === "area" ? "line" : type;
+      const numericCols = header.map((h, i) => ({ h, i })).filter(({ i }) => i !== xi && body.some((r) => !isNaN(parseFloat(r[i]))));
+      const seriesCols = yField !== header[0] && header.includes(yField) ? [{ h: yField, i: yi }] : numericCols.length > 0 ? numericCols : [{ h: header[yi] || "value", i: yi }];
       const option = {
-        tooltip: { trigger: seriesType === "pie" ? "item" : "axis" }
+        tooltip: { trigger: seriesType === "pie" ? "item" : "axis" },
+        legend: seriesCols.length > 1 ? { show: true } : { show: false }
       };
       if (seriesType === "pie") {
-        option.series = [
-          {
-            type: "pie",
-            data: body.map((r, i) => ({
-              name: r[xi] || `Item ${i + 1}`,
-              value: parseFloat(r[yi] || "0")
-            }))
-          }
-        ];
+        option.series = [{
+          type: "pie",
+          radius: ["40%", "70%"],
+          data: body.map((r, i) => ({
+            name: r[xi] || `Item ${i + 1}`,
+            value: parseFloat(r[seriesCols[0]?.i ?? yi] || "0")
+          }))
+        }];
       } else {
         option.xAxis = { type: "category", data: xData };
         option.yAxis = { type: "value" };
-        option.series = [{ type: seriesType, data: yData }];
+        option.series = seriesCols.map(({ h, i: si }) => ({
+          name: h,
+          type: seriesType,
+          data: body.map((r) => parseFloat(r[si] || "0")),
+          ...type === "area" ? { areaStyle: {} } : {},
+          smooth: type === "line" || type === "area"
+        }));
       }
       chart.setOption(option);
       const ro = new ResizeObserver(() => chart.resize());
@@ -532,7 +556,7 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const { Graphviz } = await import("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz@1/dist/graphviz.umd.min.js");
+      const { Graphviz } = await import("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz/dist/index.js");
       const graphviz = await Graphviz.load();
       const svg = graphviz.dot(this._raw);
       if (loading) loading.remove();

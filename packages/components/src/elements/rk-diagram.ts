@@ -111,7 +111,7 @@ class RkDiagram extends HTMLElement {
     if (!canvas || !this._raw) return;
     try {
       // @ts-ignore
-      const { Graphviz } = await import('https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz@1/dist/graphviz.umd.min.js');
+      const { Graphviz } = await import('https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz/dist/index.js');
       const graphviz = await Graphviz.load();
       const svg = graphviz.dot(this._raw);
       if (loading) loading.remove();
