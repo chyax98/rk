@@ -131,21 +131,30 @@ class RkField extends HTMLElement {
 }
 
 class RkForm extends HTMLElement {
+  _fieldsHTML = '';
+
   static get observedAttributes() {
     return ['title', 'submit-label', 'description'];
   }
 
-  connectedCallback(): void { this._render(); }
-  attributeChangedCallback(): void { this._render(); }
+  connectedCallback(): void {
+    // Capture field declarations before first render
+    if (!this._fieldsHTML) {
+      this._fieldsHTML = Array.from(this.querySelectorAll('rk-field'))
+        .map(f => f.outerHTML).join('') ||
+        this.innerHTML; // fallback to raw HTML
+    }
+    this._render();
+  }
+  attributeChangedCallback(): void { if (this._fieldsHTML) this._render(); }
 
   _render(): void {
     const title = this.getAttribute('title') || '表单';
     const submitLabel = this.getAttribute('submit-label') || '提交';
     const description = this.getAttribute('description') || '';
 
-    // Save existing rk-field children before re-render
-    const fields = Array.from(this.querySelectorAll('rk-field'));
-    const fieldHTML = fields.map(f => f.outerHTML).join('');
+    // Use cached field HTML
+    const fieldHTML = this._fieldsHTML;
 
     this.innerHTML = `
       <div class="rk-form" style="

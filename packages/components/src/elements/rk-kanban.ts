@@ -14,19 +14,24 @@
 //   </rk-kanban>
 
 class RkKanbanCard extends HTMLElement {
+  _raw = '';
+
   static get observedAttributes() {
     return ['priority', 'tag', 'assignee', 'due'];
   }
 
-  connectedCallback(): void { this._render(); }
-  attributeChangedCallback(): void { this._render(); }
+  connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
+    this._render();
+  }
+  attributeChangedCallback(): void { if (this._raw) this._render(); }
 
   _render(): void {
     const priority = this.getAttribute('priority') || '';
     const tag = this.getAttribute('tag') || '';
     const assignee = this.getAttribute('assignee') || '';
     const due = this.getAttribute('due') || '';
-    const text = (this.textContent || '').trim();
+    const text = this._raw;
 
     const priorityColors: Record<string, string> = {
       high:   'var(--rk-tone-danger-border, #dc2626)',
