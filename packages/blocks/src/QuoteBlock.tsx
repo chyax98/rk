@@ -1,4 +1,10 @@
-export default function QuoteBlock({ quote, cite, role }) {
+interface QuoteBlockProps {
+  quote: string;
+  cite?: string;
+  role?: string;
+}
+
+export default function QuoteBlock({ quote, cite, role }: QuoteBlockProps) {
   return (
     <figure className="rk-quote-block">
       <blockquote>{quote}</blockquote>

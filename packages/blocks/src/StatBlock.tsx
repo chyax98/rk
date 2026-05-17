@@ -1,4 +1,12 @@
-export default function StatBlock({ label, value, delta, tone = 'neutral', caption }) {
+interface StatBlockProps {
+  label?: string;
+  value: string;
+  delta?: string;
+  tone?: string;
+  caption?: string;
+}
+
+export default function StatBlock({ label, value, delta, tone = 'neutral', caption }: StatBlockProps) {
   return (
     <div className="rk-stat-block" data-tone={tone}>
       {label && <div className="rk-stat-label">{label}</div>}

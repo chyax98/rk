@@ -1,7 +1,18 @@
 import { useMemo, useState } from 'react';
 import RenderBlock from './RenderBlock';
 
-export default function TabsBlock({ title, tabs = [] }) {
+interface TabDef {
+  id: string;
+  label?: string;
+  blocks?: Array<{ id: string; type: string; props: Record<string, unknown>; [k: string]: unknown }>;
+}
+
+interface TabsBlockProps {
+  title?: string;
+  tabs?: TabDef[];
+}
+
+export default function TabsBlock({ title, tabs = [] }: TabsBlockProps) {
   const safeTabs = Array.isArray(tabs) ? tabs : [];
   const [activeId, setActiveId] = useState(safeTabs[0]?.id || '');
   const active = useMemo(() => safeTabs.find(tab => tab.id === activeId) || safeTabs[0], [safeTabs, activeId]);
@@ -28,7 +39,7 @@ export default function TabsBlock({ title, tabs = [] }) {
         ))}
       </div>
       <div className="rk-tabs-panel" id={`rk-tab-panel-${active?.id}`} role="tabpanel" aria-labelledby={`rk-tab-${active?.id}`}>
-        {(active?.blocks || []).map(block => <RenderBlock key={block.id} block={block} />)}
+        {(active?.blocks || []).map((block: any) => <RenderBlock key={block.id} block={block} />)}
       </div>
     </section>
   );

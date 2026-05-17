@@ -1,4 +1,12 @@
-export default function ImageBlock({ src, alt = '', title, caption, aspect }) {
+interface ImageBlockProps {
+  src?: string;
+  alt?: string;
+  title?: string;
+  caption?: string;
+  aspect?: string;
+}
+
+export default function ImageBlock({ src, alt = '', title, caption, aspect }: ImageBlockProps) {
   return (
     <figure className="rk-image-block" data-aspect={aspect || undefined}>
       {title && <figcaption className="rk-image-title">{title}</figcaption>}

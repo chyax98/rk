@@ -1,4 +1,14 @@
-export default function ChecklistBlock({ title, items = [] }) {
+interface ChecklistItem {
+  text: string;
+  checked?: boolean;
+}
+
+interface ChecklistBlockProps {
+  title?: string;
+  items?: ChecklistItem[];
+}
+
+export default function ChecklistBlock({ title, items = [] }: ChecklistBlockProps) {
   return (
     <div className="rk-checklist-block">
       {title && <div className="rk-checklist-title">{title}</div>}

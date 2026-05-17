@@ -3,19 +3,19 @@
   "version": "0.0.2-alpha.0",
   "private": true,
   "type": "module",
-  "types": "./src/contracts.d.ts",
+  "types": "./src/contracts.ts",
   "exports": {
     ".": {
-      "types": "./src/contracts.d.ts",
-      "import": "./src/index.mjs"
+      "types": "./src/contracts.ts",
+      "import": "./src/index.ts"
     },
     "./contracts": {
-      "types": "./src/contracts.d.ts",
-      "import": "./src/contracts.mjs"
+      "types": "./src/contracts.ts",
+      "import": "./src/contracts.ts"
     },
     "./design-assets": {
-      "types": "./src/design-assets.d.ts",
-      "import": "./src/design-assets.mjs"
+      "types": "./src/design-assets.ts",
+      "import": "./src/design-assets.ts"
     }
   }
 }

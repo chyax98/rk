@@ -7,7 +7,6 @@
     "dev": "pnpm --filter @renderkit/web dev",
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node packages/cli/bin/renderkit.mjs",
-
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
     "verify": "node scripts/verify.mjs",
     "verify:smoke": "node scripts/verify-smoke.mjs",
@@ -16,5 +15,11 @@
     "verify:contracts": "node scripts/verify-contracts.mjs",
     "verify:agent": "node scripts/verify-agent.mjs"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "sharp"
+    ]
+  }
 }

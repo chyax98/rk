@@ -1,4 +1,15 @@
-export default function TimelineBlock({ title, items = [] }) {
+interface TimelineItem {
+  status?: string;
+  label: string;
+  body?: string;
+}
+
+interface TimelineBlockProps {
+  title?: string;
+  items?: TimelineItem[];
+}
+
+export default function TimelineBlock({ title, items = [] }: TimelineBlockProps) {
   return (
     <section className="rk-timeline-block">
       {title && <h3>{title}</h3>}

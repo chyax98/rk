@@ -4,7 +4,13 @@ import EChartsBlock from './EChartsBlock';
 
 const SERVER_RENDERED_ENGINES = new Set(['plantuml', 'd2']);
 
-export default function DiagramBlock({ engine = 'mermaid', code = '', caption }) {
+interface DiagramBlockProps {
+  engine?: string;
+  code?: string;
+  caption?: string;
+}
+
+export default function DiagramBlock({ engine = 'mermaid', code = '', caption }: DiagramBlockProps) {
   const normalized = String(engine || 'mermaid').toLowerCase();
   if (normalized === 'mermaid') return <MermaidDiagram code={code} caption={caption} />;
   if (normalized === 'svg') return <SvgDiagram code={code} caption={caption} />;
@@ -14,7 +20,7 @@ export default function DiagramBlock({ engine = 'mermaid', code = '', caption })
   return <div className="rk-error-box">Unsupported diagram engine: {engine}</div>;
 }
 
-function SvgDiagram({ code, caption }) {
+function SvgDiagram({ code, caption }: { code: string; caption?: string }) {
   const safe = sanitizeSvg(code);
   return (
     <figure className="rk-diagram rk-diagram-svg">
@@ -24,8 +30,8 @@ function SvgDiagram({ code, caption }) {
   );
 }
 
-function ServerDiagram({ engine, code, caption }) {
-  const [state, setState] = useState({ status: 'loading', svg: '', error: '' });
+function ServerDiagram({ engine, code, caption }: { engine: string; code: string; caption?: string }) {
+  const [state, setState] = useState<{ status: string; svg: string; error: string }>({ status: 'loading', svg: '', error: '' });
   useEffect(() => {
     let alive = true;
     setState({ status: 'loading', svg: '', error: '' });
@@ -35,12 +41,12 @@ function ServerDiagram({ engine, code, caption }) {
       body: JSON.stringify({ engine, code })
     })
       .then(r => r.json())
-      .then(json => {
+      .then((json: { ok?: boolean; svg?: string; error?: string }) => {
         if (!alive) return;
-        if (json.ok && json.svg) setState({ status: 'rendered', svg: sanitizeSvg(json.svg), error: '' });
+        if (json.ok && json.svg) setState({ status: 'rendered', svg: sanitizeSvg(json.svg!), error: '' });
         else setState({ status: 'fallback', svg: '', error: json.error || 'Renderer unavailable' });
       })
-      .catch(e => alive && setState({ status: 'fallback', svg: '', error: String(e.message || e) }));
+      .catch((e: Error) => alive && setState({ status: 'fallback', svg: '', error: String(e.message || e) }));
     return () => { alive = false; };
   }, [engine, code]);
 
@@ -54,7 +60,7 @@ function ServerDiagram({ engine, code, caption }) {
   );
 }
 
-function SourceFallback({ engine, code, status, error }) {
+function SourceFallback({ engine, code, status, error }: { engine: string; code: string; status: string; error: string }) {
   return (
     <div className="rk-diagram-source" data-engine={engine}>
       <div className="rk-diagram-source-head">
@@ -66,7 +72,12 @@ function SourceFallback({ engine, code, status, error }) {
   );
 }
 
-function InfographicBlock({ code, caption }) {
+interface InfographicItem {
+  label: string;
+  value: string;
+}
+
+function InfographicBlock({ code, caption }: { code: string; caption?: string }) {
   const items = parseLooseData(code);
   return (
     <figure className="rk-infographic">
@@ -83,19 +94,19 @@ function InfographicBlock({ code, caption }) {
   );
 }
 
-function parseLooseData(code) {
+function parseLooseData(code: string): InfographicItem[] {
   try {
     const json = JSON.parse(code);
-    const arr = Array.isArray(json) ? json : Object.entries(json).map(([label, value]) => ({ label, value }));
-    return arr.map(x => ({ label: x.label ?? x.name ?? 'Metric', value: x.value ?? x.count ?? x.metric ?? '' }));
-  } catch {}
+    const arr = Array.isArray(json) ? json : Object.entries(json as Record<string, unknown>).map(([label, value]) => ({ label, value }));
+    return (arr as InfographicItem[]).map(x => ({ label: x.label ?? 'Metric', value: x.value ?? '—' }));
+  } catch { /* not JSON */ }
   return code.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
     const [label, ...rest] = line.split(/:|=/);
     return { label: label?.trim() || 'Metric', value: rest.join(':').trim() || '—' };
   });
 }
 
-function sanitizeSvg(svg) {
+function sanitizeSvg(svg: string): string {
   let s = String(svg || '').trim().replace(/^<\?xml[\s\S]*?\?>\s*/i, '');
   const start = s.search(/<svg[\s>]/i);
   if (start > 0) s = s.slice(start);

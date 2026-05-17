@@ -1,4 +1,11 @@
-export default function ComparisonBlock({ title, caption, columns = [], rows = [] }) {
+interface ComparisonBlockProps {
+  title?: string;
+  caption?: string;
+  columns?: string[];
+  rows?: string[][];
+}
+
+export default function ComparisonBlock({ title, caption, columns = [], rows = [] }: ComparisonBlockProps) {
   const safeColumns = columns.length ? columns : ['Before', 'After'];
   return (
     <section className="rk-comparison-block">

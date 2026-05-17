@@ -18,5 +18,8 @@
     "remark-gfm": "latest",
     "remark-parse": "latest",
     "unified": "latest"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
   }
 }
