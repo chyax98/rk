@@ -199,10 +199,12 @@ assert("agent-facing recipe/design CLI passes", agentCase.code === 0, agentCase.
 
 // ── Section 9: Web metadata ──
 console.log("\n== Web metadata ==");
-"apps/web/app/layout.tsx"
+const layoutSource = existsSync(resolve(root, "apps/web/app/layout.tsx"))
+  ? readFileSync(resolve(root, "apps/web/app/layout.tsx"), "utf8")
+  : "";
 const artifactPageSource = existsSync(resolve(root, "apps/web/app/a/[id]/page.tsx"))
   ? readFileSync(resolve(root, "apps/web/app/a/[id]/page.tsx"), "utf8")
-"apps/web/app/a/[id]/page.tsx"
+  : "";
 assert("root layout declares metadataBase", layoutSource.includes("metadataBase"));
 assert("root layout declares Open Graph metadata", layoutSource.includes("openGraph") && layoutSource.includes("renderkit-og.svg"));
 assert("root layout declares Twitter card metadata", layoutSource.includes("twitter") && layoutSource.includes("summary_large_image"));
