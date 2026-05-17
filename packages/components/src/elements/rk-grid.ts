@@ -1,6 +1,5 @@
 // ─── rk-grid ──────────────────────────────────────────────────
 class RkGrid extends HTMLElement {
-  private _cols: string[] = [];
   private _rendered = false;
 
   static get observedAttributes() {
@@ -9,36 +8,36 @@ class RkGrid extends HTMLElement {
 
   connectedCallback(): void {
     if (this._rendered) return;
-    // Capture child content BEFORE browser upgrades child Web Components
-    const cols = Array.from(this.querySelectorAll('rk-col'));
-    if (cols.length > 0) {
-      this._cols = cols.map((c) => c.innerHTML);
-    } else {
-      // No rk-col wrapper — treat entire innerHTML as single cell
-      this._cols = [this.innerHTML];
-    }
     this._rendered = true;
-    this._render();
+    this._build();
   }
 
-  attributeChangedCallback(): void {
-    if (this._rendered) this._render();
-  }
-
-  _render(): void {
+  private _build(): void {
     const cols = this.getAttribute('cols') || '2';
     const gap = this.getAttribute('gap') || 'md';
     const colCount = ['2', '3', '4'].includes(cols) ? cols : '2';
 
-    const content = this._cols
-      .map((html) => `<div class="rk-grid__cell">${html}</div>`)
-      .join('');
+    // Collect direct children BEFORE modifying DOM
+    const children = Array.from(this.children);
+    const isColBased = children.some((c) => c.tagName.toLowerCase() === 'rk-col');
+    const cells = isColBased
+      ? children.filter((c) => c.tagName.toLowerCase() === 'rk-col')
+      : children;
 
-    this.innerHTML = /* html */ `
-      <div class="rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}">
-        ${content}
-      </div>
-    `;
+    // Create grid container
+    const grid = document.createElement('div');
+    grid.className = `rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}`;
+
+    // Move child nodes (not serialize) → no duplicate connectedCallback
+    for (const cell of cells) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'rk-grid__cell';
+      wrapper.appendChild(cell); // DOM move, not clone
+      grid.appendChild(wrapper);
+    }
+
+    this.innerHTML = '';
+    this.appendChild(grid);
   }
 }
 

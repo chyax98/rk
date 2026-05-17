@@ -5,26 +5,33 @@ In Progress
 
 ## Tasks
 
-### Completed This Round
-- [x] **rk-3d Web Component** — Three.js CDN interactive 3D scenes (cube/sphere/torus/orbit), mouse+touch drag, resize observer
-- [x] **rk-chart KPI fix** — All rows now render with label→value→delta mapping (was only first row)
-- [x] **Bundle rebuilt** — 45.5KB (21 components)
-- [x] **CSS for rk-3d** — dark gradient background, grab cursor, caption
+### Done
+- [x] HTML-first architecture rewrite (DSL + React blocks deleted)
+- [x] 21 Web Components (Light DOM, no shadow DOM)
+- [x] rk-3d interactive 3D component (Three.js CDN)
+- [x] ECharts charts via CDN (bar/line/pie/kpi)
+- [x] Comment system: anchor injection + bubble rail + fixed panel
+- [x] CLI: push/feedback/patch/append/anchors/components
+- [x] CSS theme from md2html warm palette
+- [x] Documentation updated (README, ARCHITECTURE, CONTRIBUTING)
 
-### Component Count: 21
-rk-callout, rk-stat, rk-summary, rk-code, rk-table, rk-chart, rk-diagram, rk-decision, rk-checklist, rk-comparison, rk-timeline, rk-tabs, rk-grid, rk-image, rk-quote, rk-collapsible, rk-highlight, rk-progress, rk-steps, rk-metric, **rk-3d**
+### In Progress
+- [ ] rk-grid nesting bug (DOM move instead of innerHTML capture)
+- [ ] Comment bubble Y-position tracking (getBoundingClientRect)
+- [ ] Comment submission end-to-end verification
+
+### Next
+- [ ] Agent workflow docs (SKILL.md update)
+- [ ] rk-tabs click handler browser verification
 
 ## Files Changed
-- packages/components/src/elements/rk-3d.ts — NEW (Three.js interactive 3D)
-- packages/components/src/elements/rk-chart.ts — KPI rendering fixed (label/value/delta)
-- packages/components/src/bundle.ts — added rk-3d import
-- packages/components/src/index.ts — added rk-3d descriptor
-- packages/components/src/css/components.css — rk-3d styles
-- apps/web/public/rk/components.js — rebuilt (45.5KB)
-- apps/web/public/rk/components.css — copied
+- README.md — new (HTML-first overview + 21 components table)
+- ARCHITECTURE.md — rewritten (system flow, DB schema, CLI commands)
+- CONTRIBUTING.md — rewritten (how to add WC, CSS theme, dev setup)
+- docs/test-plan.md — deleted (obsolete, DSL-era)
+- docs/alpha-0.0.2-plan.md — deleted (obsolete)
+- docs/theme-strategy.md — deleted (obsolete)
 
 ## Notes
-- Three.js loaded from CDN (jsDelivr), no npm dependency
-- rk-3d supports cube/sphere/torus/orbit scene types with mouse drag interaction
-- Touch events supported for mobile
-- Orbit scene has animated child spheres
+- Git reset incident: reflog recovery at commit 4ac5b7f restored all work
+- packages/dsl, packages/blocks, packages/shared are empty dirs (only node_modules remain)

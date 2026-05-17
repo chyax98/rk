@@ -1,142 +1,189 @@
 'use client';
 
 import Script from 'next/script';
-import { useMemo, useState, useCallback } from 'react';
-import type { HtmlArtifactBundle, Comment } from '../../../lib/store.ts';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
 
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
   const { meta, revision, anchors, comments } = artifact;
 
-  // Active anchor for comment thread
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [localComments, setLocalComments] = useState<Comment[]>(comments);
+  const [bubblePositions, setBubblePositions] = useState<Record<string, number>>({});
 
-  // Build anchor -> comments map
+  // Only show meaningful anchors (rk-* components and h1/h2/h3)
+  const visibleAnchors = useMemo(
+    () =>
+      anchors.filter(
+        (a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3'].includes(a.elementTag),
+      ),
+    [anchors],
+  );
+
   const commentsByAnchor = useMemo(() => {
     const map = new Map<string, Comment[]>();
-    for (const c of comments) {
-      const list = map.get(c.anchor) || [];
-      list.push(c);
-      map.set(c.anchor, list);
+    for (const c of localComments) {
+      if (c.status === 'open') {
+        const key = c.anchor;
+        if (!key) continue;
+        const list = map.get(key) ?? [];
+        list.push(c);
+        map.set(key, list);
+      }
     }
     return map;
-  }, [comments]);
+  }, [localComments]);
 
-  const activeComments = activeAnchor ? (commentsByAnchor.get(activeAnchor) || []) : [];
+  // Calculate Y position for each anchor's bubble
+  const updatePositions = useCallback(() => {
+    if (!bodyRef.current) return;
+    const pos: Record<string, number> = {};
+    for (const a of visibleAnchors) {
+      const el = bodyRef.current.querySelector(`[data-rk-anchor="${a.anchor}"]`);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        pos[a.anchor] = rect.top + window.scrollY;
+      }
+    }
+    setBubblePositions(pos);
+  }, [visibleAnchors]);
 
-  const handleBubbleClick = useCallback((anchor: string) => {
-    setActiveAnchor((prev) => (prev === anchor ? null : anchor));
-  }, []);
+  useEffect(() => {
+    // Wait for WC rendering before initial positioning
+    const t = setTimeout(updatePositions, 600);
+    window.addEventListener('scroll', updatePositions, { passive: true });
+    window.addEventListener('resize', updatePositions);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('scroll', updatePositions);
+      window.removeEventListener('resize', updatePositions);
+    };
+  }, [updatePositions]);
 
-  const handleSubmitComment = useCallback(async () => {
+  const submitComment = useCallback(async () => {
     if (!activeAnchor || !commentText.trim()) return;
+    setSubmitting(true);
     try {
-      await fetch(`/api/artifacts/${meta.id}/comments`, {
+      const res = await fetch(`/api/artifacts/${meta.id}/comments`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          anchor: activeAnchor,
-          text: commentText.trim(),
-        }),
+        body: JSON.stringify({ anchor: activeAnchor, text: commentText.trim() }),
       });
-      setCommentText('');
-      // Refresh page to show new comment
-      window.location.reload();
-    } catch {
-      // Non-fatal
+      const data = await res.json();
+      if (data.ok && data.comment) {
+        setLocalComments((prev) => [...prev, data.comment]);
+        setCommentText('');
+      }
+    } finally {
+      setSubmitting(false);
     }
   }, [activeAnchor, commentText, meta.id]);
 
+  const activeComments = activeAnchor ? (commentsByAnchor.get(activeAnchor) ?? []) : [];
+  const activeAnchorLabel =
+    visibleAnchors.find((a) => a.anchor === activeAnchor)?.textPreview?.slice(0, 40) ||
+    activeAnchor;
+
   return (
     <div className="rk-page" data-rk-theme="paper-light">
-      {/* Inject RenderKit CSS */}
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
-      <main id="rk-main" className="rk-artifact">
-        <div
-          className="rk-html-content" // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted server-processed HTML
-          dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }}
-        />
+      <div className="rk-html-layout">
+        {/* Main document body */}
+        <div ref={bodyRef} className="rk-html-body">
+          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: server-processed HTML */}
+          <div dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }} />
+        </div>
 
-        {/* anchor bubble rail — only show meaningful anchors */}
-        <div className="rk-block-rail">
-          {anchors
-            .filter((a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3'].includes(a.elementTag))
-            .map((a) => {
-            const anchorComments = commentsByAnchor.get(a.anchor) || [];
-            const count = anchorComments.length;
+        {/* Bubble rail — absolutely positioned to track element Y */}
+        <div className="rk-comment-rail">
+          {visibleAnchors.map((a) => {
+            const count = commentsByAnchor.get(a.anchor)?.length ?? 0;
             const isActive = activeAnchor === a.anchor;
+            const top = bubblePositions[a.anchor];
             return (
-              <div
+              <button
                 key={a.id}
-                className={`rk-bubble${count > 0 ? ' rk-bubble--active' : ''}${isActive ? ' rk-bubble--selected' : ''}`}
-                data-anchor={a.anchor}
-                title={a.textPreview || a.anchor}
-                onClick={() => handleBubbleClick(a.anchor)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleBubbleClick(a.anchor); }}
-                role="button"
-                tabIndex={0}
+                type="button"
+                className={`rk-rail-dot${count > 0 ? ' has-comments' : ''}${isActive ? ' is-active' : ''}`}
+                style={
+                  top !== undefined
+                    ? { position: 'absolute', top: `${top}px`, transform: 'translateY(-50%)' }
+                    : {}
+                }
+                title={a.textPreview ?? a.anchor}
+                onClick={() => setActiveAnchor(isActive ? null : a.anchor)}
               >
-                {count > 0 ? count : '+'}
-              </div>
+                {count > 0 ? String(count) : '+'}
+              </button>
             );
           })}
         </div>
-      </main>
+      </div>
 
-      {/* Comment thread for active anchor */}
+      {/* Comment panel — fixed right drawer */}
       {activeAnchor && (
-        <div className="rk-comment-thread">
-          <div className="rk-comment-thread__header">
-            <span className="rk-comment-thread__title">
-              评论 · {anchors.find((a) => a.anchor === activeAnchor)?.textPreview || activeAnchor}
+        <div className="rk-comment-panel">
+          <div className="rk-comment-panel__header">
+            <span className="rk-comment-panel__anchor" title={activeAnchor}>
+              {activeAnchorLabel}
             </span>
             <button
-              className="rk-comment-thread__close"
-              onClick={() => setActiveAnchor(null)}
-              aria-label="关闭"
+              type="button"
+              className="rk-comment-panel__close"
+              onClick={() => {
+                setActiveAnchor(null);
+                setCommentText('');
+              }}
             >
-              ×
+              ✕
             </button>
           </div>
-
-          <div className="rk-comment-thread__list">
+          <div className="rk-comment-panel__list">
             {activeComments.length === 0 && (
-              <div className="rk-comment-thread__empty">暂无评论</div>
+              <p className="rk-comment-panel__empty">暂无评论，在下方写下第一条</p>
             )}
             {activeComments.map((c) => (
-              <div key={c.id} className={`rk-comment-card rk-comment-card--${c.status}`}>
-                <div className="rk-comment-card__text">{c.text}</div>
-                {c.selector && (
-                  <div className="rk-comment-card__quote">&ldquo;{c.selector.exact}&rdquo;</div>
+              <div key={c.id} className="rk-comment-card-inpanel">
+                {c.selector?.exact && (
+                  <blockquote className="rk-comment-card__quote">
+                    &ldquo;{c.selector.exact}&rdquo;
+                  </blockquote>
                 )}
-                <div className="rk-comment-card__meta">
-                  <span className="rk-comment-card__status">{c.status === 'open' ? '🟢 待处理' : c.status === 'resolved' ? '✅ 已解决' : '⚠️ 已失效'}</span>
-                  <span className="rk-comment-card__time">{new Date(c.createdAt).toLocaleString('zh-CN')}</span>
-                </div>
+                <p className="rk-comment-card__text">{c.text}</p>
+                <span className="rk-comment-card__time">
+                  {new Date(c.createdAt).toLocaleString('zh-CN')}
+                </span>
               </div>
             ))}
           </div>
-
-          <div className="rk-comment-thread__input">
+          <div className="rk-comment-panel__input">
             <textarea
+              className="rk-comment-panel__textarea"
+              placeholder="写下评论… (Cmd+Enter 提交)"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="写下评论…"
-              rows={2}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitComment();
+              }}
+              rows={3}
             />
             <button
-              onClick={handleSubmitComment}
-              disabled={!commentText.trim()}
+              type="button"
+              className="rk-comment-panel__submit"
+              onClick={submitComment}
+              disabled={submitting || !commentText.trim()}
             >
-              发送
+              {submitting ? '…' : '发送'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Inject RenderKit components JS */}
       <Script src="/rk/components.js" strategy="afterInteractive" />
     </div>
   );
