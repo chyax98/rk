@@ -1,7 +1,14 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
+import {
+  diag,
+  directiveBodyText,
+  excerpt,
+  parsePipeTable,
+  pos,
+  rawDirectiveBody,
+} from '../helpers.ts';
 import { validateTableProfile, validateTableRenderer } from '../renderer-validation.ts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, parsePipeTable, diag } from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileTable(
   node: RemarkNode,
@@ -13,11 +20,21 @@ export function compileTable(
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const parsed = parsePipeTable(body);
   if (!parsed.headers.length || !parsed.rows.length) {
-    errors.push(diag('RK_TABLE_BODY_REQUIRED', 'table directive requires a GitHub-flavored Markdown table body', file, pos(node)));
+    errors.push(
+      diag(
+        'RK_TABLE_BODY_REQUIRED',
+        'table directive requires a GitHub-flavored Markdown table body',
+        file,
+        pos(node),
+      ),
+    );
   }
 
   // Profile and renderer validation
-  const { profile: resolvedProfile, forced } = validateTableProfile(attrs.profile, parsed.headers.length);
+  const { profile: resolvedProfile, forced } = validateTableProfile(
+    attrs.profile,
+    parsed.headers.length,
+  );
   const renderer = validateTableRenderer(attrs.renderer);
 
   if (forced) {

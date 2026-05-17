@@ -455,6 +455,7 @@
   --rk-scrollbar-track: transparent;
 
   /* Editorial-specific: use serif for body text */
-  --rk-font-sans: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif JP", serif;
+  --rk-font-sans:
+    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif JP", serif;
   --rk-font-mono: ui-monospace, SFMono-Regular, Menlo, "Noto Sans Mono", monospace;
 }

@@ -1,12 +1,18 @@
 'use client';
 import { Fragment } from 'react';
-import CommentCard from './CommentCard';
-import CommentInput from './CommentInput';
 import type { Comment } from '../hooks/useComments';
 import type { QuoteAnchor } from '../hooks/useSelection';
+import CommentCard from './CommentCard';
+import CommentInput from './CommentInput';
 
 interface BlockInspectorProps {
-  block: { id: string; type: string; props: Record<string, any>; sourceRange?: { startLine: number; endLine: number }; sourceExcerpt?: string };
+  block: {
+    id: string;
+    type: string;
+    props: Record<string, any>;
+    sourceRange?: { startLine: number; endLine: number };
+    sourceExcerpt?: string;
+  };
   comments: Comment[];
   text: string;
   setText: (t: string) => void;
@@ -15,7 +21,15 @@ interface BlockInspectorProps {
   setCommentStatus: (id: string, status: string) => void;
 }
 
-export default function BlockInspector({ block, comments, text, setText, submitComment, quoteAnchor, setCommentStatus }: BlockInspectorProps) {
+export default function BlockInspector({
+  block,
+  comments,
+  text,
+  setText,
+  submitComment,
+  quoteAnchor,
+  setCommentStatus,
+}: BlockInspectorProps) {
   return (
     <>
       <div className="rk-drawer-section">
@@ -26,12 +40,14 @@ export default function BlockInspector({ block, comments, text, setText, submitC
 
       <details className="rk-drawer-section rk-agent-metadata">
         <summary>Agent 元数据</summary>
-<div className="rk-drawer-label">块 ID</div>
+        <div className="rk-drawer-label">块 ID</div>
         <code>{block.id}</code>
         {block.sourceRange && (
           <>
             <div className="rk-drawer-label">源文件位置</div>
-            <div className="rk-source-range">第 {block.sourceRange.startLine}–{block.sourceRange.endLine} 行</div>
+            <div className="rk-source-range">
+              第 {block.sourceRange.startLine}–{block.sourceRange.endLine} 行
+            </div>
             {block.sourceExcerpt && <pre className="rk-source-excerpt">{block.sourceExcerpt}</pre>}
           </>
         )}
@@ -40,7 +56,9 @@ export default function BlockInspector({ block, comments, text, setText, submitC
           {Object.entries(block.props || {}).map(([k, v]) => (
             <Fragment key={k}>
               <span className="rk-meta-key">{k}</span>
-              <span className="rk-meta-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+              <span className="rk-meta-val">
+                {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+              </span>
             </Fragment>
           ))}
         </div>
@@ -54,9 +72,13 @@ export default function BlockInspector({ block, comments, text, setText, submitC
             <blockquote>{quoteAnchor.selector.exact}</blockquote>
           </div>
         )}
-        {comments.length === 0
-          ? <p className="rk-muted rk-small">暂无评论。</p>
-          : comments.map(c => <CommentCard key={c.id} comment={c} setCommentStatus={setCommentStatus} />)}
+        {comments.length === 0 ? (
+          <p className="rk-muted rk-small">暂无评论。</p>
+        ) : (
+          comments.map((c) => (
+            <CommentCard key={c.id} comment={c} setCommentStatus={setCommentStatus} />
+          ))
+        )}
         <CommentInput text={text} setText={setText} onSubmit={submitComment} />
       </div>
     </>

@@ -1,14 +1,23 @@
-interface QuoteBlockProps {
-  quote: string;
-  cite?: string;
-  role?: string;
+import { RichText } from './utils/richText.tsx';
+
+interface Props {
+  quote?: string;
+  attribution?: string;
+  source?: string;
 }
 
-export default function QuoteBlock({ quote, cite, role }: QuoteBlockProps) {
+export default function QuoteBlock({ quote = '', attribution, source }: Props) {
   return (
     <figure className="rk-quote-block">
-      <blockquote>{quote}</blockquote>
-      {(cite || role) && <figcaption>{cite && <b>{cite}</b>}{role && <span>{role}</span>}</figcaption>}
+      <blockquote className="rk-quote-text">
+        <RichText text={quote} />
+      </blockquote>
+      {(attribution || source) && (
+        <figcaption className="rk-quote-attribution">
+          {attribution}
+          {source && attribution ? `, ${source}` : source}
+        </figcaption>
+      )}
     </figure>
   );
 }

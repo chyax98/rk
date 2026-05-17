@@ -1,4 +1,4 @@
-import { TableBlockProps } from '../types';
+import type { TableBlockProps } from '../types';
 
 export default function CardsTable({ title, caption, columns = [], rows = [] }: TableBlockProps) {
   return (

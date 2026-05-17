@@ -1,7 +1,7 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, plainText, diag } from '../helpers.ts';
 import { resolveDirective } from '../alias.ts';
+import { diag, excerpt, plainText, pos } from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 import { compileBlock } from './index.ts';
 
 export function compileTabs(
@@ -13,7 +13,14 @@ export function compileTabs(
   for (const child of node.children || []) {
     if (child.type !== 'containerDirective' && child.type !== 'leafDirective') continue;
     if (child.name !== 'tab') {
-      ctx.errors.push(diag('RK_TABS_CHILD_UNSUPPORTED', `tabs child must be tab, got ${child.name}`, ctx.file, pos(child)));
+      ctx.errors.push(
+        diag(
+          'RK_TABS_CHILD_UNSUPPORTED',
+          `tabs child must be tab, got ${child.name}`,
+          ctx.file,
+          pos(child),
+        ),
+      );
       continue;
     }
     const tabAttrs = child.attributes || {};
@@ -24,11 +31,23 @@ export function compileTabs(
       blocks: compileNestedBlocks(child, tabId, ctx),
     });
   }
-  if (!tabs.length) ctx.errors.push(diag('RK_TABS_CHILD_REQUIRED', 'tabs directive requires at least one tab child', ctx.file, pos(node)));
+  if (!tabs.length)
+    ctx.errors.push(
+      diag(
+        'RK_TABS_CHILD_REQUIRED',
+        'tabs directive requires at least one tab child',
+        ctx.file,
+        pos(node),
+      ),
+    );
   return {
     id: attrs.id!,
     type: 'tabs',
-    props: { title: attrs.title || '', width: normalizeBlockWidth(attrs.width || attrs.span || 'wide'), tabs },
+    props: {
+      title: attrs.title || '',
+      width: normalizeBlockWidth(attrs.width || attrs.span || 'wide'),
+      tabs,
+    },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(ctx.source, node.position),
   };
@@ -73,11 +92,30 @@ function compileNestedBlocks(
     const resolved = resolveDirective(child.name!, child.attributes || {});
     const name = resolved.name;
     const KNOWN = new Set([
-      'callout', 'decision-card', 'diagram', 'code', 'summary', 'grid',
-      'table', 'image', 'stat', 'checklist', 'quote', 'comparison', 'timeline', 'chart',
+      'callout',
+      'decision-card',
+      'diagram',
+      'code',
+      'summary',
+      'grid',
+      'table',
+      'image',
+      'stat',
+      'checklist',
+      'quote',
+      'comparison',
+      'timeline',
+      'chart',
     ]);
     if (!KNOWN.has(name) || name === 'tab') {
-      ctx.errors.push(diag('RK_TABS_BLOCK_UNSUPPORTED', `unsupported block inside tab: ${child.name}`, ctx.file, pos(child)));
+      ctx.errors.push(
+        diag(
+          'RK_TABS_BLOCK_UNSUPPORTED',
+          `unsupported block inside tab: ${child.name}`,
+          ctx.file,
+          pos(child),
+        ),
+      );
       continue;
     }
     const id = resolved.attrs.id || `${prefix}-${out.length + 1}`;

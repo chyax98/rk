@@ -2,34 +2,35 @@
  * RenderKit DSL parser — main entry point.
  * Parses .rk.md source into a validated RenderKit model.
  */
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
+
+import type { Diagnostic, RenderKitModel, SourceRange } from '@renderkit/shared';
+import {
+  DEFAULT_THEME,
+  normalizeBlockWidth,
+  SURFACE_NAMES,
+  THEME_NAMES,
+  validateRenderKitModel,
+} from '@renderkit/shared/contracts';
+import yaml from 'js-yaml';
 import remarkDirective from 'remark-directive';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
-import yaml from 'js-yaml';
-import {
-  DEFAULT_THEME,
-  THEME_NAMES,
-  SURFACE_NAMES,
-  validateRenderKitModel,
-  normalizeBlockWidth,
-} from '@renderkit/shared/contracts';
-import type { SourceRange, Diagnostic, RenderKitModel } from '@renderkit/shared';
-import type { RemarkNode, BlockAttrs, CompileContext } from './types.ts';
-import {
-  pos,
-  excerpt,
-  rangeFromOffsets,
-  plainText,
-  collectDirectiveIds,
-  walkNodes,
-  firstHeading,
-  diag,
-} from './helpers.ts';
-import { generatedBlockId, slugId, ID_FORMAT } from './id.ts';
+import remarkParse from 'remark-parse';
+import { unified } from 'unified';
 import { resolveDirective } from './alias.ts';
-import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers/index.ts';
+import { BLOCK_COMPILERS, compileBlock, KNOWN_BLOCK_TYPES } from './compilers/index.ts';
+import {
+  collectDirectiveIds,
+  diag,
+  excerpt,
+  firstHeading,
+  plainText,
+  pos,
+  rangeFromOffsets,
+  walkNodes,
+} from './helpers.ts';
+import { generatedBlockId, ID_FORMAT, slugId } from './id.ts';
+import type { BlockAttrs, CompileContext, RemarkNode } from './types.ts';
 
 // Re-export for consumers that import from the package root
 export { parseRK };
@@ -46,17 +47,19 @@ function parseRK(
 ): { ok: boolean; model: RenderKitModel | null; errors: Diagnostic[]; warnings: Diagnostic[] } {
   const errors: Diagnostic[] = [];
   const warnings: Diagnostic[] = [];
-    let frontmatter: Record<string, unknown> = {};
+  let frontmatter: Record<string, unknown> = {};
 
-    const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
-    if (fm) {
-      try {
-        frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>;
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push(diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)));
-      }
+  const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
+  if (fm) {
+    try {
+      frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      errors.push(
+        diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)),
+      );
     }
+  }
 
   let tree: RemarkNode;
   try {
@@ -126,11 +129,21 @@ function parseRK(
       }
 
       if (!attrs.id) {
-        attrs = { ...attrs, id: generatedBlockId(name, node, source, explicitDirectiveIds, generatedDirectiveIds) };
+        attrs = {
+          ...attrs,
+          id: generatedBlockId(name, node, source, explicitDirectiveIds, generatedDirectiveIds),
+        };
       }
 
       if (!ID_FORMAT.test(attrs.id!)) {
-        errors.push(diag('RK_BLOCK_ID_INVALID', `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
+        errors.push(
+          diag(
+            'RK_BLOCK_ID_INVALID',
+            `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`,
+            file,
+            r,
+          ),
+        );
         continue;
       }
 
@@ -138,13 +151,14 @@ function parseRK(
 
       let block;
       if (name === 'tab') {
-        errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
+        errors.push(
+          diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r),
+        );
       } else {
         block = compileBlock(patched, attrs, ctx);
       }
 
       if (block) blocks.push(block);
-      continue;
     }
   }
 
@@ -152,7 +166,14 @@ function parseRK(
   for (const block of blocks) {
     const bid = block.id as string;
     if (ids.has(bid)) {
-      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${bid}`, file, block.sourceRange as SourceRange));
+      errors.push(
+        diag(
+          'RK_DUPLICATE_BLOCK_ID',
+          `Duplicate block id: ${bid}`,
+          file,
+          block.sourceRange as SourceRange,
+        ),
+      );
     } else {
       ids.set(bid, block);
     }
@@ -160,14 +181,26 @@ function parseRK(
 
   // Theme and surface validation
   let effectiveTheme = (frontmatter.theme as string | null) || null;
-  let effectiveSurface = (frontmatter.surface as string | null) || null;
+  const effectiveSurface = (frontmatter.surface as string | null) || null;
 
   if (effectiveTheme && !VALID_THEMES.has(effectiveTheme as any)) {
-    warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${effectiveTheme}", falling back to "${DEFAULT_THEME}"`, file));
+    warnings.push(
+      diag(
+        'RK_THEME_UNKNOWN',
+        `Unknown theme "${effectiveTheme}", falling back to "${DEFAULT_THEME}"`,
+        file,
+      ),
+    );
     effectiveTheme = DEFAULT_THEME;
   }
   if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface as any)) {
-    warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
+    warnings.push(
+      diag(
+        'RK_SURFACE_UNKNOWN',
+        `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`,
+        file,
+      ),
+    );
   }
 
   const model: RenderKitModel = {

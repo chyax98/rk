@@ -9,7 +9,7 @@ export interface CodeBlockProps {
   filename?: string;
   frame?: CodeFrame;
   showLineNumbers?: boolean;
-  highlight?: string;   // '1,3-5'
+  highlight?: string; // '1,3-5'
   diff?: boolean;
   copyMode?: CopyMode;
   renderer?: CodeRenderer;

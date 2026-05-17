@@ -14,7 +14,9 @@ export default function AgentHandoff({ feedbackCmd, copyToClipboard }: AgentHand
       </p>
       <div className="rk-feedback-cmd">
         <code>{feedbackCmd}</code>
-        <button onClick={() => copyToClipboard(feedbackCmd)} title="复制命令">⎘</button>
+        <button onClick={() => copyToClipboard(feedbackCmd)} title="复制命令">
+          ⎘
+        </button>
       </div>
     </div>
   );

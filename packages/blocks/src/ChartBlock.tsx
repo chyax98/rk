@@ -1,145 +1,121 @@
-import { useEffect, useRef, useState } from 'react';
-import type { ECharts } from 'echarts';
+'use client';
+import { useEffect, useRef } from 'react';
+import { RichText } from './utils/richText.tsx';
 
 type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'kpi';
-type ChartTemplate = 'default' | 'minimal' | 'report';
 
-interface ChartBlockProps {
-  chartType: ChartType;
-  template?: ChartTemplate;
+interface Props {
+  chartType?: ChartType;
   title?: string;
+  caption?: string;
+  columns?: string[];
+  rows?: string[][];
+  template?: string;
   xField?: string;
   yField?: string;
-  columns: string[];
-  rows: string[][];
-  caption?: string;
 }
 
-export default function ChartBlock(props: ChartBlockProps) {
-  if (props.chartType === 'kpi') return <KpiCard {...props} />;
-  return <EChartsChart {...props} />;
+export default function ChartBlock(props: Props) {
+  if ((props.chartType ?? 'bar') === 'kpi') return <KpiGrid {...props} />;
+  return <EChartsBlock {...props} />;
 }
 
-function KpiCard({ rows, columns, title }: ChartBlockProps) {
-  const items = rows.map(row => ({
-    label: row[0] || columns[0] || '',
-    value: row[1] || columns[1] || '',
-  }));
-
+/* ── KPI grid ──────────────────────────────────────────── */
+function KpiGrid({ title, rows = [], caption }: Props) {
   return (
-    <figure className="rk-chart rk-chart-kpi">
-      {title && <figcaption className="rk-chart-title">{title}</figcaption>}
+    <figure className="rk-chart-kpi">
+      {title && (
+        <figcaption className="rk-chart-title">
+          <RichText text={title} />
+        </figcaption>
+      )}
       <div className="rk-kpi-grid">
-        {items.map((item, i) => (
-          <div className="rk-kpi-tile" key={i}>
-            <div className="rk-kpi-value">{item.value}</div>
-            <div className="rk-kpi-label">{item.label}</div>
+        {rows.map((row, i) => (
+          <div key={i} className="rk-kpi-card">
+            <p className="rk-kpi-label">{row[0] ?? ''}</p>
+            <p className="rk-kpi-value">{row[1] ?? '—'}</p>
+            {row[2] && <p className="rk-kpi-delta">{row[2]}</p>}
           </div>
         ))}
       </div>
+      {caption && (
+        <p className="rk-chart-caption">
+          <RichText text={caption} />
+        </p>
+      )}
     </figure>
   );
 }
 
-function EChartsChart({ chartType, template = 'default', title, xField, yField, columns, rows, caption }: ChartBlockProps) {
+/* ── ECharts block ─────────────────────────────────────── */
+function EChartsBlock({ chartType = 'bar', title, caption, columns = [], rows = [] }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    let chart: ECharts | null = null;
-    let alive = true;
+    if (!ref.current) return;
+    let instance: import('echarts').ECharts | null = null;
 
-    async function run() {
-      try {
-        const echarts = await import('echarts');
-        if (!alive || !ref.current) return;
-        setErr(null);
+    import('echarts').then(({ init }) => {
+      if (!ref.current) return;
+      instance = init(ref.current, null, { renderer: 'svg' });
+      instance.setOption(buildOption(chartType, columns, rows, title));
+    });
 
-        const option = buildOption(chartType!, columns, rows, { xField, yField, title, template });
-        chart = echarts.init(ref.current, null, { renderer: 'svg' });
-        chart.setOption(option);
-        const resize = () => chart?.resize?.();
-        window.addEventListener('resize', resize);
-        return () => window.removeEventListener('resize', resize);
-      } catch (e) {
-        if (alive) setErr(String((e as Error).message || e));
-      }
-    }
-
-    let cleanup: (() => void) | undefined;
-    run().then(fn => { cleanup = fn; });
-    return () => { alive = false; cleanup?.(); chart?.dispose?.(); };
-  }, [chartType, template, title, xField, yField, JSON.stringify(columns), JSON.stringify(rows)]);
+    const ro = new ResizeObserver(() => instance?.resize());
+    ro.observe(ref.current);
+    return () => {
+      ro.disconnect();
+      instance?.dispose();
+    };
+  }, [chartType, title, columns, rows]);
 
   return (
-    <figure className="rk-chart rk-chart-echarts">
-      {title && <figcaption className="rk-chart-title">{title}</figcaption>}
-      {err
-        ? <div className="rk-chart-error">Chart error: {err}</div>
-        : <div ref={ref} className="rk-chart-canvas" />
-      }
-      {caption && <div className="rk-chart-caption">{caption}</div>}
+    <figure className="rk-chart">
+      <div ref={ref} className="rk-chart-container" />
+      {caption && (
+        <figcaption className="rk-chart-caption">
+          <RichText text={caption} />
+        </figcaption>
+      )}
     </figure>
   );
 }
 
-function buildOption(
-  chartType: ChartType,
-  columns: string[],
-  rows: string[][],
-  opts: { xField?: string; yField?: string; title?: string; template?: ChartTemplate }
-): Record<string, unknown> {
-  // Determine x/y column indices
-  const xIdx = opts.xField ? Math.max(0, columns.indexOf(opts.xField)) : 0;
-  const yIdx = opts.yField ? Math.max(0, columns.indexOf(opts.yField)) : (columns.length > 1 ? 1 : 0);
-
-  const labels = rows.map(r => r[xIdx] || '');
-  const values = rows.map(r => Number(r[yIdx]) || 0);
+/* ── Option builders ───────────────────────────────────── */
+function buildOption(type: ChartType, columns: string[], rows: string[][], title?: string) {
+  const names = rows.map((r) => r[0] ?? '');
+  const values = rows.map((r) => Number(r[1]) || 0);
 
   const base = {
-    title: opts.template !== 'minimal' && opts.title ? { text: opts.title, textStyle: { fontSize: 14 } } : undefined,
-    tooltip: { trigger: 'axis' as const },
-    grid: opts.template === 'report' ? { left: 60, right: 20, top: 40, bottom: 30 } : undefined,
+    title: title ? { text: title, textStyle: { fontSize: 13, fontWeight: 600 } } : undefined,
+    tooltip: { trigger: type === 'pie' ? 'item' : 'axis' },
+    animation: true,
   };
 
-  switch (chartType) {
-    case 'bar':
-      return {
-        ...base,
-        xAxis: { type: 'category', data: labels },
-        yAxis: { type: 'value' },
-        series: [{ type: 'bar', data: values }],
-      };
-    case 'line':
-      return {
-        ...base,
-        xAxis: { type: 'category', data: labels },
-        yAxis: { type: 'value' },
-        series: [{ type: 'line', data: values, smooth: true }],
-      };
-    case 'pie':
-      return {
-        ...base,
-        tooltip: { trigger: 'item' as const },
-        series: [{
+  if (type === 'pie') {
+    return {
+      ...base,
+      series: [
+        {
           type: 'pie',
-          radius: opts.template === 'report' ? ['35%', '65%'] : '60%',
-          data: labels.map((name, i) => ({ name, value: values[i] })),
-        }],
-      };
-    case 'scatter':
-      return {
-        ...base,
-        xAxis: { type: 'value' },
-        yAxis: { type: 'value' },
-        series: [{ type: 'scatter', data: rows.map(r => [Number(r[xIdx]) || 0, Number(r[yIdx]) || 0]) }],
-      };
-    default:
-      return {
-        ...base,
-        xAxis: { type: 'category', data: labels },
-        yAxis: { type: 'value' },
-        series: [{ type: 'bar', data: values }],
-      };
+          radius: '65%',
+          data: rows.map((r) => ({ name: r[0] ?? '', value: Number(r[1]) || 0 })),
+        },
+      ],
+    };
   }
+  if (type === 'scatter') {
+    return {
+      ...base,
+      xAxis: { type: 'value', name: columns[0] ?? 'x' },
+      yAxis: { type: 'value', name: columns[1] ?? 'y' },
+      series: [{ type: 'scatter', data: rows.map((r) => [Number(r[0]) || 0, Number(r[1]) || 0]) }],
+    };
+  }
+  return {
+    ...base,
+    xAxis: { type: 'category', data: names },
+    yAxis: { type: 'value' },
+    series: [{ type, data: values, smooth: type === 'line' }],
+  };
 }

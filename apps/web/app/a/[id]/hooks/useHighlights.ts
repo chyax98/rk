@@ -8,7 +8,9 @@ function cssEscape(value: string) {
 }
 
 function normalizeSpace(value: string) {
-  return String(value || '').replace(/\s+/g, ' ').trim();
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function overlapScore(text: string, anchor: string, side: 'start' | 'end') {
@@ -35,7 +37,12 @@ function findTextRange(root: HTMLElement, selector: Comment['selector']): Range 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node: Text) {
       if (!node.nodeValue?.includes(exact)) return NodeFilter.FILTER_REJECT;
-      if ((node.parentElement as HTMLElement)?.closest?.('.rk-block-tools,.rk-comment-card,.rk-context-menu,.rk-selection-menu')) return NodeFilter.FILTER_REJECT;
+      if (
+        (node.parentElement as HTMLElement)?.closest?.(
+          '.rk-block-tools,.rk-comment-card,.rk-context-menu,.rk-selection-menu',
+        )
+      )
+        return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });
@@ -55,10 +62,19 @@ function findTextRange(root: HTMLElement, selector: Comment['selector']): Range 
   if (!candidates.length) return null;
   if (candidates.length === 1 || (!prefix && !suffix)) return candidates[0].range;
 
-  const scored = candidates.map(candidate => {
-    const before = candidate.node.nodeValue!.slice(Math.max(0, candidate.start - 120), candidate.start);
-    const after = candidate.node.nodeValue!.slice(candidate.start + exact.length, candidate.start + exact.length + 120);
-    return { ...candidate, score: overlapScore(before, prefix, 'end') + overlapScore(after, suffix, 'start') };
+  const scored = candidates.map((candidate) => {
+    const before = candidate.node.nodeValue!.slice(
+      Math.max(0, candidate.start - 120),
+      candidate.start,
+    );
+    const after = candidate.node.nodeValue!.slice(
+      candidate.start + exact.length,
+      candidate.start + exact.length + 120,
+    );
+    return {
+      ...candidate,
+      score: overlapScore(before, prefix, 'end') + overlapScore(after, suffix, 'start'),
+    };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored[0].range;
@@ -68,26 +84,37 @@ function ensureHighlightStyle() {
   if (document.getElementById('rk-comment-highlight-style')) return;
   const style = document.createElement('style');
   style.id = 'rk-comment-highlight-style';
-  style.textContent = '::highlight(rk-comment-quotes){background:rgba(255,214,102,.55);color:inherit;}';
+  style.textContent =
+    '::highlight(rk-comment-quotes){background:rgba(255,214,102,.55);color:inherit;}';
   document.head.appendChild(style);
 }
 
 function clearCommentHighlights() {
-  try { (CSS as any).highlights?.delete?.('rk-comment-quotes'); } catch {}
+  try {
+    (CSS as any).highlights?.delete?.('rk-comment-quotes');
+  } catch {}
 }
 
 function applyCommentHighlights(comments: Comment[]) {
   ensureHighlightStyle();
   clearCommentHighlights();
-  if (typeof window === 'undefined' || !(CSS as any).highlights || typeof (globalThis as any).Highlight === 'undefined') return;
+  if (
+    typeof window === 'undefined' ||
+    !(CSS as any).highlights ||
+    typeof (globalThis as any).Highlight === 'undefined'
+  )
+    return;
   const ranges: Range[] = [];
   for (const comment of comments || []) {
     if (comment.status !== 'open' || !comment.selector?.exact) continue;
-    const block = document.querySelector(`[data-block-id="${cssEscape(comment.blockId)}"]`) as HTMLElement | null;
+    const block = document.querySelector(
+      `[data-block-id="${cssEscape(comment.blockId)}"]`,
+    ) as HTMLElement | null;
     const range = block ? findTextRange(block, comment.selector) : null;
     if (range) ranges.push(range);
   }
-  if (ranges.length) (CSS as any).highlights.set('rk-comment-quotes', new (globalThis as any).Highlight(...ranges));
+  if (ranges.length)
+    (CSS as any).highlights.set('rk-comment-quotes', new (globalThis as any).Highlight(...ranges));
 }
 
 export function useHighlights(comments: Comment[]) {

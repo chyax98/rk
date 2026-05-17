@@ -1,7 +1,7 @@
-import Database from 'better-sqlite3';
-import path from 'node:path';
-import os from 'node:os';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import Database from 'better-sqlite3';
 
 const dataDir = path.join(os.homedir(), '.renderkit', 'data');
 const dbPath = path.join(dataDir, 'renderkit.db');
@@ -63,5 +63,8 @@ function migrate(db: Database.Database): void {
 }
 
 export function closeDb(): void {
-  if (_db) { _db.close(); _db = null; }
+  if (_db) {
+    _db.close();
+    _db = null;
+  }
 }

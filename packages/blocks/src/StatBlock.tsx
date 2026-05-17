@@ -11,8 +11,18 @@ interface Props {
 }
 
 function DeltaIcon({ dir }: { dir: string }) {
-  if (dir === 'up')   return <span className="rk-stat-delta-icon" aria-hidden="true">↑</span>;
-  if (dir === 'down') return <span className="rk-stat-delta-icon" aria-hidden="true">↓</span>;
+  if (dir === 'up')
+    return (
+      <span className="rk-stat-delta-icon" aria-hidden="true">
+        ↑
+      </span>
+    );
+  if (dir === 'down')
+    return (
+      <span className="rk-stat-delta-icon" aria-hidden="true">
+        ↓
+      </span>
+    );
   return null;
 }
 
@@ -23,7 +33,15 @@ function inferDeltaDir(delta?: string): 'up' | 'down' | 'neutral' {
   return 'neutral';
 }
 
-export default function StatBlock({ label, value, unit, delta, deltaDir, caption, tone = 'neutral' }: Props) {
+export default function StatBlock({
+  label,
+  value,
+  unit,
+  delta,
+  deltaDir,
+  caption,
+  tone = 'neutral',
+}: Props) {
   const dir = deltaDir || inferDeltaDir(delta);
   return (
     <div className={`rk-stat-block rk-stat-${tone}`} role="figure" aria-label={label}>
@@ -38,7 +56,11 @@ export default function StatBlock({ label, value, unit, delta, deltaDir, caption
           <span>{delta}</span>
         </div>
       )}
-      {caption && <p className="rk-stat-caption"><RichText text={caption} /></p>}
+      {caption && (
+        <p className="rk-stat-caption">
+          <RichText text={caption} />
+        </p>
+      )}
     </div>
   );
 }

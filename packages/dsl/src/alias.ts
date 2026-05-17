@@ -8,5 +8,8 @@ export function resolveDirective(
   name: string,
   attrs: BlockAttrs,
 ): { name: string; attrs: BlockAttrs } {
-  return resolveBlockAlias(name, attrs as Record<string, string>) as { name: string; attrs: BlockAttrs };
+  return resolveBlockAlias(name, attrs as Record<string, string>) as {
+    name: string;
+    attrs: BlockAttrs;
+  };
 }

@@ -8,7 +8,24 @@ async function getHighlighter() {
       const { createHighlighter } = await import('shiki');
       const highlighter = await createHighlighter({
         themes: ['github-light', 'github-dark'],
-        langs: ['javascript', 'typescript', 'jsx', 'tsx', 'python', 'bash', 'json', 'yaml', 'css', 'html', 'markdown', 'sql', 'rust', 'go', 'java', 'diff'],
+        langs: [
+          'javascript',
+          'typescript',
+          'jsx',
+          'tsx',
+          'python',
+          'bash',
+          'json',
+          'yaml',
+          'css',
+          'html',
+          'markdown',
+          'sql',
+          'rust',
+          'go',
+          'java',
+          'diff',
+        ],
       });
       return highlighter;
     })();
@@ -18,8 +35,11 @@ async function getHighlighter() {
 
 export async function POST(req: Request) {
   let payload: { code?: string; language?: string; theme?: string };
-  try { payload = await req.json(); }
-  catch { return Response.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 }); }
+  try {
+    payload = await req.json();
+  } catch {
+    return Response.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 });
+  }
 
   const code = String(payload?.code || '');
   const language = String(payload?.language || 'text');
@@ -44,13 +64,13 @@ export async function POST(req: Request) {
 
 function resolveLangId(lang: string): string {
   const map: Record<string, string> = {
-    'js': 'javascript',
-    'ts': 'typescript',
-    'sh': 'bash',
-    'shell': 'bash',
-    'yml': 'yaml',
-    'md': 'markdown',
-    'text': 'text',
+    js: 'javascript',
+    ts: 'typescript',
+    sh: 'bash',
+    shell: 'bash',
+    yml: 'yaml',
+    md: 'markdown',
+    text: 'text',
   };
   return map[lang.toLowerCase()] || lang.toLowerCase();
 }

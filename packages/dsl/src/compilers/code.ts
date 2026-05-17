@@ -1,9 +1,13 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
 import { coerceBool, coerceEnum, parseHighlightRanges } from '../attrs.ts';
-import { validateCodeRenderer, validateCodeFrame, validateCodeCopyMode } from '../renderer-validation.ts';
-import { CODE_RENDERERS, CODE_FRAMES, CODE_COPY_MODES } from '../types.ts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, findCode, diag } from '../helpers.ts';
+import { diag, excerpt, findCode, pos } from '../helpers.ts';
+import {
+  validateCodeCopyMode,
+  validateCodeFrame,
+  validateCodeRenderer,
+} from '../renderer-validation.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
+import { CODE_COPY_MODES, CODE_FRAMES, CODE_RENDERERS } from '../types.ts';
 
 export function compileCode(
   node: RemarkNode,
@@ -14,7 +18,9 @@ export function compileCode(
 ): CompiledBlock {
   const code = findCode(node);
   if (!code || !code.value) {
-    errors.push(diag('RK_CODE_BODY_REQUIRED', 'code directive requires a fenced code block', file, pos(node)));
+    errors.push(
+      diag('RK_CODE_BODY_REQUIRED', 'code directive requires a fenced code block', file, pos(node)),
+    );
   }
 
   // Extended attrs for Shiki/Expressive Code style rendering

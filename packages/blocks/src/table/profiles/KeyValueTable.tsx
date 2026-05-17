@@ -1,6 +1,11 @@
-import { TableBlockProps } from '../types';
+import type { TableBlockProps } from '../types';
 
-export default function KeyValueTable({ title, caption, columns = [], rows = [] }: TableBlockProps) {
+export default function KeyValueTable({
+  title,
+  caption,
+  columns = [],
+  rows = [],
+}: TableBlockProps) {
   return (
     <figure className="rk-table-block rk-table-key-value">
       {title && <figcaption className="rk-table-title">{title}</figcaption>}

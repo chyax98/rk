@@ -1,7 +1,14 @@
-import yaml from 'js-yaml';
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, markdownBullets, diag } from '../helpers.ts';
+import yaml from 'js-yaml';
+import {
+  diag,
+  directiveBodyText,
+  excerpt,
+  markdownBullets,
+  pos,
+  rawDirectiveBody,
+} from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileDecision(
   node: RemarkNode,
@@ -21,15 +28,17 @@ export function compileDecision(
       alternatives: [],
     };
   } else {
-    try { data = (yaml.load(body) || {}) as Record<string, unknown>; }
-    catch (e: unknown) {
+    try {
+      data = (yaml.load(body) || {}) as Record<string, unknown>;
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       errors.push(diag('RK_DECISION_YAML_INVALID', msg, file, pos(node)));
     }
   }
 
   for (const k of ['question', 'chosen']) {
-    if (!data[k]) errors.push(diag('RK_PROP_REQUIRED', `decision-card requires ${k}`, file, pos(node)));
+    if (!data[k])
+      errors.push(diag('RK_PROP_REQUIRED', `decision-card requires ${k}`, file, pos(node)));
   }
   return {
     id: attrs.id!,
@@ -38,7 +47,7 @@ export function compileDecision(
       question: (data.question as string) || '',
       chosen: (data.chosen as string) || '',
       width: normalizeBlockWidth(attrs.width || attrs.span),
-      status: ((data.status as string) || attrs.status || 'draft'),
+      status: (data.status as string) || attrs.status || 'draft',
       rationale: (data.rationale as string[]) || [],
       alternatives: (data.alternatives as unknown[]) || [],
     },

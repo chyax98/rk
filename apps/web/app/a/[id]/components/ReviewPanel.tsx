@@ -1,11 +1,11 @@
 'use client';
-import type { DrawerMode } from '../hooks/useReviewState';
-import CommentThread from './CommentThread';
-import BlockInspector from './BlockInspector';
-import AgentHandoff from './AgentHandoff';
-import CommentInput from './CommentInput';
 import type { Comment } from '../hooks/useComments';
+import type { DrawerMode } from '../hooks/useReviewState';
 import type { QuoteAnchor } from '../hooks/useSelection';
+import AgentHandoff from './AgentHandoff';
+import BlockInspector from './BlockInspector';
+import CommentInput from './CommentInput';
+import CommentThread from './CommentThread';
 
 const TABS: { key: DrawerMode; label: string }[] = [
   { key: 'comments', label: '评论' },
@@ -41,18 +41,27 @@ interface ReviewPanelProps {
 }
 
 export default function ReviewPanel({
-  mode, onModeChange,
-  selectedBlock, comments,
-  text, setText, submitComment,
-  feedbackCmd, copyToClipboard,
-  quoteAnchor, setSelected, setDrawerMode,
-  setCommentStatus, commentFilter, setCommentFilter,
+  mode,
+  onModeChange,
+  selectedBlock,
+  comments,
+  text,
+  setText,
+  submitComment,
+  feedbackCmd,
+  copyToClipboard,
+  quoteAnchor,
+  setSelected,
+  setDrawerMode,
+  setCommentStatus,
+  commentFilter,
+  setCommentFilter,
   commentsFor,
 }: ReviewPanelProps) {
   return (
     <div className="rk-review-panel-inner">
       <div className="rk-panel-tabs">
-        {TABS.map(tab => (
+        {TABS.map((tab) => (
           <button
             key={tab.key}
             className={mode === tab.key ? 'is-active' : ''}
@@ -78,8 +87,8 @@ export default function ReviewPanel({
           />
         )}
 
-        {mode === 'block' && (
-          selectedBlock ? (
+        {mode === 'block' &&
+          (selectedBlock ? (
             <BlockInspector
               block={selectedBlock}
               comments={commentsFor(selectedBlock.id)}
@@ -103,8 +112,7 @@ export default function ReviewPanel({
                 />
               )}
             </div>
-          )
-        )}
+          ))}
 
         {mode === 'agent' && (
           <div>

@@ -1,6 +1,13 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, parseChecklistItems, diag } from '../helpers.ts';
+import {
+  diag,
+  directiveBodyText,
+  excerpt,
+  parseChecklistItems,
+  pos,
+  rawDirectiveBody,
+} from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileChecklist(
   node: RemarkNode,
@@ -11,11 +18,23 @@ export function compileChecklist(
 ): CompiledBlock {
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const items = parseChecklistItems(body);
-  if (!items.length) errors.push(diag('RK_CHECKLIST_BODY_REQUIRED', 'checklist directive requires list items', file, pos(node)));
+  if (!items.length)
+    errors.push(
+      diag(
+        'RK_CHECKLIST_BODY_REQUIRED',
+        'checklist directive requires list items',
+        file,
+        pos(node),
+      ),
+    );
   return {
     id: attrs.id!,
     type: 'checklist',
-    props: { title: attrs.title || '', items, width: normalizeBlockWidth(attrs.width || attrs.span) },
+    props: {
+      title: attrs.title || '',
+      items,
+      width: normalizeBlockWidth(attrs.width || attrs.span),
+    },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position),
   };

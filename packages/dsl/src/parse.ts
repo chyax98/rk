@@ -2,32 +2,32 @@
  * Core parser for RenderKit .rk.md documents.
  * Orchestrates frontmatter parsing, tree walking, and block compilation.
  */
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
+
+import {
+  DEFAULT_THEME,
+  SURFACE_NAMES,
+  THEME_NAMES,
+  validateRenderKitModel,
+} from '@renderkit/shared/contracts';
+import yaml from 'js-yaml';
 import remarkDirective from 'remark-directive';
 import remarkFrontmatter from 'remark-frontmatter';
 import remarkGfm from 'remark-gfm';
-import yaml from 'js-yaml';
-import {
-  DEFAULT_THEME,
-  THEME_NAMES,
-  SURFACE_NAMES,
-  validateRenderKitModel,
-} from '@renderkit/shared/contracts';
-
-import type { RemarkNode, CompileContext, BlockAttrs } from './types.ts';
-import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers/index.ts';
+import remarkParse from 'remark-parse';
+import { unified } from 'unified';
 import { resolveDirective } from './alias.ts';
-import { ID_FORMAT, generatedBlockId } from './id.ts';
+import { BLOCK_COMPILERS, compileBlock, KNOWN_BLOCK_TYPES } from './compilers/index.ts';
 import {
-  pos,
-  excerpt,
-  plainText,
-  firstHeading,
-  diag,
-  rangeFromOffsets,
   collectDirectiveIds,
+  diag,
+  excerpt,
+  firstHeading,
+  plainText,
+  pos,
+  rangeFromOffsets,
 } from './helpers.ts';
+import { generatedBlockId, ID_FORMAT } from './id.ts';
+import type { BlockAttrs, CompileContext, RemarkNode } from './types.ts';
 
 const VALID_THEMES = new Set(THEME_NAMES);
 const VALID_SURFACES = new Set(SURFACE_NAMES);
@@ -42,10 +42,13 @@ export function parseRK(
 
   const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
   if (fm) {
-    try { frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>; }
-    catch (e: unknown) {
+    try {
+      frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>;
+    } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      errors.push(diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)));
+      errors.push(
+        diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)),
+      );
     }
   }
 
@@ -111,47 +114,73 @@ export function parseRK(
         continue;
       }
       if (!attrs.id) {
-        attrs = { ...attrs, id: generatedBlockId(name, node, source, explicitDirectiveIds, generatedDirectiveIds) };
+        attrs = {
+          ...attrs,
+          id: generatedBlockId(name, node, source, explicitDirectiveIds, generatedDirectiveIds),
+        };
       }
       if (!ID_FORMAT.test(attrs.id!)) {
-        errors.push(diag('RK_BLOCK_ID_INVALID', `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`, file, r));
+        errors.push(
+          diag(
+            'RK_BLOCK_ID_INVALID',
+            `${originalName} block id "${attrs.id}" does not match [a-zA-Z0-9_-]+`,
+            file,
+            r,
+          ),
+        );
         continue;
       }
 
       const patched = { ...node, name, attributes: attrs };
       let block;
       if (name === 'tab') {
-        errors.push(diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r));
+        errors.push(
+          diag('RK_TAB_PARENT_REQUIRED', 'tab directive is only valid inside tabs', file, r),
+        );
       } else {
         block = compileBlock(patched, attrs, ctx);
       }
       if (block) blocks.push(block);
-      continue;
     }
   }
 
   for (const block of blocks) {
     if (ids.has(block.id)) {
-      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${block.id}`, file, block.sourceRange));
+      errors.push(
+        diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${block.id}`, file, block.sourceRange),
+      );
     } else {
       ids.set(block.id, true);
     }
   }
 
   let effectiveTheme: string = DEFAULT_THEME;
-  let effectiveSurface: string | undefined = (frontmatter.surface as string | undefined) || undefined;
+  const effectiveSurface: string | undefined =
+    (frontmatter.surface as string | undefined) || undefined;
 
   const themeValue = frontmatter.theme as string | undefined;
   if (themeValue) {
     if (VALID_THEMES.has(themeValue as any)) {
       effectiveTheme = themeValue;
     } else {
-      warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${themeValue}", falling back to "${DEFAULT_THEME}"`, file));
+      warnings.push(
+        diag(
+          'RK_THEME_UNKNOWN',
+          `Unknown theme "${themeValue}", falling back to "${DEFAULT_THEME}"`,
+          file,
+        ),
+      );
     }
   }
   const surfaceValue = frontmatter.surface as string | undefined;
   if (surfaceValue && !VALID_SURFACES.has(surfaceValue as any)) {
-    warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${surfaceValue}", using as-is but may not render as expected`, file));
+    warnings.push(
+      diag(
+        'RK_SURFACE_UNKNOWN',
+        `Unknown surface "${surfaceValue}", using as-is but may not render as expected`,
+        file,
+      ),
+    );
   }
 
   const model: import('@renderkit/shared').RenderKitModel = {

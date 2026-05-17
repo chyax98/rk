@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface Comment {
   id: string;
@@ -15,16 +15,16 @@ export function useComments(artifactId: string, initial: Comment[]) {
   const [comments, setComments] = useState<Comment[]>(initial || []);
 
   const commentsFor = useCallback(
-    (blockId: string) => comments.filter(c => c.blockId === blockId),
+    (blockId: string) => comments.filter((c) => c.blockId === blockId),
     [comments],
   );
 
   const blockCommentStatus = useCallback(
     (blockId: string): 'open' | 'orphaned' | 'resolved' | null => {
       const list = commentsFor(blockId);
-      if (list.some(c => c.status === 'open')) return 'open';
-      if (list.some(c => c.status === 'orphaned')) return 'orphaned';
-      if (list.some(c => c.status === 'resolved')) return 'resolved';
+      if (list.some((c) => c.status === 'open')) return 'open';
+      if (list.some((c) => c.status === 'orphaned')) return 'orphaned';
+      if (list.some((c) => c.status === 'resolved')) return 'resolved';
       return null;
     },
     [commentsFor],
@@ -39,7 +39,7 @@ export function useComments(artifactId: string, initial: Comment[]) {
     });
     const json = await res.json();
     if (json.ok) {
-      setComments(prev => [...prev, json.comment]);
+      setComments((prev) => [...prev, json.comment]);
       return json.comment;
     }
     return null;
@@ -52,8 +52,15 @@ export function useComments(artifactId: string, initial: Comment[]) {
       body: JSON.stringify({ status }),
     });
     const json = await res.json();
-    if (json.ok) setComments(prev => prev.map(c => c.id === commentId ? json.comment : c));
+    if (json.ok) setComments((prev) => prev.map((c) => (c.id === commentId ? json.comment : c)));
   }
 
-  return { comments, setComments, commentsFor, blockCommentStatus, submitComment, setCommentStatus };
+  return {
+    comments,
+    setComments,
+    commentsFor,
+    blockCommentStatus,
+    submitComment,
+    setCommentStatus,
+  };
 }

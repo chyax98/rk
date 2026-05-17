@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
 import type { ECharts } from 'echarts';
+import { useEffect, useRef, useState } from 'react';
 
 interface EChartsBlockProps {
   code: string;
@@ -30,14 +30,24 @@ export default function EChartsBlock({ code, caption, variant = 'auto' }: EChart
       }
     }
     let cleanup: (() => void) | undefined;
-    run().then(fn => { cleanup = fn; });
-    return () => { alive = false; cleanup?.(); chart?.dispose?.(); };
+    run().then((fn) => {
+      cleanup = fn;
+    });
+    return () => {
+      alive = false;
+      cleanup?.();
+      chart?.dispose?.();
+    };
   }, [code, variant]);
 
   return (
     <figure className="rk-diagram rk-echarts" data-variant={variant}>
       {caption && <figcaption className="rk-diagram-caption">{caption}</figcaption>}
-      {err ? <div className="rk-diagram-error">ECharts render error: {err}</div> : <div ref={ref} className="rk-echarts-canvas" />}
+      {err ? (
+        <div className="rk-diagram-error">ECharts render error: {err}</div>
+      ) : (
+        <div ref={ref} className="rk-echarts-canvas" />
+      )}
     </figure>
   );
 }
@@ -48,7 +58,9 @@ function parseEChartsOption(code: string, variant: string): Record<string, unkno
   try {
     const json = JSON.parse(text);
     if (typeof json === 'object' && json !== null) return json as Record<string, unknown>;
-  } catch { /* not JSON */ }
+  } catch {
+    /* not JSON */
+  }
   // fallback: parse as key=value pairs or simple DSL
   return {
     title: { text: variant !== 'auto' ? variant : '' },

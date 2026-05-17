@@ -1,9 +1,20 @@
-import { useState } from 'react';
 import hljs from 'highlight.js/lib/common';
+import { useState } from 'react';
 import CodeFrame from './CodeFrame';
-import { CodeBlockProps } from './types';
+import type { CodeBlockProps } from './types';
 
-export default function CodeHljsBlock({ language, title, code, filename, frame, showLineNumbers, highlight, diff, copyMode, renderer }: CodeBlockProps) {
+export default function CodeHljsBlock({
+  language,
+  title,
+  code,
+  filename,
+  frame,
+  showLineNumbers,
+  highlight,
+  diff,
+  copyMode,
+  renderer,
+}: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const highlighted = highlightCode(code || '', language || '');
   const lines = (code || '').split('\n');
@@ -11,11 +22,13 @@ export default function CodeHljsBlock({ language, title, code, filename, frame, 
 
   async function copyCode() {
     try {
-      const text = copyMode === 'all' ? (code || '') : stripPrompts(code || '');
+      const text = copyMode === 'all' ? code || '' : stripPrompts(code || '');
       await navigator.clipboard?.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
-    } catch { /* clipboard unavailable */ }
+    } catch {
+      /* clipboard unavailable */
+    }
   }
 
   return (
@@ -26,7 +39,9 @@ export default function CodeHljsBlock({ language, title, code, filename, frame, 
             {title && <span className="rk-code-title">{title}</span>}
             {language && <span className="rk-code-lang">{language}</span>}
           </div>
-          <button className="rk-code-copy" type="button" onClick={copyCode}>{copied ? 'Copied' : 'Copy'}</button>
+          <button className="rk-code-copy" type="button" onClick={copyCode}>
+            {copied ? 'Copied' : 'Copy'}
+          </button>
         </div>
       )}
       <CodeFrame filename={filename} language={language} frame={frame}>
@@ -36,13 +51,21 @@ export default function CodeHljsBlock({ language, title, code, filename, frame, 
               {lines.map((line, i) => (
                 <tr key={i} className={highlightSet.has(i + 1) ? 'rk-code-highlight-line' : ''}>
                   <td className="rk-code-line-number" data-line={i + 1} />
-                  <td className="rk-code-line-content" dangerouslySetInnerHTML={{ __html: highlightLine(line, language || '') }} />
+                  <td
+                    className="rk-code-line-content"
+                    dangerouslySetInnerHTML={{ __html: highlightLine(line, language || '') }}
+                  />
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <pre><code className={`hljs language-${language || 'text'}`} dangerouslySetInnerHTML={{ __html: highlighted }} /></pre>
+          <pre>
+            <code
+              className={`hljs language-${language || 'text'}`}
+              dangerouslySetInnerHTML={{ __html: highlighted }}
+            />
+          </pre>
         )}
       </CodeFrame>
     </div>
@@ -52,7 +75,8 @@ export default function CodeHljsBlock({ language, title, code, filename, frame, 
 function highlightCode(code: string, language: string): string {
   const lang = String(language || '').toLowerCase();
   try {
-    if (lang && hljs.getLanguage(lang)) return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+    if (lang && hljs.getLanguage(lang))
+      return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
     return hljs.highlightAuto(code).value;
   } catch {
     return escapeHtml(code);

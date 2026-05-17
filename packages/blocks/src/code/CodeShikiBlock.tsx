@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import CodeFrame from './CodeFrame';
 import CodeHljsBlock from './CodeHljsBlock';
-import { CodeBlockProps } from './types';
+import type { CodeBlockProps } from './types';
 
 interface ShikiResponse {
   ok: boolean;
@@ -24,7 +24,7 @@ export default function CodeShikiBlock(props: CodeBlockProps) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ code, language, theme: 'github-light' }),
     })
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((json: ShikiResponse) => {
         if (!alive) return;
         if (json.ok && json.html) {
@@ -35,9 +35,14 @@ export default function CodeShikiBlock(props: CodeBlockProps) {
         setLoading(false);
       })
       .catch(() => {
-        if (alive) { setError(true); setLoading(false); }
+        if (alive) {
+          setError(true);
+          setLoading(false);
+        }
       });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [code, language]);
 
   // Fallback to hljs if shiki fails
@@ -59,7 +64,10 @@ export default function CodeShikiBlock(props: CodeBlockProps) {
               {lines.map((lineHtml, i) => (
                 <tr key={i} className={highlightSet.has(i + 1) ? 'rk-code-highlight-line' : ''}>
                   <td className="rk-code-line-number" data-line={i + 1} />
-                  <td className="rk-code-line-content" dangerouslySetInnerHTML={{ __html: lineHtml }} />
+                  <td
+                    className="rk-code-line-content"
+                    dangerouslySetInnerHTML={{ __html: lineHtml }}
+                  />
                 </tr>
               ))}
             </tbody>

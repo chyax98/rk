@@ -1,8 +1,9 @@
 /**
  * Block ID generation utilities.
  */
+
+import { directiveBodyText, plainText, rawDirectiveBody } from './helpers.ts';
 import type { RemarkNode } from './types.ts';
-import { plainText, rawDirectiveBody, directiveBodyText } from './helpers.ts';
 
 export function generatedBlockId(
   name: string,
@@ -21,8 +22,14 @@ export function generatedBlockId(
 
 function autoIdSeed(node: RemarkNode, source: string): string {
   const attrs = node.attributes || {};
-  const attrSeed = attrs.title || attrs.label || attrs.q || attrs.question || attrs.chosen || attrs.source || '';
-  const bodySeed = attrSeed || plainText(node) || rawDirectiveBody(source, node) || directiveBodyText(node) || 'block';
+  const attrSeed =
+    attrs.title || attrs.label || attrs.q || attrs.question || attrs.chosen || attrs.source || '';
+  const bodySeed =
+    attrSeed ||
+    plainText(node) ||
+    rawDirectiveBody(source, node) ||
+    directiveBodyText(node) ||
+    'block';
   return String(bodySeed).slice(0, 64);
 }
 

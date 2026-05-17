@@ -71,12 +71,13 @@ export interface ChartBlockProps {
 export type BlockType = import('@renderkit/shared').BlockType;
 export type RenderKitBlock = import('@renderkit/shared').RenderKitBlock;
 export type RenderKitBlockComponent<Props extends object = Record<string, unknown>>
-export type RenderKitRegistry = Record<string, RenderKitBlockComponent>;
+export
+type RenderKitRegistry = Record<string, RenderKitBlockComponent>;
 
 export const registry: RenderKitRegistry;
 export function createBlockDispatcher<P extends Record<string, unknown>>(
   variants: Record<string, ComponentType<P>>,
-  resolveKey: (props: P) => string
+  resolveKey: (props: P) => string,
 ): ComponentType<P>;
 
 export const BlockFrame: ComponentType<BlockFrameProps>;

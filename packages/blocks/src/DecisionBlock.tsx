@@ -1,22 +1,55 @@
-interface DecisionBlockProps {
-  question: string;
-  chosen: string;
+import { RichText } from './utils/richText.tsx';
+
+interface Props {
+  question?: string;
+  chosen?: string;
+  rationale?: string;
   status?: string;
-  rationale?: string[];
-  alternatives?: Array<{ name?: string; reason?: string } | string>;
+  alternatives?: string[];
 }
 
-export default function DecisionBlock({ question, chosen, status, rationale, alternatives }: DecisionBlockProps) {
+export default function DecisionBlock({
+  question = '',
+  chosen,
+  rationale,
+  status = 'decided',
+  alternatives = [],
+}: Props) {
   return (
-    <div>
-      <h3 className="rk-decision-question">{question}<span className="rk-decision-status">{status || 'draft'}</span></h3>
-      <div className="rk-decision-kv"><b>Chosen</b><span>{chosen}</span></div>
-      {Array.isArray(rationale) && rationale.length > 0 && (
-        <><b className="rk-muted">Rationale</b><ul className="rk-decision-list">{rationale.map((x, i) => <li key={i}>{x}</li>)}</ul></>
-      )}
-      {Array.isArray(alternatives) && alternatives.length > 0 && (
-        <><b className="rk-muted">Alternatives</b><ul className="rk-decision-list">{alternatives.map((x, i) => <li key={i}>{typeof x === 'string' ? x : `${x.name || x}: ${x.reason || ''}`}</li>)}</ul></>
-      )}
-    </div>
+    <article className="rk-decision-block">
+      <header className="rk-decision-header">
+        <p className="rk-decision-eyebrow">决策记录 · {status}</p>
+        <h4 className="rk-decision-question">
+          <RichText text={question} />
+        </h4>
+      </header>
+      <div className="rk-decision-body">
+        {chosen && (
+          <div className="rk-decision-chosen">
+            <p className="rk-decision-chosen-label">✓ 选择</p>
+            <p>
+              <RichText text={chosen} />
+            </p>
+          </div>
+        )}
+        {rationale && (
+          <p className="rk-decision-rationale">
+            <RichText text={rationale} />
+          </p>
+        )}
+        {alternatives.length > 0 && (
+          <details className="rk-decision-alternatives">
+            <summary>其他方案 ({alternatives.length})</summary>
+            <ul>
+              {alternatives.map((a, i) => (
+                <li key={i}>
+                  <RichText text={a} />
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
+    </article>
   );
 }

@@ -15,6 +15,8 @@ export default function RenderBlock({ block }: RenderBlockProps) {
   try {
     return <Comp {...(block.props || {})} />;
   } catch (e) {
-    return <div className="rk-error-box">Block render error: {String((e as Error).message || e)}</div>;
+    return (
+      <div className="rk-error-box">Block render error: {String((e as Error).message || e)}</div>
+    );
   }
 }

@@ -14,9 +14,15 @@ interface OutlineDrawerProps {
   onClose: () => void;
 }
 
-export default function OutlineDrawer({ items, selected, commentCounts, onSelect, onClose }: OutlineDrawerProps) {
-  const headings = items.filter(i => i.type === 'heading');
-  const others = items.filter(i => i.type !== 'heading');
+export default function OutlineDrawer({
+  items,
+  selected,
+  commentCounts,
+  onSelect,
+  onClose,
+}: OutlineDrawerProps) {
+  const headings = items.filter((i) => i.type === 'heading');
+  const others = items.filter((i) => i.type !== 'heading');
 
   return (
     <aside className="rk-outline-drawer">
@@ -25,12 +31,14 @@ export default function OutlineDrawer({ items, selected, commentCounts, onSelect
         <button onClick={onClose}>×</button>
       </div>
       <nav className="rk-outline-list">
-        {headings.map(item => (
+        {headings.map((item) => (
           <button
             key={item.id}
             onClick={() => {
               onSelect(item.id);
-              document.getElementById(`rk-block-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              document
+                .getElementById(`rk-block-${item.id}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
             className={selected === item.id ? 'is-active' : ''}
           >
@@ -38,15 +46,15 @@ export default function OutlineDrawer({ items, selected, commentCounts, onSelect
             {(commentCounts[item.id] || 0) > 0 && <b>{commentCounts[item.id]}</b>}
           </button>
         ))}
-        {others.length > 0 && headings.length > 0 && (
-          <div className="rk-outline-divider" />
-        )}
-        {others.map(item => (
+        {others.length > 0 && headings.length > 0 && <div className="rk-outline-divider" />}
+        {others.map((item) => (
           <button
             key={item.id}
             onClick={() => {
               onSelect(item.id);
-              document.getElementById(`rk-block-${item.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              document
+                .getElementById(`rk-block-${item.id}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }}
             className={`rk-outline-secondary${selected === item.id ? ' is-active' : ''}`}
           >

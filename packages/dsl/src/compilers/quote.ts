@@ -1,6 +1,6 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, diag } from '../helpers.ts';
+import { diag, directiveBodyText, excerpt, pos, rawDirectiveBody } from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileQuote(
   node: RemarkNode,
@@ -10,7 +10,10 @@ export function compileQuote(
   file: string,
 ): CompiledBlock {
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
-  if (!body) errors.push(diag('RK_QUOTE_BODY_REQUIRED', 'quote directive requires body text', file, pos(node)));
+  if (!body)
+    errors.push(
+      diag('RK_QUOTE_BODY_REQUIRED', 'quote directive requires body text', file, pos(node)),
+    );
   return {
     id: attrs.id!,
     type: 'quote',

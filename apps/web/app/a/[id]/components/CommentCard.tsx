@@ -22,16 +22,23 @@ export default function CommentCard({ comment: c, onClick, setCommentStatus }: C
       onClick={onClick}
     >
       <div className="rk-comment-header">
-        <span className="rk-pill" data-status={c.status}>{STATUS_LABELS[c.status] || c.status}</span>
+        <span className="rk-pill" data-status={c.status}>
+          {STATUS_LABELS[c.status] || c.status}
+        </span>
       </div>
-      {c.selector?.exact && <blockquote className="rk-comment-quote">{c.selector.exact}</blockquote>}
+      {c.selector?.exact && (
+        <blockquote className="rk-comment-quote">{c.selector.exact}</blockquote>
+      )}
       <p>{c.text}</p>
       <div className="rk-comment-actions">
         {setCommentStatus && c.status !== 'orphaned' && (
-          <button type="button" onClick={(e) => {
-            e.stopPropagation();
-            setCommentStatus(c.id, c.status === 'resolved' ? 'open' : 'resolved');
-          }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCommentStatus(c.id, c.status === 'resolved' ? 'open' : 'resolved');
+            }}
+          >
             {c.status === 'resolved' ? '重新打开' : '解决'}
           </button>
         )}

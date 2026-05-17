@@ -130,9 +130,18 @@ Your summary text here. Keep it dense and actionable.
 
 ```md
 :::callout{id="risk-note" tone="warning" title="Risk Alert"}
-Callout content. Tones: info | warning | danger | success.
+Callout content. Tones: info | warning | danger | success | decision | note.
 :::
-```
+
+**Tones 语义：**
+- `info` — 背景说明（蓝色）
+- `warning` — 注意事项（黄色）
+- `danger` — 禁止操作（红色）
+- `success` — 已完成（绿色）
+- `tip` — 最佳实践/建议（紫色）
+- `decision` — 决策记录/ADR（橙色）
+- `note` — 补充说明（灰色）
+
 
 #### decision-card
 
@@ -232,10 +241,19 @@ window,p50,p95
 Use `stat` or alias `metric` for KPI cards and product-readiness numbers.
 
 ```md
-:::metric{id="adoption" label="Adoption" value="74%" delta="+18%" tone="success"}
+:::metric{id="adoption" label="Adoption" value="74%" unit="%" delta="+18%" deltaDir="up" tone="success"}
 Share of artifacts using visual blocks.
 :::
-```
+
+**属性：**
+- `label` — KPI 名称
+- `value` — 数值（必填）
+- `unit` — 单位，如 `%`, `ms`, `人`（渲染在数值右侧，小一号）
+- `delta` — 变化值描述，如 `+18%`, `-5ms`
+- `deltaDir` — `up` | `down` | `neutral`，控制趋势箭头颜色和方向（未指定时自动推断）
+- `tone` — `positive` | `negative` | `neutral` | `warning`（控制卡片整体色调）
+- `caption` — 数值下方说明文字
+
 
 #### checklist / todo
 
@@ -306,6 +324,16 @@ Use `chart` for data visualization (bar, line, pie, scatter, KPI). Data comes fr
 :::
 ```
 
+完整示例：
+```md
+:::chart{id="revenue" type="bar" title="月度收入" xField="月份" yField="金额" width="wide"}
+| 月份 | 金额 |
+|---|---|
+| 1月  | 120  |
+| 2月  | 180  |
+:::
+```
+
 **Attributes:**
 - `type="bar|line|pie|scatter|kpi"` — 图表类型（kpi = 大数字卡片）
 - `template="default|minimal|report"` — 视觉风格
@@ -368,7 +396,10 @@ Use `comparison` or alias `compare` for side-by-side evaluation of options, alte
 :::
 ```
 
-The body must be a GitHub-flavored Markdown table with at least two columns and one data row. The first row is treated as column headers. Supported attributes: `title`, `caption`, `width`.
+Supported attributes: `title`, `caption`, `width`, `variant`.
+
+- `variant="proscons"` — 两列自动使用绿/红配色渲染优缺点对比（列名建议为 `✓ 优点` / `✕ 缺点` 或 `Pros` / `Cons`）
+- `variant="matrix"` — 标准 N 列对比矩阵（默认）
 
 #### timeline / roadmap
 
@@ -376,15 +407,21 @@ Use `timeline` or alias `roadmap` for sequential progress tracking, rollout plan
 
 ```md
 :::roadmap{id="launch-timeline" title="Launch roadmap" width="wide"}
-- [done] Alpha: Core pipeline stable
-- [done] Beta: 12 teams onboarded
-- [active] GA staged rollout: 10% → 25% → 100%
-- [next] Post-GA: Collaborative editing
+- [done] Alpha: Core pipeline stable {tags: [milestone]}
+- [done] Beta: 12 teams onboarded {tags: [frontend, qa]}
+- [active] GA staged rollout: 10% → 25% → 100% {tags: [backend, infra]}
+- [next] Post-GA: Collaborative editing {tags: [frontend]}
 - [planned] v2.0: Plugin surface
 :::
 ```
 
-Each list item uses the pattern `[status] label: optional body`. Status is free-form text; typical values: `done`, `active`, `next`, `planned`. Supported attributes: `title`, `width`.
+Each list item uses the pattern `[status] label: optional body`. Status values: `done`, `active`, `next`, `planned`.
+
+**Item-level 属性：**
+- `status` — `done` | `active` | `next` | `planned`（也可通过 `[status]` 文本前缀指定）
+- `tags` — 标签数组，如 `['backend', 'milestone']`，渲染为步骤下方的标签 pill
+
+Supported block attributes: `title`, `width`.
 
 ## Stable ID rules
 

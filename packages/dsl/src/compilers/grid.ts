@@ -1,7 +1,13 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock, ChildCompileOptions } from '../types.ts';
-import { pos, excerpt, diag } from '../helpers.ts';
 import { resolveDirective } from '../alias.ts';
+import { diag, excerpt, pos } from '../helpers.ts';
+import type {
+  BlockAttrs,
+  ChildCompileOptions,
+  CompileContext,
+  CompiledBlock,
+  RemarkNode,
+} from '../types.ts';
 import { compileBlock } from './index.ts';
 
 export function compileGrid(
@@ -16,7 +22,7 @@ export function compileGrid(
       index: children.length + 1,
       disallow: new Set(['grid']),
       errorCode: 'RK_GRID_CHILD_UNSUPPORTED',
-      message: name => `grid child must be a supported non-grid block, got ${name}`,
+      message: (name) => `grid child must be a supported non-grid block, got ${name}`,
       idFor: (parentAttrs, index) => `${parentAttrs.id || 'grid'}-${index}`,
     });
     if (block) children.push(block);
@@ -44,9 +50,21 @@ export function compileChildBlock(
   const resolved = resolveDirective(child.name!, child.attributes || {});
   const name = resolved.name;
   const KNOWN = new Set([
-    'callout', 'decision-card', 'diagram', 'code', 'summary', 'grid',
-    'table', 'image', 'tabs', 'stat', 'checklist', 'quote', 'comparison',
-    'timeline', 'chart',
+    'callout',
+    'decision-card',
+    'diagram',
+    'code',
+    'summary',
+    'grid',
+    'table',
+    'image',
+    'tabs',
+    'stat',
+    'checklist',
+    'quote',
+    'comparison',
+    'timeline',
+    'chart',
   ]);
   if (!KNOWN.has(name) || options.disallow?.has(name)) {
     ctx.errors.push(diag(options.errorCode, options.message(child.name!), ctx.file, pos(child)));

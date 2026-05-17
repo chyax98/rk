@@ -1,11 +1,7 @@
 /**
  * Core type definitions for the RenderKit DSL compiler.
  */
-import type {
-  RenderKitBlock,
-  SourceRange,
-  Diagnostic,
-} from '@renderkit/shared';
+import type { Diagnostic, RenderKitBlock, SourceRange } from '@renderkit/shared';
 
 // ── Remark AST node types (subset used by DSL) ──
 

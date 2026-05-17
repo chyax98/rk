@@ -2,7 +2,7 @@
  * Shared helper functions for all DSL compilers.
  * Pure functions with no side effects.
  */
-import type { RemarkNode, RemarkPosition, ParsedPipeTable } from './types.ts';
+import type { ParsedPipeTable, RemarkNode, RemarkPosition } from './types.ts';
 
 // ── Position / source helpers ──
 
@@ -59,7 +59,7 @@ export function plainText(node: RemarkNode | null | undefined): string {
 }
 
 function listText(node: RemarkNode): string {
-  return (node.children || []).map(item => '- ' + plainText(item)).join('\n');
+  return (node.children || []).map((item) => '- ' + plainText(item)).join('\n');
 }
 
 export function directiveBodyText(node: RemarkNode): string {
@@ -78,42 +78,55 @@ export function directiveBodyText(node: RemarkNode): string {
 export function markdownBullets(body: string): string[] {
   return String(body || '')
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .filter(Boolean)
-    .map(line => line.replace(/^[-*]\s+/, ''));
+    .map((line) => line.replace(/^[-*]\s+/, ''));
 }
 
 export function parsePipeTable(body: string): ParsedPipeTable {
-  const lines = String(body || '').split('\n').map(l => l.trim()).filter(Boolean);
-  const tableLines = lines.filter(l => l.includes('|'));
+  const lines = String(body || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const tableLines = lines.filter((l) => l.includes('|'));
   if (tableLines.length < 2) return { headers: [], rows: [], align: [] };
   const header = splitTableRow(tableLines[0]);
   const sep = splitTableRow(tableLines[1]);
   if (!header.length || !sep.every(isSeparatorCell)) return { headers: [], rows: [], align: [] };
-  const align = sep.map(cell => {
+  const align = sep.map((cell) => {
     const t = cell.trim();
     if (t.startsWith(':') && t.endsWith(':')) return 'center';
     if (t.endsWith(':')) return 'right';
     return 'left';
   });
-  const rows = tableLines.slice(2).map(splitTableRow).filter(r => r.length).map(r => header.map((_, i) => r[i] || ''));
+  const rows = tableLines
+    .slice(2)
+    .map(splitTableRow)
+    .filter((r) => r.length)
+    .map((r) => header.map((_, i) => r[i] || ''));
   return { headers: header, rows, align };
 }
 
 function splitTableRow(line: string): string[] {
-  return String(line || '').replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  return String(line || '')
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((c) => c.trim());
 }
 
 function isSeparatorCell(cell: string): boolean {
   return /^:?-{3,}:?$/.test(String(cell || '').trim());
 }
 
-export function parseTimelineItems(body: string): Array<{ status: string; label: string; body: string }> {
+export function parseTimelineItems(
+  body: string,
+): Array<{ status: string; label: string; body: string }> {
   return String(body || '')
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .filter(Boolean)
-    .map(line => {
+    .map((line) => {
       const cleaned = line.replace(/^[-*]\s+/, '').trim();
       const m = cleaned.match(/^\[([^\]]+)\]\s*(.+)$/);
       const status = (m?.[1] || 'next').trim().toLowerCase();
@@ -125,26 +138,29 @@ export function parseTimelineItems(body: string): Array<{ status: string; label:
         body: split >= 0 ? rest.slice(split + 1).trim() : '',
       };
     })
-    .filter(item => item.label);
+    .filter((item) => item.label);
 }
 
 export function parseChecklistItems(body: string): Array<{ checked: boolean; text: string }> {
   return String(body || '')
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .filter(Boolean)
-    .map(line => {
+    .map((line) => {
       const m = line.match(/^[-*]\s+\[(x|X| |-)\]\s+(.+)$/);
       if (m) return { checked: m[1].toLowerCase() === 'x', text: m[2].trim() };
       return { checked: false, text: line.replace(/^[-*]\s+/, '').trim() };
     })
-    .filter(item => item.text);
+    .filter((item) => item.text);
 }
 
 export function stripFenceLikeBody(body: string): string {
   const text = String(body || '').trim();
   if (!text) return '';
-  return text.replace(/^```[a-zA-Z0-9_-]*\n?/, '').replace(/\n?```$/, '').trim();
+  return text
+    .replace(/^```[a-zA-Z0-9_-]*\n?/, '')
+    .replace(/\n?```$/, '')
+    .trim();
 }
 
 export function findCode(node: RemarkNode): RemarkNode | null {
@@ -157,8 +173,10 @@ export function findCode(node: RemarkNode): RemarkNode | null {
   return null;
 }
 
-export function firstHeading(blocks: Array<{ type: string; props?: Record<string, unknown> }>): string | undefined {
-  return blocks.find(b => b.type === 'heading')?.props?.text as string | undefined;
+export function firstHeading(
+  blocks: Array<{ type: string; props?: Record<string, unknown> }>,
+): string | undefined {
+  return blocks.find((b) => b.type === 'heading')?.props?.text as string | undefined;
 }
 
 // ── Diagnostic factory ──
@@ -176,8 +194,11 @@ export function diag(
 
 export function collectDirectiveIds(tree: RemarkNode): Set<string> {
   const ids = new Set<string>();
-  walkNodes(tree, node => {
-    if ((node.type === 'containerDirective' || node.type === 'leafDirective') && node.attributes?.id)
+  walkNodes(tree, (node) => {
+    if (
+      (node.type === 'containerDirective' || node.type === 'leafDirective') &&
+      node.attributes?.id
+    )
       ids.add(String(node.attributes.id));
   });
   return ids;

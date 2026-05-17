@@ -1,12 +1,8 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText } from '../helpers.ts';
+import { directiveBodyText, excerpt, pos, rawDirectiveBody } from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
-export function compileCallout(
-  node: RemarkNode,
-  attrs: BlockAttrs,
-  source: string,
-): CompiledBlock {
+export function compileCallout(node: RemarkNode, attrs: BlockAttrs, source: string): CompiledBlock {
   return {
     id: attrs.id!,
     type: 'callout',

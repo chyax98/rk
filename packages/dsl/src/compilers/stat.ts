@@ -1,6 +1,6 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, diag } from '../helpers.ts';
+import { diag, directiveBodyText, excerpt, pos, rawDirectiveBody } from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileStat(
   node: RemarkNode,
@@ -11,7 +11,8 @@ export function compileStat(
 ): CompiledBlock {
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const value = attrs.value || attrs.metric || '';
-  if (!value) errors.push(diag('RK_STAT_VALUE_REQUIRED', 'stat directive requires value', file, pos(node)));
+  if (!value)
+    errors.push(diag('RK_STAT_VALUE_REQUIRED', 'stat directive requires value', file, pos(node)));
   return {
     id: attrs.id!,
     type: 'stat',

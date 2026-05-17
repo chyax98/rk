@@ -76,7 +76,9 @@
   color: var(--rk-text-secondary);
   font-size: var(--rk-text-sm);
   cursor: pointer;
-  transition: background var(--rk-ease), color var(--rk-ease);
+  transition:
+    background var(--rk-ease),
+    color var(--rk-ease);
   border-radius: 0;
 }
 .rk-sidebar-left-item:hover {
@@ -160,7 +162,9 @@
   width: 100%;
   transition: opacity var(--rk-ease);
 }
-.rk-primary-btn:hover { opacity: var(--rk-opacity-hover); }
+.rk-primary-btn:hover {
+  opacity: var(--rk-opacity-hover);
+}
 
 .rk-secondary-btn {
   background: var(--rk-btn-secondary-bg);
@@ -171,7 +175,9 @@
   cursor: pointer;
   font-size: var(--rk-text-sm);
   font-weight: var(--rk-weight-medium);
-  transition: background var(--rk-ease), border-color var(--rk-ease);
+  transition:
+    background var(--rk-ease),
+    border-color var(--rk-ease);
 }
 .rk-secondary-btn:hover {
   background: var(--rk-accent-muted);
@@ -186,7 +192,9 @@
   padding: var(--rk-space-2) var(--rk-space-3);
   cursor: pointer;
   font-size: var(--rk-text-sm);
-  transition: background var(--rk-ease), color var(--rk-ease);
+  transition:
+    background var(--rk-ease),
+    color var(--rk-ease);
 }
 .rk-ghost-btn:hover {
   background: var(--rk-btn-ghost-hover);
@@ -195,8 +203,16 @@
 
 /* ── Mobile ── */
 @media (max-width: 900px) {
-  .rk-artifact { grid-template-columns: 1fr; }
-  .rk-rail { position: static; }
-  .rk-shell { grid-template-columns: 1fr; }
-  .rk-sidebar-left { display: none; }
+  .rk-artifact {
+    grid-template-columns: 1fr;
+  }
+  .rk-rail {
+    position: static;
+  }
+  .rk-shell {
+    grid-template-columns: 1fr;
+  }
+  .rk-sidebar-left {
+    display: none;
+  }
 }

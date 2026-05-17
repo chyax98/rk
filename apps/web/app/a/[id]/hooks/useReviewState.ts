@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export type DrawerMode = 'comments' | 'block' | 'agent' | 'comment';
 
@@ -17,15 +17,12 @@ export function useReviewState() {
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [menu, setMenu] = useState<MenuState | null>(null);
 
-  const openDrawer = useCallback(
-    (mode: DrawerMode, blockId?: string | null) => {
-      if (blockId) setSelected(blockId);
-      setReviewMode(true);
-      setDrawerMode(mode);
-      setDrawerOpen(true);
-    },
-    [],
-  );
+  const openDrawer = useCallback((mode: DrawerMode, blockId?: string | null) => {
+    if (blockId) setSelected(blockId);
+    setReviewMode(true);
+    setDrawerMode(mode);
+    setDrawerOpen(true);
+  }, []);
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
@@ -43,12 +40,21 @@ export function useReviewState() {
   );
 
   return {
-    reviewMode, setReviewMode,
-    drawerOpen, setDrawerOpen,
-    drawerMode, setDrawerMode,
-    selected, setSelected,
-    outlineOpen, setOutlineOpen,
-    menu, setMenu, openMenu,
-    openDrawer, closeDrawer, handleDrawerMode,
+    reviewMode,
+    setReviewMode,
+    drawerOpen,
+    setDrawerOpen,
+    drawerMode,
+    setDrawerMode,
+    selected,
+    setSelected,
+    outlineOpen,
+    setOutlineOpen,
+    menu,
+    setMenu,
+    openMenu,
+    openDrawer,
+    closeDrawer,
+    handleDrawerMode,
   };
 }

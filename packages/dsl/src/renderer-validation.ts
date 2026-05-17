@@ -2,16 +2,17 @@
  * Renderer and profile validation.
  * Checks block renderer/profile attrs against allowlists.
  */
+
+import { coerceEnum } from './attrs.ts';
 import {
-  CHART_TYPES,
   CHART_TEMPLATES,
-  TABLE_PROFILES,
-  TABLE_RENDERERS,
+  CHART_TYPES,
+  CODE_COPY_MODES,
   CODE_FRAMES,
   CODE_RENDERERS,
-  CODE_COPY_MODES,
+  TABLE_PROFILES,
+  TABLE_RENDERERS,
 } from './types.ts';
-import { coerceEnum } from './attrs.ts';
 
 export function validateTableProfile(
   profile: string | undefined,

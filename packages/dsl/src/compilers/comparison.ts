@@ -1,6 +1,13 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, parsePipeTable, diag } from '../helpers.ts';
+import {
+  diag,
+  directiveBodyText,
+  excerpt,
+  parsePipeTable,
+  pos,
+  rawDirectiveBody,
+} from '../helpers.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 export function compileComparison(
   node: RemarkNode,
@@ -12,7 +19,14 @@ export function compileComparison(
   const body = rawDirectiveBody(source, node) || directiveBodyText(node);
   const parsed = parsePipeTable(body);
   if (parsed.headers.length < 2 || !parsed.rows.length) {
-    errors.push(diag('RK_COMPARISON_BODY_REQUIRED', 'comparison directive requires a Markdown table with at least two columns and one row', file, pos(node)));
+    errors.push(
+      diag(
+        'RK_COMPARISON_BODY_REQUIRED',
+        'comparison directive requires a Markdown table with at least two columns and one row',
+        file,
+        pos(node),
+      ),
+    );
   }
   return {
     id: attrs.id!,

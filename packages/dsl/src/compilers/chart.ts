@@ -1,7 +1,7 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import { validateChartType, validateChartTemplate } from '../renderer-validation.ts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, plainText, diag } from '../helpers.ts';
+import { diag, directiveBodyText, excerpt, plainText, pos, rawDirectiveBody } from '../helpers.ts';
+import { validateChartTemplate, validateChartType } from '../renderer-validation.ts';
+import type { BlockAttrs, CompileContext, CompiledBlock, RemarkNode } from '../types.ts';
 
 /**
  * Chart block compiler.
@@ -53,7 +53,14 @@ export function compileChart(
   }
 
   if (columns.length === 0 && rows.length === 0) {
-    errors.push(diag('RK_CHART_BODY_REQUIRED', 'chart directive requires a markdown table body', file, pos(node)));
+    errors.push(
+      diag(
+        'RK_CHART_BODY_REQUIRED',
+        'chart directive requires a markdown table body',
+        file,
+        pos(node),
+      ),
+    );
   }
 
   const chartType = validateChartType(attrs.type);
@@ -79,16 +86,28 @@ export function compileChart(
 }
 
 function parseBodyAsPipeTable(body: string | undefined) {
-  const lines = String(body || '').split('\n').map(l => l.trim()).filter(Boolean);
-  const tableLines = lines.filter(l => l.includes('|'));
+  const lines = String(body || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const tableLines = lines.filter((l) => l.includes('|'));
   if (tableLines.length < 2) return { headers: [], rows: [] };
   const header = splitRow(tableLines[0]);
   const sep = splitRow(tableLines[1]);
-  if (!header.length || !sep.every(c => /^:?-{3,}:?$/.test(c.trim()))) return { headers: [], rows: [] };
-  const rows = tableLines.slice(2).map(splitRow).filter(r => r.length).map(r => header.map((_, i) => r[i] || ''));
+  if (!header.length || !sep.every((c) => /^:?-{3,}:?$/.test(c.trim())))
+    return { headers: [], rows: [] };
+  const rows = tableLines
+    .slice(2)
+    .map(splitRow)
+    .filter((r) => r.length)
+    .map((r) => header.map((_, i) => r[i] || ''));
   return { headers: header, rows };
 }
 
 function splitRow(line: string): string[] {
-  return String(line || '').replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  return String(line || '')
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((c) => c.trim());
 }

@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import type { ComponentType } from 'react';
 
 /**
  * Creates a dispatcher component that selects a variant based on props.
@@ -6,7 +6,7 @@ import { ComponentType } from 'react';
  */
 export function createBlockDispatcher<P extends Record<string, unknown>>(
   variants: Record<string, ComponentType<P>>,
-  resolveKey: (props: P) => string
+  resolveKey: (props: P) => string,
 ): ComponentType<P> {
   return function BlockDispatcher(props: P) {
     const key = resolveKey(props);

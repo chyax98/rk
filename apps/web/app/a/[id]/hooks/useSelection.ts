@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface QuoteAnchor {
   blockId: string;
@@ -19,14 +19,21 @@ export function useSelection() {
   const captureSelection = useCallback(() => {
     const selection = window.getSelection?.();
     const exact = selection?.toString?.().trim();
-    if (!exact || exact.length < 2) { setSelectionMenu(null); return; }
+    if (!exact || exact.length < 2) {
+      setSelectionMenu(null);
+      return;
+    }
 
     const range = selection.rangeCount ? selection.getRangeAt(0) : null;
-    const container = range?.commonAncestorContainer?.nodeType === (Node as any).ELEMENT_NODE
-      ? range.commonAncestorContainer as HTMLElement
-      : (range?.commonAncestorContainer as HTMLElement)?.parentElement;
+    const container =
+      range?.commonAncestorContainer?.nodeType === (Node as any).ELEMENT_NODE
+        ? (range.commonAncestorContainer as HTMLElement)
+        : (range?.commonAncestorContainer as HTMLElement)?.parentElement;
     const el = container?.closest?.('[data-block-id]');
-    if (!el) { setSelectionMenu(null); return; }
+    if (!el) {
+      setSelectionMenu(null);
+      return;
+    }
 
     const blockId = el.getAttribute('data-block-id')!;
     let prefix = '';
@@ -69,8 +76,12 @@ export function useSelection() {
   }, []);
 
   return {
-    quoteAnchor, setQuoteAnchor,
-    selectionMenu, setSelectionMenu,
-    captureSelection, clearSelectionMenu, clearQuoteAnchor,
+    quoteAnchor,
+    setQuoteAnchor,
+    selectionMenu,
+    setSelectionMenu,
+    captureSelection,
+    clearSelectionMenu,
+    clearQuoteAnchor,
   };
 }

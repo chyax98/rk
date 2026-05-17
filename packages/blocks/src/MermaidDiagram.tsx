@@ -7,9 +7,7 @@ interface MermaidDiagramProps {
 
 function sanitizeSvg(svg: string): string {
   // Remove <style> tags and HTML comments to prevent CSS text pollution
-  return svg
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<!--[\s\S]*?-->/g, '');
+  return svg.replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<!--[\s\S]*?-->/g, '');
 }
 
 export default function MermaidDiagram({ code, caption }: MermaidDiagramProps) {
@@ -56,16 +54,27 @@ export default function MermaidDiagram({ code, caption }: MermaidDiagramProps) {
         if (alive) setErr(String((e as Error).message || e));
       }
     });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [code, caption]);
 
   return (
     <figure className="rk-diagram rk-mermaid">
       {caption && <figcaption className="rk-diagram-caption">{caption}</figcaption>}
-      {err
-        ? <div className="rk-diagram-error">{err}{'\n\n'}{code}</div>
-        : <div ref={ref} aria-hidden="true"><div className="rk-diagram-fallback"><pre>{code}</pre></div></div>
-      }
+      {err ? (
+        <div className="rk-diagram-error">
+          {err}
+          {'\n\n'}
+          {code}
+        </div>
+      ) : (
+        <div ref={ref} aria-hidden="true">
+          <div className="rk-diagram-fallback">
+            <pre>{code}</pre>
+          </div>
+        </div>
+      )}
     </figure>
   );
 }

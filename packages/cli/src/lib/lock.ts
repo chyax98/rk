@@ -10,11 +10,21 @@ export interface LockData {
 }
 
 export async function readLock(file: string): Promise<LockData | null> {
-  const p = path.join(path.dirname(file), '.' + path.basename(file).replace(/\.(rk\.)?md$/, '') + '.rk.lock.json');
-  try { return JSON.parse(await fs.readFile(p, 'utf8')); } catch { return null; }
+  const p = path.join(
+    path.dirname(file),
+    '.' + path.basename(file).replace(/\.(rk\.)?md$/, '') + '.rk.lock.json',
+  );
+  try {
+    return JSON.parse(await fs.readFile(p, 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 export async function writeLock(file: string, data: LockData): Promise<void> {
-  const p = path.join(path.dirname(file), '.' + path.basename(file).replace(/\.(rk\.)?md$/, '') + '.rk.lock.json');
+  const p = path.join(
+    path.dirname(file),
+    '.' + path.basename(file).replace(/\.(rk\.)?md$/, '') + '.rk.lock.json',
+  );
   await fs.writeFile(p, JSON.stringify(data, null, 2));
 }
