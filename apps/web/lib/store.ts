@@ -376,7 +376,7 @@ export async function addComment(id: string, blockId: string, text: string, sele
 }
 
 export async function updateCommentStatus(id: string, commentId: string, status: string) {
-  if (!HUMAN_EDITABLE_COMMENT_STATUSES.has(status as 'open' | 'resolved')) return { ok: false as const, status: 400, error: 'invalid status' };
+  if (!HUMAN_EDITABLE_COMMENT_STATUSES.has(status as any)) return { ok: false as const, status: 400, error: 'invalid status' };
   const artifact = await getArtifact(id);
   if (!artifact) return { ok: false as const, status: 404, error: 'not found' };
 

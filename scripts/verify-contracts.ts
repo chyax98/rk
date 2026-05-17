@@ -61,17 +61,24 @@ assert('shared aliases include Agent shorthand metric→stat', BLOCK_ALIASES.met
 assert('shared diagram engines include ECharts shorthand variants', ['echarts-bar', 'echarts-line', 'echarts-pie'].every(x => DIAGRAM_ENGINES.includes(x)));
 
 console.log('\n== DSL / renderer drift ==');
+// DSL was refactored: index.ts imports from compilers/index.ts and parse.ts
 const dslSource = read('packages/dsl/src/index.ts');
+const dslParseSource = read('packages/dsl/src/parse.ts');
+const dslCompilersSource = read('packages/dsl/src/compilers/index.ts');
+const dslAliasSource = read('packages/dsl/src/alias.ts');
+const dslDiagramSource = read('packages/dsl/src/compilers/diagram.ts');
+const dslAllSource = dslSource + dslParseSource + dslCompilersSource + dslAliasSource + dslDiagramSource;
 const rendererSource = read('packages/blocks/src/registry.tsx');
-const compilerTypes = objectKeysFromConst(dslSource, 'BLOCK_COMPILERS');
+// Support both `const X = {` and `const X: Type = {` patterns
+const compilerTypes = objectKeysFromConst(dslCompilersSource.replace(/const BLOCK_COMPILERS:.*?=\s*\{/, 'const BLOCK_COMPILERS = {'), 'BLOCK_COMPILERS');
 const rendererTypes = unique([...rendererSource.matchAll(/^\s*'([^']+)'\s*:/gm)].map(m => m[1]));
 const authoredDirectiveTypes = BLOCK_TYPES.filter(t => !['heading', 'paragraph'].includes(t)).sort();
 assert('DSL compiler keys match authorable block contracts', arrayEq(compilerTypes, authoredDirectiveTypes), `compiler=${compilerTypes.join(',')} contract=${authoredDirectiveTypes.join(',')}`);
 assert('Renderer registry keys match block contracts', arrayEq(rendererTypes, BLOCK_TYPES), `renderer=${rendererTypes.join(',')} contract=${BLOCK_TYPES.join(',')}`);
-assert('DSL imports shared theme/surface contracts', dslSource.includes("@renderkit/shared/contracts"));
-assert('DSL resolves aliases through shared contracts', dslSource.includes('resolveBlockAlias(name, attrs)'));
-assert('DSL validates diagram engines through shared contracts', dslSource.includes('isKnownDiagramEngine(engine)'));
-assert('DSL validates model against shared contract', dslSource.includes('validateRenderKitModel(model)'));
+assert('DSL imports shared theme/surface contracts', dslAllSource.includes("@renderkit/shared/contracts"));
+assert('DSL resolves aliases through shared contracts', dslAllSource.includes('resolveBlockAlias'));
+assert('DSL validates diagram engines through shared contracts', dslAllSource.includes('isKnownDiagramEngine'));
+assert('DSL validates model against shared contract', dslAllSource.includes('validateRenderKitModel(model)'));
 const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.tsx');
 assert('Web review surface logic imports shared contract helper', artifactViewSource.includes("@renderkit/shared/contracts") && artifactViewSource.includes('isWideReviewSurface(surface)'));
 const gallery = JSON.parse(read('examples/gallery.json'));
@@ -82,7 +89,7 @@ assert('Every shared surface has a recipe', SURFACE_NAMES.every(surface => Boole
 const storeSource = read('apps/web/lib/store.ts');
 assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
 assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
-const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.js');
+const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.ts');
 assert('Artifact status route uses shared comment status contracts', artifactRouteSource.includes('COMMENT_STATUSES') && artifactRouteSource.includes('COMMENT_OPEN'));
 
 console.log('\n== Example model contract validation ==');

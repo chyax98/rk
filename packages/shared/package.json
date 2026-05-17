@@ -19,5 +19,6 @@
   },
   "devDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "types": "./src/contracts.ts"
 }
