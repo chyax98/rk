@@ -19,12 +19,7 @@
         "name": "next"
       }
     ],
-    "paths": {
-      "@renderkit/shared/contracts": ["../../packages/shared/src/contracts.ts"],
-      "@renderkit/shared": ["../../packages/shared/src/index.ts"],
-      "@renderkit/blocks": ["../../packages/blocks/src/index.tsx"],
-      "@renderkit/dsl": ["../../packages/dsl/src/index.ts"]
-    }
+    "paths": {}
   },
   "include": [
     "next-env.d.ts",

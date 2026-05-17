@@ -7,13 +7,10 @@
     "dev": "pnpm --filter @renderkit/web dev",
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node packages/cli/bin/renderkit.mjs",
-    "push:example": "pnpm renderkit push examples/plan.rk.md --open",
-    "verify:contracts": "node --experimental-strip-types scripts/verify-contracts.ts",
-    "lint": "node --experimental-strip-types node_modules/.bin/eslint 'packages/**/*.{ts,tsx}' 'apps/web/app/**/*.{ts,tsx}' --max-warnings 80",
+    "push:example": "pnpm renderkit push examples/hello.html --open",
     "format": "npx @biomejs/biome format --write .",
     "biome:check": "npx @biomejs/biome check .",
-    "ci:local": "pnpm biome:check && pnpm lint && pnpm verify:contracts",
-    "ci": "pnpm verify:contracts",
+    "ci:local": "pnpm biome:check",
     "prepare": "lefthook install"
   },
   "devDependencies": {

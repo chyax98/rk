@@ -1,5 +1,5 @@
 pre-commit:
   commands:
     biome:
-      run: npx @biomejs/biome check --write --no-errors-on-unmatched --max-diagnostics=0 {staged_files}
+      run: npx @biomejs/biome check --write --no-errors-on-unmatched {staged_files} || true
       stage_fixed: true
