@@ -491,16 +491,19 @@ var RkDiagram = class extends HTMLElement {
         ${caption ? `<div class="rk-diagram__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
+    const prerendered = this.querySelector(".rk-diagram__prerendered");
+    if (prerendered) {
+      const loading = this.querySelector(".rk-diagram__loading");
+      if (loading) loading.style.display = "none";
+      const canvas = this.querySelector(".rk-diagram__canvas");
+      if (canvas && !canvas.contains(prerendered)) canvas.appendChild(prerendered);
+      this._makeSvgResponsive(this.querySelector(".rk-diagram__canvas"));
+      return;
+    }
     if (engine === "plantuml") {
-      const prerendered = this.querySelector(".rk-diagram__prerendered");
-      if (prerendered) {
-        const loading = this.querySelector(".rk-diagram__loading");
-        if (loading) loading.style.display = "none";
-      } else {
-        const loading = this.querySelector(".rk-diagram__loading");
-        if (loading) {
-          loading.innerHTML = "\u26A0\uFE0F PlantUML \u56FE\u8868\u9700\u8981\u670D\u52A1\u7AEF\u5904\u7406\u540E\u67E5\u770B\u3002<br><small>\u5728 server \u542F\u52A8\u72B6\u6001\u4E0B\u63A8\u9001 artifact \u5373\u53EF\u81EA\u52A8\u6E32\u67D3\u3002</small>";
-        }
+      const loading = this.querySelector(".rk-diagram__loading");
+      if (loading) {
+        loading.innerHTML = "\u26A0\uFE0F PlantUML \u56FE\u8868\u9700\u8981\u670D\u52A1\u7AEF\u5904\u7406\u540E\u67E5\u770B\u3002<br><small>\u5728 server \u542F\u52A8\u72B6\u6001\u4E0B\u63A8\u9001 artifact \u5373\u53EF\u81EA\u52A8\u6E32\u67D3\u3002</small>";
       }
       return;
     }
@@ -514,16 +517,32 @@ var RkDiagram = class extends HTMLElement {
     }
     this._renderMermaid();
   }
+  /** Detect if current theme is dark based on CSS var */
+  _isDark() {
+    const bg = getComputedStyle(this).getPropertyValue("--rk-bg").trim();
+    if (!bg) return false;
+    if (bg.startsWith("#")) {
+      const hex = bg.slice(1);
+      const r = parseInt(hex.slice(0, 2), 16);
+      return !isNaN(r) && r < 80;
+    }
+    return bg.includes("0b1") || bg.includes("08090a") || bg.includes("161616");
+  }
   async _renderMermaid() {
     const canvas = this.querySelector(".rk-diagram__canvas");
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
       const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+      const isDark = this._isDark();
       mermaid.default.initialize({
         startOnLoad: false,
-        theme: "default",
-        securityLevel: "loose"
+        theme: isDark ? "dark" : "default",
+        securityLevel: "loose",
+        themeVariables: {
+          background: "transparent",
+          fontFamily: getComputedStyle(this).getPropertyValue("--rk-font-sans").trim() || "'Inter', 'Noto Sans SC', sans-serif"
+        }
       });
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.default.render(id, this._raw);
@@ -556,11 +575,20 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const { Graphviz } = await import("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz/dist/index.js");
-      const graphviz = await Graphviz.load();
-      const svg = graphviz.dot(this._raw);
+      const { instance } = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js");
+      const viz = await instance();
+      const isDark = this._isDark();
+      let dotCode = this._raw;
+      if (isDark) {
+        const prelude = '  graph [fontcolor="#c9d1d9" bgcolor="transparent"];\n  node [color="#8b949e" fontcolor="#c9d1d9"];\n  edge [color="#8b949e" fontcolor="#c9d1d9"];\n';
+        dotCode = dotCode.replace("{", "{\n" + prelude);
+      }
+      const svgEl = viz.renderSVGElement(dotCode, {
+        graphAttributes: { bgcolor: "transparent" }
+      });
+      const svgString = new XMLSerializer().serializeToString(svgEl);
       if (loading) loading.remove();
-      canvas.innerHTML = svg;
+      canvas.innerHTML = svgString;
       this._makeSvgResponsive(canvas);
     } catch (e) {
       if (loading) loading.textContent = `Graphviz \u6E32\u67D3\u5931\u8D25: ${e?.message || String(e)}`;

@@ -34,16 +34,22 @@ class RkDiagram extends HTMLElement {
       </div>
     `;
 
+    // For ALL engines: if pre-rendered SVG is present (from server Kroki SSR), display it
+    const prerendered = this.querySelector('.rk-diagram__prerendered');
+    if (prerendered) {
+      const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
+      if (loading) loading.style.display = 'none';
+      // Move prerendered into canvas if not already there
+      const canvas = this.querySelector('.rk-diagram__canvas') as HTMLElement;
+      if (canvas && !canvas.contains(prerendered)) canvas.appendChild(prerendered);
+      this._makeSvgResponsive(this.querySelector('.rk-diagram__canvas') as HTMLElement);
+      return;
+    }
+
     if (engine === 'plantuml') {
-      const prerendered = this.querySelector('.rk-diagram__prerendered');
-      if (prerendered) {
-        const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
-        if (loading) loading.style.display = 'none';
-      } else {
-        const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
-        if (loading) {
-          loading.innerHTML = '⚠️ PlantUML 图表需要服务端处理后查看。<br><small>在 server 启动状态下推送 artifact 即可自动渲染。</small>';
-        }
+      const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
+      if (loading) {
+        loading.innerHTML = '⚠️ PlantUML 图表需要服务端处理后查看。<br><small>在 server 启动状态下推送 artifact 即可自动渲染。</small>';
       }
       return;
     }
@@ -58,8 +64,21 @@ class RkDiagram extends HTMLElement {
       return;
     }
 
-    // default: mermaid
+    // default: mermaid — pass theme context
     this._renderMermaid();
+  }
+
+  /** Detect if current theme is dark based on CSS var */
+  _isDark(): boolean {
+    const bg = getComputedStyle(this).getPropertyValue('--rk-bg').trim();
+    // Simple heuristic: if bg starts with #0-3 or is a dark named value, it's dark
+    if (!bg) return false;
+    if (bg.startsWith('#')) {
+      const hex = bg.slice(1);
+      const r = parseInt(hex.slice(0,2), 16);
+      return !isNaN(r) && r < 80;
+    }
+    return bg.includes('0b1') || bg.includes('08090a') || bg.includes('161616');
   }
 
   async _renderMermaid(): Promise<void> {
@@ -69,10 +88,17 @@ class RkDiagram extends HTMLElement {
 
     try {
       const mermaid = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+      // Theme-aware: detect dark mode from CSS custom properties
+      const isDark = this._isDark();
       mermaid.default.initialize({
         startOnLoad: false,
-        theme: 'default',
+        theme: isDark ? 'dark' : 'default',
         securityLevel: 'loose',
+        themeVariables: {
+          background: 'transparent',
+          fontFamily: getComputedStyle(this).getPropertyValue('--rk-font-sans').trim() ||
+            "'Inter', 'Noto Sans SC', sans-serif",
+        },
       });
 
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
@@ -110,12 +136,28 @@ class RkDiagram extends HTMLElement {
     const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
     if (!canvas || !this._raw) return;
     try {
+      // Use @viz-js/viz (same as docu.md / markdown-viewer-extension)
       // @ts-ignore
-      const { Graphviz } = await import('https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz/dist/index.js');
-      const graphviz = await Graphviz.load();
-      const svg = graphviz.dot(this._raw);
+      const { instance } = await import('https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js');
+      const viz = await instance();
+
+      // Dark theme support: inject graph attributes before first '{'
+      const isDark = this._isDark();
+      let dotCode = this._raw;
+      if (isDark) {
+        const prelude = '  graph [fontcolor="#c9d1d9" bgcolor="transparent"];\n'
+          + '  node [color="#8b949e" fontcolor="#c9d1d9"];\n'
+          + '  edge [color="#8b949e" fontcolor="#c9d1d9"];\n';
+        dotCode = dotCode.replace('{', '{\n' + prelude);
+      }
+
+      const svgEl = viz.renderSVGElement(dotCode, {
+        graphAttributes: { bgcolor: 'transparent' },
+      });
+      const svgString = new XMLSerializer().serializeToString(svgEl);
+
       if (loading) loading.remove();
-      canvas.innerHTML = svg;
+      canvas.innerHTML = svgString;
       this._makeSvgResponsive(canvas);
     } catch (e: any) {
       if (loading) loading.textContent = `Graphviz 渲染失败: ${e?.message || String(e)}`;
