@@ -1,32 +1,29 @@
 # Progress
 
 ## Status
-In Progress
-
-### Wave 1 — 核心重构（已完成 2026-05-17）
-- packages/shared: TS + renderer schema + chart block type
-- packages/dsl: compiler 拆分 16 个文件 + chart compiler
-- packages/blocks: dispatch + table profiles + Shiki code + ChartBlock
-- apps/web: ArtifactView 拆分 94 行 + ReviewPanel 三 tab + 4 个 P0 bug 修复
-- packages/cli: 模块化 lib/ + sourceFile lock + DELETE API
-
-### Wave 1.5 — Skill 文档更新
-- skills/renderkit-authoring/SKILL.md: 追加 v2 新增章节（chart/code/table 新属性）
-
-### Wave 2 — CSS + fixtures
-- packages/design/src/blocks.css: table profiles + code frames + chart/KPI CSS
-- apps/web/app/style.css: ReviewPanel tabs + comment status badge CSS
-- examples/capabilities/chart-gallery.rk.md: chart block fixture
-- examples/capabilities/table-profiles.rk.md: table profiles fixture
-- examples/capabilities/code-presentation.rk.md: code block fixture
+Wave 3 - A11y cleanup DONE
 
 ## Tasks
-- [ ] Wave 3: strict TS per-package
-- [ ] Wave 3: Mermaid SVG a11y
-- [ ] Wave 3: 中文 UI 全量 pass
-- [ ] Wave 3: skill 文档更新
+- CLI commands 拆分为 12 个独立 command 模块
+- lib/lock.ts 修复 lock 路径格式
+- CLI src/ 结构：commands/ + lib/
+- Mermaid SVG a11y 清理
+  - sanitizeSvg 移除 <style> 标签（防止 CSS 内容被 read-text 读到）
+  - SVG 注入 <title> + <desc> + aria-labelledby
+  - 所有 <text> 元素标记 aria-hidden="true"
+  - DiagramBlock server-rendered SVG 同样处理
+  - SourceFallback 文案中文化
+
+## Files Changed
+- packages/cli/src/commands/*.ts (12 个命令)
+- packages/cli/src/index.ts (主入口)
+- packages/cli/src/lib/http.ts
+- packages/cli/src/lib/lock.ts
+- packages/cli/src/lib/output.ts
+- packages/cli/src/lib/open.ts (新增)
+- packages/blocks/src/MermaidDiagram.tsx (重写)
+- packages/blocks/src/DiagramBlock.tsx (重写)
 
 ## Notes
-- verify:contracts 全绿 (72/72)
-- 不跑测试 (用户机器扛不住)
-- DSL package.json exports 已修正为 src/index.mjs
+- bin/renderkit.mjs 保持不动，作为运行时入口
+- src/ 为 TypeScript 参考实现

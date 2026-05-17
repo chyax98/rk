@@ -26,7 +26,7 @@ export default function BlockInspector({ block, comments, text, setText, submitC
 
       <details className="rk-drawer-section rk-agent-metadata">
         <summary>Agent 元数据</summary>
-        <div className="rk-drawer-label">Block ID</div>
+<div className="rk-drawer-label">块 ID</div>
         <code>{block.id}</code>
         {block.sourceRange && (
           <>

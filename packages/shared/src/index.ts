@@ -143,7 +143,7 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
  * Get a recipe by surface name. Returns null if unknown.
  */
 export function getRecipe(surface: string): import('./contracts').Recipe | null {
-  return RECIPES[surface] || null;
+  return (RECIPES as Record<string, import('./contracts').Recipe>)[surface] || null;
 }
 
 /**

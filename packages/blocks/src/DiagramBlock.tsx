@@ -21,7 +21,7 @@ export default function DiagramBlock({ engine = 'mermaid', code = '', caption }:
 }
 
 function SvgDiagram({ code, caption }: { code: string; caption?: string }) {
-  const safe = sanitizeSvg(code);
+  const safe = enhanceSvgAccessibility(sanitizeSvg(code), caption || 'SVG diagram');
   return (
     <figure className="rk-diagram rk-diagram-svg">
       {caption && <figcaption className="rk-diagram-caption">{caption}</figcaption>}
@@ -43,12 +43,12 @@ function ServerDiagram({ engine, code, caption }: { engine: string; code: string
       .then(r => r.json())
       .then((json: { ok?: boolean; svg?: string; error?: string }) => {
         if (!alive) return;
-        if (json.ok && json.svg) setState({ status: 'rendered', svg: sanitizeSvg(json.svg!), error: '' });
+        if (json.ok && json.svg) setState({ status: 'rendered', svg: enhanceSvgAccessibility(sanitizeSvg(json.svg!), caption || `${engine} diagram`), error: '' });
         else setState({ status: 'fallback', svg: '', error: json.error || 'Renderer unavailable' });
       })
       .catch((e: Error) => alive && setState({ status: 'fallback', svg: '', error: String(e.message || e) }));
     return () => { alive = false; };
-  }, [engine, code]);
+  }, [engine, code, caption]);
 
   return (
     <figure className="rk-diagram rk-diagram-server" data-engine={engine} data-status={state.status}>
@@ -64,7 +64,7 @@ function SourceFallback({ engine, code, status, error }: { engine: string; code:
   return (
     <div className="rk-diagram-source" data-engine={engine}>
       <div className="rk-diagram-source-head">
-        {engine.toUpperCase()} {status === 'loading' ? 'rendering…' : 'source fallback'}
+        {engine.toUpperCase()} {status === 'loading' ? '渲染中…' : '源文件回退'}
       </div>
       {error && <p className="rk-diagram-error">{error}</p>}
       <pre><code>{code}</code></pre>
@@ -112,7 +112,28 @@ function sanitizeSvg(svg: string): string {
   if (start > 0) s = s.slice(start);
   if (!/^<svg[\s>]/i.test(s)) return '';
   return s
+    .replace(/<style[\s\S]*?<\/style>/gi, '')  // Remove CSS style blocks (prevents pw read-text pollution)
     .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/\son[a-z]+\s*=\s*(['"]).*?\1/gi, '')
     .replace(/javascript:/gi, '');
+}
+
+function enhanceSvgAccessibility(svg: string, label: string): string {
+  const safe = escapeXml(label);
+  const titleTag = `<title>${safe}</title>`;
+  const descTag = `<desc>${safe}</desc>`;
+  // Insert title+desc right after opening <svg...> tag; also add role="img"
+  let enhanced = svg.replace(/<svg/i, `<svg role="img"`);
+  enhanced = enhanced.replace(/(<svg[^>]*>)/i, `$1${titleTag}${descTag}`);
+  return enhanced;
+}
+
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
