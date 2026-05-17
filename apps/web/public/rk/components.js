@@ -1347,19 +1347,21 @@ customElements.define("rk-3d", RkThreeD);
 
 // packages/components/src/elements/rk-badge.ts
 var RkBadge = class extends HTMLElement {
+  _raw = "";
   static get observedAttributes() {
     return ["color", "icon"];
   }
   connectedCallback() {
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
     this._render();
   }
   attributeChangedCallback() {
-    this._render();
+    if (this._raw) this._render();
   }
   _render() {
     const color = this.getAttribute("color") || "accent";
     const icon = this.getAttribute("icon") || "";
-    const text = this.textContent?.trim() || "";
+    const text = this._raw;
     const colorMap = {
       blue: { bg: "var(--rk-tone-info-bg, #eff6ff)", text: "var(--rk-tone-info-border, #2563eb)", border: "var(--rk-tone-info-border, #2563eb)" },
       green: { bg: "var(--rk-tone-success-bg, #f0fdf4)", text: "var(--rk-tone-success-border, #16a34a)", border: "var(--rk-tone-success-border, #16a34a)" },
