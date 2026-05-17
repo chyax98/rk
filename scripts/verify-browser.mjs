@@ -193,10 +193,44 @@ async function main() {
   const svgCount = countFromGet(pw(['get', '-s', session, '--selector', '.rk-diagram-svg svg', '--fact', 'count'], 'read svg diagram count').stdout);
   assert('diagram visual language renders inline SVG', svgCount >= 1, `count=${svgCount}`);
 
+  logSection('Chart block page');
+  const chartFixture = tempExample('examples/capabilities/chart-gallery.rk.md', 'chart-gallery.rk.md');
+  const chartPushed = await pushArtifact(chartFixture, 'push chart gallery artifact');
+  assert('chart artifact url returned', Boolean(chartPushed?.url), JSON.stringify(chartPushed));
+  if (chartPushed?.artifactId) createdArtifactIds.push(chartPushed.artifactId);
+  pw(['session', 'recreate', session, '--open', chartPushed.url], 'open chart artifact', { timeout: 90_000 });
+  pw(['wait', '-s', session, '--selector', '.rk-chart'], 'wait for chart blocks');
+  const chartCount = countFromGet(pw(['get', '-s', session, '--selector', '.rk-chart', '--fact', 'count'], 'read chart block count').stdout);
+  assert('chart gallery renders chart blocks', chartCount >= 1, `count=${chartCount}`);
+
+  logSection('Table profiles page');
+  const tableFixture = tempExample('examples/capabilities/table-profiles.rk.md', 'table-profiles.rk.md');
+  const tablePushed = await pushArtifact(tableFixture, 'push table profiles artifact');
+  assert('table artifact url returned', Boolean(tablePushed?.url), JSON.stringify(tablePushed));
+  if (tablePushed?.artifactId) createdArtifactIds.push(tablePushed.artifactId);
+  pw(['session', 'recreate', session, '--open', tablePushed.url], 'open table artifact', { timeout: 90_000 });
+  pw(['wait', '-s', session, '--selector', '.rk-table-block'], 'wait for table blocks');
+  const statusTable = countFromGet(pw(['get', '-s', session, '--selector', '.rk-table-status', '--fact', 'count'], 'read status table count').stdout);
+  assert('status profile table renders', statusTable >= 1, `count=${statusTable}`);
+  const cardsTable = countFromGet(pw(['get', '-s', session, '--selector', '.rk-table-cards', '--fact', 'count'], 'read cards table count').stdout);
+  assert('cards profile table renders', cardsTable >= 1, `count=${cardsTable}`);
+
+  logSection('Code presentation page');
+  const codeFixture = tempExample('examples/capabilities/code-presentation.rk.md', 'code-presentation.rk.md');
+  const codePushed = await pushArtifact(codeFixture, 'push code presentation artifact');
+  assert('code artifact url returned', Boolean(codePushed?.url), JSON.stringify(codePushed));
+  if (codePushed?.artifactId) createdArtifactIds.push(codePushed.artifactId);
+  pw(['session', 'recreate', session, '--open', codePushed.url], 'open code artifact', { timeout: 90_000 });
+  pw(['wait', '-s', session, '--selector', '.rk-code-block'], 'wait for code blocks');
+  const editorFrame = countFromGet(pw(['get', '-s', session, '--selector', '.rk-code-frame-editor', '--fact', 'count'], 'read editor frame count').stdout);
+  assert('editor frame renders', editorFrame >= 1, `count=${editorFrame}`);
+  const terminalFrame = countFromGet(pw(['get', '-s', session, '--selector', '.rk-code-frame-terminal', '--fact', 'count'], 'read terminal frame count').stdout);
+  assert('terminal frame renders', terminalFrame >= 1, `count=${terminalFrame}`);
+
   logSection('Browser diagnostics and evidence');
   const errors = parseJson(pw(['errors', '-s', session, '--output=json'], 'read browser errors').stdout);
   assert('browser has no captured page errors', (errors?.summary?.total ?? 0) === 0, JSON.stringify(errors));
-  const screenshotPath = '.pw-evidence/verify-browser-diagram.png';
+  const screenshotPath = '.pw-evidence/verify-browser-all.png';
   pw(['screenshot', '-s', session, '--path', screenshotPath], 'capture browser verification screenshot', { timeout: 90_000 });
   assert('browser screenshot exists', existsSync(resolve(root, screenshotPath)), screenshotPath);
 

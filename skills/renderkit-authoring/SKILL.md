@@ -168,14 +168,24 @@ Required fields: `question`/`q`, `chosen`. Optional: `status` (draft|proposed|ap
 #### code
 
 ````md
-:::code{id="example-code" language="js" title="Example"}
+:::code{id="example-code" language="js" title="Example" filename="src/index.ts" frame="editor" showLineNumbers="true" highlight="1,3-5"}
 ```js
 console.log("hello renderkit");
 ```
 :::
 ````
 
-Must contain a fenced code block. `language` and `title` are optional attributes.
+Must contain a fenced code block.
+
+**Attributes:**
+- `language` — 代码语言（如 `js`, `tsx`, `bash`, `json`）
+- `title` — 代码块标题
+- `filename` — 文件路径，触发 editor frame 显示文件名 tab
+- `frame="editor|terminal|none"` — 窗口样式：editor（macOS 窗口 chrome）、terminal（深色终端样式）、none（无 chrome）
+- `showLineNumbers="true"` — 显示行号
+- `highlight="1,3-5"` — 高亮指定行
+- `diff="true"` — diff 模式，解析 `+`/`-` 前缀为增删行
+- `copyMode="code"` — 复制时自动去掉 `$`/`#` prompt 和注释行（terminal 场景）
 
 #### diagram
 
@@ -266,13 +276,41 @@ Supported attributes: `src` (required), `alt`, `title`, `caption`, `aspect` (`16
 Use `table` for comparison matrices, status trackers, release gates, and review findings.
 
 ```md
-:::table{id="risk-table" title="Risk matrix" width="wide"}
+:::table{id="risk-table" profile="matrix" title="Risk matrix" width="wide"}
 | Area | Current signal | Decision impact | Owner |
 |---|---|---|---|
 | Queue latency | p95 142ms | Continue rollout | SRE |
 | Rollback | Config-only tested | Safe to proceed | Release |
 :::
 ```
+
+**Profiles**（展示约束，防止表格崩坏）：
+- `matrix` — 标准矩阵，3-5 列（默认）
+- `status` — 状态清单，第一列彩色 badge（🔴🟡🟢）
+- `key-value` — 两列配置表，value 支持 code wrap
+- `cards` — 每行变卡片，适合长文本比较
+- `compact` — 小字体高密度，禁长段落
+
+超过 6 列自动降级为 `cards`。
+
+#### chart
+
+Use `chart` for data visualization (bar, line, pie, scatter, KPI). Data comes from a Markdown table; the Agent controls rendering via `type`, `xField`, `yField`.
+
+```md
+:::chart{id="monthly" type="bar" template="report" title="月度活跃" xField="月份" yField="活跃用户" width="wide"}
+| 月份 | 活跃用户 |
+|---|---|
+| 1月 | 1200 |
+| 2月 | 1500 |
+:::
+```
+
+**Attributes:**
+- `type="bar|line|pie|scatter|kpi"` — 图表类型（kpi = 大数字卡片）
+- `template="default|minimal|report"` — 视觉风格
+- `xField`, `yField` — 指定数据列（默认第一列和第二列）
+- 数据通过 Markdown 表格提供，不允许 agent 写原始 ECharts option JSON
 
 #### tabs
 
