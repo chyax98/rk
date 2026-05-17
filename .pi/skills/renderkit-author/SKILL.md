@@ -359,11 +359,11 @@ B --> A: 响应
 
 ```html
 <rk-form title="文档审阅" submit-label="提交反馈" description="请对文档提供意见。">
-  <rk-field label="整体评分" type="rating" max="5" required />
-  <rk-field label="主要问题" type="textarea" placeholder="描述问题..." />
-  <rk-field label="优先级" type="select" options="高,中,低" />
-  <rk-field label="联系方式" type="text" placeholder="邮箱或姓名" />
-  <rk-field label="同意公开" type="checkbox" placeholder="允许公开此反馈" />
+  <rk-field label="整体评分" type="rating" max="5" required></rk-field>
+  <rk-field label="主要问题" type="textarea" placeholder="描述问题..."></rk-field>
+  <rk-field label="优先级" type="select" options="高,中,低"></rk-field>
+  <rk-field label="联系方式" type="text" placeholder="邮箱或姓名"></rk-field>
+  <rk-field label="同意公开" type="checkbox" placeholder="允许公开此反馈"></rk-field>
 </rk-form>
 <!-- type: text | textarea | select | rating | checkbox | number -->
 <!-- 提交后结果以 JSON 输出到浏览器控制台，Agent 可通过截图或 feedback 命令获取 -->
@@ -371,9 +371,26 @@ B --> A: 响应
 
 ---
 
-## 4.
+## 4. 设计规则（Anti-Slop）
 
 来源：html-anything、md2html、open-design 最佳实践。
+
+### ❗❗ HTML 语法硬性规则（最重要）
+
+**禁止使用自閉合标签**（`<rk-field ... />`）写 Custom Elements。HTML5 解析器会把它当作开启标签，导致后续元素变成子元素。
+
+```html
+✗ 错误：
+<rk-form title="...">  <rk-field label="评分" type="rating" />          (自閉合)
+  <rk-field label="反馈" type="textarea" />        (将被嵌套成上一个的子元素!)
+</rk-form>
+
+✓ 正确：
+<rk-form title="...">
+  <rk-field label="评分" type="rating" required></rk-field>
+  <rk-field label="反馈" type="textarea" placeholder="..."></rk-field>
+</rk-form>
+```
 
 ### 排版
 - 正文宽度 **≤ 720px**（`max-width: 720px; margin: 0 auto`）
