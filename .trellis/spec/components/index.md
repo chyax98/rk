@@ -1,6 +1,6 @@
 # @renderkit/components — Spec 导航
 
-> 21 个 `rk-*` Web Components，纯 Custom Elements（无 Shadow DOM），样式由 `@renderkit/design` 提供。
+> 24 个 `rk-*` Web Components，纯 Custom Elements（无 Shadow DOM），样式由 `@renderkit/design` 提供。
 
 ## 包概览
 

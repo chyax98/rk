@@ -27,12 +27,12 @@ export const COMPONENTS: readonly ComponentDescriptor[] = [
 
 ### 1. bundle.ts — 运行时注册
 
-`src/bundle.ts` import 所有 21 个组件文件，触发 `customElements.define()`：
+`src/bundle.ts` import 所有 24 个组件文件，触发 `customElements.define()`：
 
 ```typescript
 import './elements/rk-callout.ts';
 import './elements/rk-stat.ts';
-// ... 21 个 import
+// ... 24 个 import
 ```
 
 **顺序无关**，因为每个文件末尾自行调用 `customElements.define()`。
