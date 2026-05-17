@@ -482,6 +482,8 @@ var RkDiagram = class extends HTMLElement {
     const title = this.getAttribute("title") || "";
     const caption = this.getAttribute("caption") || "";
     const engine = this.getAttribute("engine") || "mermaid";
+    const existingPrerendered = this.querySelector(".rk-diagram__prerendered");
+    const prerenderedHTML = existingPrerendered ? existingPrerendered.outerHTML : null;
     this.innerHTML = /* html */
     `
       <div class="rk-diagram">
@@ -491,13 +493,12 @@ var RkDiagram = class extends HTMLElement {
         ${caption ? `<div class="rk-diagram__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
-    const prerendered = this.querySelector(".rk-diagram__prerendered");
-    if (prerendered) {
+    if (prerenderedHTML) {
       const loading = this.querySelector(".rk-diagram__loading");
       if (loading) loading.style.display = "none";
       const canvas = this.querySelector(".rk-diagram__canvas");
-      if (canvas && !canvas.contains(prerendered)) canvas.appendChild(prerendered);
-      this._makeSvgResponsive(this.querySelector(".rk-diagram__canvas"));
+      if (canvas) canvas.innerHTML = prerenderedHTML;
+      this._makeSvgResponsive(canvas);
       return;
     }
     if (engine === "plantuml") {
