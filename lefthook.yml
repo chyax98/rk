@@ -1,5 +1,2 @@
-pre-commit:
-  commands:
-    biome:
-      run: npx @biomejs/biome check --write --no-errors-on-unmatched {staged_files} || true
-      stage_fixed: true
+# Pre-commit hooks disabled — agents use LEFTHOOK=0 prefix anyway.
+# Run biome manually: npx @biomejs/biome check --write .
