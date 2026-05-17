@@ -89,8 +89,9 @@ function highlightLine(line: string, language: string): string {
 
 function parseHighlightRanges(spec: string, totalLines: number): Set<number> {
   const set = new Set<number>();
-  if (!spec) return set;
-  for (const part of spec.split(',')) {
+  const s = String(spec ?? '');
+  if (!s) return set;
+  for (const part of s.split(',')) {
     const trimmed = part.trim();
     if (trimmed.includes('-')) {
       const [a, b] = trimmed.split('-').map(Number);

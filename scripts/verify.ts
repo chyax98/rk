@@ -44,7 +44,7 @@ function assert(label, ok, detail = '') {
 // ── Section 1: Good examples ──
 console.log('\n== Good examples ==');
 for (const file of fixtures.good) {
-  const r = run(`node packages/cli/bin/renderkit.ts validate ${file} --json`);
+  const r = run(`node packages/cli/bin/renderkit.mjs validate ${file} --json`);
   let parsed;
   try {
     parsed = JSON.parse(r.stdout);
@@ -83,7 +83,7 @@ assert(
 );
 for (const [file, expectedCode] of Object.entries(fixtures.bad)) {
   assert(`${file}: exists`, existsSync(join(root, file)));
-  const r = run(`node packages/cli/bin/renderkit.ts validate ${file} --json`);
+  const r = run(`node packages/cli/bin/renderkit.mjs validate ${file} --json`);
 
   let parsed;
   try {
@@ -134,7 +134,7 @@ const themeCases = [
 assert('theme strategy doc exists', existsSync(join(root, 'docs/theme-strategy.md')));
 for (const c of themeCases) {
   assert(`${c.file}: exists`, existsSync(join(root, c.file)));
-  const r = run(`node packages/cli/bin/renderkit.ts validate ${c.file} --json`);
+  const r = run(`node packages/cli/bin/renderkit.mjs validate ${c.file} --json`);
   let parsed;
   try {
     parsed = JSON.parse(r.stdout);
@@ -158,7 +158,7 @@ assert('theme cases cover 4 supported themes', new Set(themeCases.map((c) => c.t
 // ── Section 5: Rendering capabilities ──
 console.log('\n== Rendering capabilities ==');
 const diagramCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/diagram-engines.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/diagram-engines.rk.md --json',
 );
 let diagramParsed;
 try {
@@ -175,7 +175,7 @@ for (const engine of ['mermaid', 'svg', 'echarts', 'infographic', 'plantuml', 'd
   assert(`diagram case covers ${engine}`, engines.has(engine));
 }
 const gridCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/grid-layout.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/grid-layout.rk.md --json',
 );
 let gridParsed;
 try {
@@ -191,7 +191,7 @@ assert(
 );
 
 const productCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/product-system.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/product-system.rk.md --json',
 );
 let productParsed;
 try {
@@ -233,7 +233,7 @@ assert(
 );
 
 const richCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/rich-media-tabs.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/rich-media-tabs.rk.md --json',
 );
 let richParsed;
 try {
@@ -264,7 +264,7 @@ assert(
 );
 
 const editorialCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/editorial-components.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/editorial-components.rk.md --json',
 );
 let editorialParsed;
 try {
@@ -294,7 +294,7 @@ assert(
 // ── Section 6: Narrative blocks ──
 console.log('\n== Narrative blocks ==');
 const autoIdCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/auto-id.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/auto-id.rk.md --json',
 );
 let autoIdParsed;
 try {
@@ -313,7 +313,7 @@ assert(
 );
 
 const narrativeCase = run(
-  'node packages/cli/bin/renderkit.ts validate examples/capabilities/narrative-blocks.rk.md --json',
+  'node packages/cli/bin/renderkit.mjs validate examples/capabilities/narrative-blocks.rk.md --json',
 );
 let narrativeParsed;
 try {

@@ -28,7 +28,7 @@ function assert(label, ok, detail = '') {
 }
 
 console.log('\n== Recipe CLI ==');
-const recipes = runJson('node packages/cli/bin/renderkit.ts recipes list --json');
+const recipes = runJson('node packages/cli/bin/renderkit.mjs recipes list --json');
 assert('recipes list ok=true', recipes.ok === true);
 assert(
   'recipes list exposes seven surfaces',
@@ -40,7 +40,7 @@ assert(
   recipes.surfaces?.some((r) => r.surface === 'engineering-plan'),
 );
 const engineering = runJson(
-  'node packages/cli/bin/renderkit.ts recipes show engineering-plan --json',
+  'node packages/cli/bin/renderkit.mjs recipes show engineering-plan --json',
 );
 assert('recipe show engineering-plan ok=true', engineering.ok === true);
 assert(
@@ -49,7 +49,7 @@ assert(
     engineering.recipe?.recommendedBlocks?.includes(b),
   ),
 );
-const surfaces = runJson('node packages/cli/bin/renderkit.ts surfaces --json');
+const surfaces = runJson('node packages/cli/bin/renderkit.mjs surfaces --json');
 assert(
   'surfaces command exposes seven supported surfaces',
   surfaces.surfaces?.length === 7,
@@ -61,31 +61,31 @@ assert(
     surfaces.surfaces?.some((x) => x.surface === s && x.recipe),
   ),
 );
-const themes = runJson('node packages/cli/bin/renderkit.ts themes --json');
+const themes = runJson('node packages/cli/bin/renderkit.mjs themes --json');
 assert(
   'themes command exposes four themes',
   themes.themes?.length === 4,
   `got ${themes.themes?.length}`,
 );
 assert('themes command has no duplicates', new Set(themes.themes).size === themes.themes.length);
-const blocks = runJson('node packages/cli/bin/renderkit.ts blocks --json');
+const blocks = runJson('node packages/cli/bin/renderkit.mjs blocks --json');
 assert(
   'blocks command exposes block types',
   blocks.blocks?.includes('summary') && blocks.blocks?.includes('timeline'),
 );
-const aliases = runJson('node packages/cli/bin/renderkit.ts aliases --json');
+const aliases = runJson('node packages/cli/bin/renderkit.mjs aliases --json');
 assert(
   'aliases command exposes metric/todo aliases',
   aliases.aliases?.metric?.name === 'stat' && aliases.aliases?.todo?.name === 'checklist',
 );
-const errors = runJson('node packages/cli/bin/renderkit.ts errors --json');
+const errors = runJson('node packages/cli/bin/renderkit.mjs errors --json');
 assert(
   'errors command exposes duplicate block id code',
   errors.errors?.RK_DUPLICATE_BLOCK_ID === 'RK_DUPLICATE_BLOCK_ID',
 );
 
 console.log('\n== Design resources CLI ==');
-const resources = runJson('node packages/cli/bin/renderkit.ts design resources --json');
+const resources = runJson('node packages/cli/bin/renderkit.mjs design resources --json');
 assert('design resources ok=true', resources.ok === true);
 assert(
   'design resources expose six cloned assets',
@@ -109,7 +109,7 @@ for (const id of [
     resources.resources?.some((r) => r.id === id),
   );
 }
-const md2html = runJson('node packages/cli/bin/renderkit.ts design resource md2html --json');
+const md2html = runJson('node packages/cli/bin/renderkit.mjs design resource md2html --json');
 assert('design resource md2html ok=true', md2html.ok === true);
 assert(
   'md2html exposes local path and commit',
@@ -119,14 +119,14 @@ assert(
   'md2html records integration status',
   md2html.resource?.integrationStatus === 'partially-integrated',
 );
-const p0 = runJson('node packages/cli/bin/renderkit.ts design resources --priority P0 --json');
+const p0 = runJson('node packages/cli/bin/renderkit.mjs design resources --priority P0 --json');
 assert(
   'priority filter returns only P0',
   p0.resources?.length === 2 && p0.resources.every((r) => r.priority === 'P0'),
   `got ${JSON.stringify(p0.resources?.map((r) => r.priority))}`,
 );
 const recommendation = runJson(
-  'node packages/cli/bin/renderkit.ts design recommend --surface documentation --json',
+  'node packages/cli/bin/renderkit.mjs design recommend --surface documentation --json',
 );
 assert('design recommend documentation ok=true', recommendation.ok === true);
 assert(
