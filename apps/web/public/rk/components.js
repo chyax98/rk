@@ -457,6 +457,7 @@ var RkDiagram = class extends HTMLElement {
   _render() {
     const title = this.getAttribute("title") || "";
     const caption = this.getAttribute("caption") || "";
+    const engine = this.getAttribute("engine") || "mermaid";
     this.innerHTML = /* html */
     `
       <div class="rk-diagram">
@@ -466,6 +467,27 @@ var RkDiagram = class extends HTMLElement {
         ${caption ? `<div class="rk-diagram__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
+    if (engine === "plantuml") {
+      const prerendered = this.querySelector(".rk-diagram__prerendered");
+      if (prerendered) {
+        const loading = this.querySelector(".rk-diagram__loading");
+        if (loading) loading.style.display = "none";
+      } else {
+        const loading = this.querySelector(".rk-diagram__loading");
+        if (loading) {
+          loading.innerHTML = "\u26A0\uFE0F PlantUML \u56FE\u8868\u9700\u8981\u670D\u52A1\u7AEF\u5904\u7406\u540E\u67E5\u770B\u3002<br><small>\u5728 server \u542F\u52A8\u72B6\u6001\u4E0B\u63A8\u9001 artifact \u5373\u53EF\u81EA\u52A8\u6E32\u67D3\u3002</small>";
+        }
+      }
+      return;
+    }
+    if (engine === "d2") {
+      this._renderD2();
+      return;
+    }
+    if (engine === "graphviz" || engine === "dot") {
+      this._renderGraphviz();
+      return;
+    }
     this._renderMermaid();
   }
   async _renderMermaid() {
@@ -483,14 +505,51 @@ var RkDiagram = class extends HTMLElement {
       const { svg } = await mermaid.default.render(id, this._raw);
       if (loading) loading.remove();
       canvas.innerHTML = svg;
-      const svgEl = canvas.querySelector("svg");
-      if (svgEl) {
-        svgEl.style.maxWidth = "100%";
-        svgEl.style.height = "auto";
-      }
+      this._makeSvgResponsive(canvas);
     } catch (err) {
       if (loading) loading.remove();
       canvas.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm);white-space:pre-wrap">Mermaid error: ${this._escape(err?.message || String(err))}</div>`;
+    }
+  }
+  async _renderD2() {
+    const canvas = this.querySelector(".rk-diagram__canvas");
+    const loading = this.querySelector(".rk-diagram__loading");
+    if (!canvas || !this._raw) return;
+    try {
+      const mod = await import("https://cdn.jsdelivr.net/npm/@terrastruct/d2@0.1.33/dist/browser/index.js");
+      const Renderer = mod.Renderer || mod.default || mod.D2 || mod;
+      const renderer = new Renderer();
+      const svg = await renderer.render(this._raw);
+      if (loading) loading.remove();
+      canvas.innerHTML = typeof svg === "string" ? svg : svg?.svg || svg?.toString() || "";
+      this._makeSvgResponsive(canvas);
+    } catch (e) {
+      if (loading) loading.textContent = `D2 \u6E32\u67D3\u5931\u8D25: ${e?.message || String(e)}`;
+    }
+  }
+  async _renderGraphviz() {
+    const canvas = this.querySelector(".rk-diagram__canvas");
+    const loading = this.querySelector(".rk-diagram__loading");
+    if (!canvas || !this._raw) return;
+    try {
+      const { Graphviz } = await import("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm-graphviz@1/dist/graphviz.umd.min.js");
+      const graphviz = await Graphviz.load();
+      const svg = graphviz.dot(this._raw);
+      if (loading) loading.remove();
+      canvas.innerHTML = svg;
+      this._makeSvgResponsive(canvas);
+    } catch (e) {
+      if (loading) loading.textContent = `Graphviz \u6E32\u67D3\u5931\u8D25: ${e?.message || String(e)}`;
+    }
+  }
+  _makeSvgResponsive(container) {
+    const svgEl = container.querySelector("svg");
+    if (svgEl) {
+      svgEl.removeAttribute("width");
+      svgEl.removeAttribute("height");
+      svgEl.style.width = "100%";
+      svgEl.style.maxWidth = "100%";
+      svgEl.style.height = "auto";
     }
   }
   _escape(s) {
