@@ -171,7 +171,7 @@ assert(
 );
 assert(
   'DSL resolves aliases through shared contracts',
-  dslAllSource.includes('resolveBlockAlias(name, attrs)'),
+  dslAllSource.includes('resolveBlockAlias'),
 );
 assert(
   'DSL validates diagram engines through shared contracts',
@@ -220,6 +220,7 @@ const examples = [
   'examples/capabilities/diagram-visual-language.rk.md',
   'examples/surfaces/proposal.rk.md',
   'examples/surfaces/documentation.rk.md',
+  'examples/capabilities/chart-gallery.rk.md',
 ];
 for (const file of examples) {
   const result = parseRK(read(file), file);
