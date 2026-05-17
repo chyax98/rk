@@ -1403,21 +1403,23 @@ customElements.define("rk-badge-group", RkBadgeGroup);
 
 // packages/components/src/elements/rk-kanban.ts
 var RkKanbanCard = class extends HTMLElement {
+  _raw = "";
   static get observedAttributes() {
     return ["priority", "tag", "assignee", "due"];
   }
   connectedCallback() {
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   attributeChangedCallback() {
-    this._render();
+    if (this._raw) this._render();
   }
   _render() {
     const priority = this.getAttribute("priority") || "";
     const tag = this.getAttribute("tag") || "";
     const assignee = this.getAttribute("assignee") || "";
     const due = this.getAttribute("due") || "";
-    const text = (this.textContent || "").trim();
+    const text = this._raw;
     const priorityColors = {
       high: "var(--rk-tone-danger-border, #dc2626)",
       medium: "var(--rk-tone-warning-border, #d97706)",
@@ -1678,21 +1680,24 @@ var RkField = class extends HTMLElement {
   }
 };
 var RkForm = class extends HTMLElement {
+  _fieldsHTML = "";
   static get observedAttributes() {
     return ["title", "submit-label", "description"];
   }
   connectedCallback() {
+    if (!this._fieldsHTML) {
+      this._fieldsHTML = Array.from(this.querySelectorAll("rk-field")).map((f) => f.outerHTML).join("") || this.innerHTML;
+    }
     this._render();
   }
   attributeChangedCallback() {
-    this._render();
+    if (this._fieldsHTML) this._render();
   }
   _render() {
     const title = this.getAttribute("title") || "\u8868\u5355";
     const submitLabel = this.getAttribute("submit-label") || "\u63D0\u4EA4";
     const description = this.getAttribute("description") || "";
-    const fields = Array.from(this.querySelectorAll("rk-field"));
-    const fieldHTML = fields.map((f) => f.outerHTML).join("");
+    const fieldHTML = this._fieldsHTML;
     this.innerHTML = `
       <div class="rk-form" style="
         background:var(--rk-surface,#fff);
