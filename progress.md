@@ -1,19 +1,19 @@
-# RenderKit Progress — Web Layer (apps/web)
+# RenderKit 重构进度
 
-## Status: DONE
+## Wave 1 状态
 
-### Completed
-- [x] Bug 1: feedbackCmd → `renderkit feedback ${artifactId}`
-- [x] Bug 2: ReviewPanel 3-tab (评论/当前块/Agent) real branching
-- [x] Bug 3: CommentCard no raw ID/English status, Chinese status labels
-- [x] Bug 4: BlockInspector block.id in `<details>` collapse
-- [x] ArtifactView.tsx → 94 lines (from 235)
-- [x] page.jsx → page.tsx with typed props
-- [x] lib.ts extracted (flattenBlocks, blockLabel, copyToClipboard)
-- [x] useReviewState updated with menu state + openMenu
-- [x] All 12 components verified correct
-- [x] Old .jsx files deleted
+| 包 | 状态 | 说明 |
+|---|---|---|
+| packages/shared | ✅ 完成 | TS + renderer schema, chart block type |
+| packages/dsl | ✅ 完成 | 15 个 compiler 文件 + attrs.ts + types.ts + chart block |
+| packages/blocks | ⏳ 待完成 | dispatch + table profiles + Shiki + ChartBlock |
+| apps/web | ✅ 完成 | ArtifactView 拆分 + P0 bugs 修复 |
+| packages/cli | ⏳ 待完成 | 模块化 + sourceFile lock + test fixes |
+| verify:contracts | ✅ 通过 | 72 passed, 0 failed |
 
-### Blocked (not in scope)
-- `pnpm verify` broken due to packages/dsl dist build issue (parallel agent)
-- `pnpm verify:browser` depends on packages/dsl fix
+## 验证基线
+```
+✅ renderkit validate examples/alpha-showcase.rk.md → ok
+✅ renderkit validate examples/capabilities/chart-gallery.rk.md → ok
+✅ pnpm verify:contracts → 72 passed, 0 failed
+```

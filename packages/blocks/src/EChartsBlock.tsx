@@ -11,7 +11,7 @@ export default function EChartsBlock({ code, caption, variant = 'auto' }: EChart
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    let chart: ReturnType<typeof import('echarts')> | null = null;
+    let chart: any | null = null;
     let alive = true;
     async function run() {
       try {
