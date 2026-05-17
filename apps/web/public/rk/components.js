@@ -351,9 +351,15 @@ var RkChart = class extends HTMLElement {
     const header = rows[0];
     const body = rows.slice(1);
     const items = body.map((row) => {
-      const value = row[0] || "";
-      const label = row[1] || header[1] || "";
-      return `<div class="rk-chart-kpi__item"><div class="rk-kpi-value">${this._escape(value)}</div><div class="rk-kpi-label">${this._escape(label)}</div></div>`;
+      const label = row[0] || header[0] || "";
+      const value = row[1] || "\u2014";
+      const delta = row[2] || "";
+      const deltaHtml = delta ? `<span class="rk-chart-kpi__delta">${this._escape(delta)}</span>` : "";
+      return `<div class="rk-chart-kpi__item">
+          <div class="rk-chart-kpi__value">${this._escape(value)}</div>
+          <div class="rk-chart-kpi__label">${this._escape(label)}</div>
+          ${deltaHtml}
+        </div>`;
     }).join("");
     this.innerHTML = /* html */
     `
@@ -1147,3 +1153,139 @@ var RkMetric = class extends HTMLElement {
   }
 };
 customElements.define("rk-metric", RkMetric);
+
+// packages/components/src/elements/rk-3d.ts
+var RkThreeD = class extends HTMLElement {
+  _rendered = false;
+  connectedCallback() {
+    if (this._rendered) return;
+    this._rendered = true;
+    this._render();
+  }
+  _render() {
+    const scene = this.getAttribute("scene") || "cube";
+    const height = this.getAttribute("height") || "360";
+    const caption = this.getAttribute("caption") || "";
+    const color = this.getAttribute("color") || "#6366f1";
+    const uid = Math.random().toString(36).slice(2, 9);
+    this.innerHTML = `
+      <div class="rk-3d">
+        <canvas class="rk-3d__canvas" id="rk3d-${uid}" height="${height}" style="width:100%;height:${height}px;display:block;"></canvas>
+        ${caption ? `<p class="rk-3d__caption">${this._escape(caption)}</p>` : ""}
+      </div>`;
+    this._loadThree(uid, scene, color, parseInt(height));
+  }
+  async _loadThree(uid, scene, color, height) {
+    try {
+      const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js");
+      const canvas = this.querySelector(`#rk3d-${uid}`);
+      if (!canvas) return;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(canvas.clientWidth || 600, height);
+      const camera = new THREE.PerspectiveCamera(60, (canvas.clientWidth || 600) / height, 0.1, 100);
+      camera.position.set(0, 0, 3);
+      const threeScene = new THREE.Scene();
+      threeScene.background = null;
+      threeScene.add(new THREE.AmbientLight(16777215, 0.6));
+      const dirLight = new THREE.DirectionalLight(16777215, 1);
+      dirLight.position.set(5, 5, 5);
+      threeScene.add(dirLight);
+      let geo;
+      if (scene === "sphere") geo = new THREE.SphereGeometry(1, 32, 32);
+      else if (scene === "torus") geo = new THREE.TorusGeometry(0.7, 0.3, 16, 100);
+      else if (scene === "orbit") geo = new THREE.IcosahedronGeometry(0.8, 1);
+      else geo = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+      const hex = parseInt(color.replace("#", ""), 16);
+      const mat = new THREE.MeshPhongMaterial({ color: hex, shininess: 80 });
+      const mesh = new THREE.Mesh(geo, mat);
+      threeScene.add(mesh);
+      if (scene === "orbit") {
+        const orbitGeo = new THREE.SphereGeometry(0.2, 16, 16);
+        const colors = [16739179, 5164484, 16770669];
+        for (let i = 0; i < 3; i++) {
+          const orbitMat = new THREE.MeshPhongMaterial({ color: colors[i] });
+          const orbitMesh = new THREE.Mesh(orbitGeo, orbitMat);
+          const angle = i / 3 * Math.PI * 2;
+          orbitMesh.position.set(Math.cos(angle) * 1.5, 0, Math.sin(angle) * 1.5);
+          threeScene.add(orbitMesh);
+        }
+      }
+      let isDragging = false;
+      let lastX = 0;
+      let lastY = 0;
+      canvas.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+      canvas.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        mesh.rotation.y += (e.clientX - lastX) * 0.01;
+        mesh.rotation.x += (e.clientY - lastY) * 0.01;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+      canvas.addEventListener("mouseup", () => {
+        isDragging = false;
+      });
+      canvas.addEventListener("mouseleave", () => {
+        isDragging = false;
+      });
+      canvas.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          lastX = e.touches[0].clientX;
+          lastY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      canvas.addEventListener("touchmove", (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        mesh.rotation.y += (e.touches[0].clientX - lastX) * 0.01;
+        mesh.rotation.x += (e.touches[0].clientY - lastY) * 0.01;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      }, { passive: true });
+      canvas.addEventListener("touchend", () => {
+        isDragging = false;
+      });
+      const animate = () => {
+        requestAnimationFrame(animate);
+        if (!isDragging) {
+          mesh.rotation.x += 5e-3;
+          mesh.rotation.y += 8e-3;
+        }
+        if (scene === "orbit") {
+          const children = threeScene.children.filter((c) => c !== mesh && c.type === "Mesh");
+          children.forEach((child, i) => {
+            const t = Date.now() * 1e-3 + i / 3 * Math.PI * 2;
+            child.position.set(Math.cos(t) * 1.5, Math.sin(t * 0.7) * 0.3, Math.sin(t) * 1.5);
+          });
+        }
+        renderer.render(threeScene, camera);
+      };
+      animate();
+      const ro = new ResizeObserver(() => {
+        const w = canvas.clientWidth || 600;
+        renderer.setSize(w, height);
+        camera.aspect = w / height;
+        camera.updateProjectionMatrix();
+      });
+      ro.observe(canvas.parentElement);
+    } catch {
+      const canvas = this.querySelector(".rk-3d__canvas");
+      if (canvas) {
+        canvas.insertAdjacentHTML(
+          "afterend",
+          '<p style="color:#999;font-size:0.8rem;text-align:center;padding:1rem">3D \u9700\u8981 WebGL \u652F\u6301\u548C Three.js CDN \u52A0\u8F7D</p>'
+        );
+      }
+    }
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-3d", RkThreeD);

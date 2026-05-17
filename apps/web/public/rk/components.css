@@ -1181,3 +1181,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── rk-3d ─────────────────────────────────────────────────────────── */
+.rk-3d {
+  border-radius: var(--rk-radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  border: 1px solid var(--rk-border);
+  position: relative;
+}
+.rk-3d__canvas {
+  cursor: grab;
+  display: block;
+  width: 100%;
+}
+.rk-3d__canvas:active {
+  cursor: grabbing;
+}
+.rk-3d__caption {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0.5rem;
+  margin: 0;
+  background: rgba(0, 0, 0, 0.3);
+}

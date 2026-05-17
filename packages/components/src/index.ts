@@ -138,4 +138,11 @@ export const COMPONENTS: readonly ComponentDescriptor[] = [
     childElements: ['rk-metric-item'],
     description: 'Compact metric row. cols=2|3|4. rk-metric-item[label,value,delta,tone] children.',
   },
+  {
+    tag: 'rk-3d',
+    className: 'RkThreeD',
+    attributes: ['scene', 'height', 'color', 'caption'],
+    description:
+      'Interactive 3D scene (Three.js CDN). scene=cube|sphere|torus|orbit, height, color, caption.',
+  },
 ] as const;
