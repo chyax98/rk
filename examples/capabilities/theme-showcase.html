@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RenderKit — 主题系统展示</title>
+  <link rel="stylesheet" href="/rk/components.css">
+  <script type="module" src="/rk/components.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Inter, "Noto Sans SC", system-ui, sans-serif; }
+
+    .theme-section {
+      min-height: 100vh;
+      padding: 3rem 2rem;
+      background: var(--rk-bg);
+    }
+    .theme-section[data-rk-theme="glassmorphism"] {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%);
+    }
+
+    .theme-header {
+      max-width: 900px;
+      margin: 0 auto 2.5rem;
+    }
+    .theme-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--rk-accent);
+      margin-bottom: 0.4rem;
+    }
+    .theme-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--rk-text);
+      margin-bottom: 0.5rem;
+    }
+    .theme-desc {
+      color: var(--rk-text-tertiary);
+      font-size: 0.9rem;
+    }
+
+    .demo-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .demo-grid > * { grid-column: span 1; }
+    .demo-grid > *:first-child,
+    .demo-grid .full { grid-column: span 2; }
+
+    @media (max-width: 640px) {
+      .demo-grid { grid-template-columns: 1fr; }
+      .demo-grid > * { grid-column: span 1 !important; }
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--rk-border);
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── paper-light ───────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="paper-light">
+  <div class="theme-header">
+    <div class="theme-name">paper-light</div>
+    <h1 class="theme-title">温暖纸质 · 文档阅读</h1>
+    <p class="theme-desc">阅读优先，温暖中性，适合长文档、报告、方案。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="info" title="信息提示">这是 paper-light 主题的信息提示，温暖低调。</rk-callout>
+    <rk-callout type="warning" title="注意事项">请注意这个重要的警告信息。</rk-callout>
+    <rk-metric label="文档质量评分" value="94" unit="分" trend="+12%" trend-dir="up" />
+    <rk-stat label="字数" value="12,480" caption="较上版本增加 840 字" />
+    <div class="full">
+      <rk-code lang="typescript" title="示例代码">
+const artifact = await pushArtifact('report.html');
+const feedback = await getFeedback(artifact.id);
+feedback.comments.forEach(c => console.log(c.text));
+      </rk-code>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── dark-pro ──────────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="dark-pro">
+  <div class="theme-header">
+    <div class="theme-name">dark-pro</div>
+    <h1 class="theme-title">深色专业 · 技术报告</h1>
+    <p class="theme-desc">深色背景，冷蓝色调，适合技术报告、工程文档、系统设计。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="info" title="系统状态">所有服务运行正常，延迟 P99 &lt; 100ms。</rk-callout>
+    <rk-callout type="danger" title="告警">内存使用率超过 85%，请立即处理。</rk-callout>
+    <rk-metric label="API 响应时间" value="42" unit="ms" trend="-8%" trend-dir="down" />
+    <rk-stat label="QPS" value="23,410" caption="峰值：45,000 QPS" />
+    <div class="full">
+      <rk-code lang="bash" title="部署命令">
+kubectl apply -f deployment.yaml --namespace=prod
+kubectl rollout status deployment/api-server -n prod
+      </rk-code>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── notion-clean ──────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="notion-clean">
+  <div class="theme-header">
+    <div class="theme-name">notion-clean</div>
+    <h1 class="theme-title">暖白极简 · 协作文档</h1>
+    <p class="theme-desc">Notion 风格，温暖白底，近黑文字，适合协作文档、笔记、知识库。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="success" title="已完成">设计系统 Token 统一已落地，覆盖全部 21 个组件。</rk-callout>
+    <rk-callout type="info" title="待跟进">需与前端团队对齐 glassmorphism 主题的模糊效果实现方案。</rk-callout>
+    <rk-metric label="任务完成率" value="78" unit="%" trend="+15%" trend-dir="up" />
+    <rk-stat label="开放 Issues" value="7" caption="本周新增 2 条" />
+    <div class="full">
+      <rk-checklist title="本周 Action Items">
+        <rk-check done>统一 WC 语义 token</rk-check>
+        <rk-check done>新增 4 套主题</rk-check>
+        <rk-check>写 Agent Authoring Skill</rk-check>
+        <rk-check>CLI 重写并测试</rk-check>
+      </rk-checklist>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── linear-app ────────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="linear-app">
+  <div class="theme-header">
+    <div class="theme-name">linear-app</div>
+    <h1 class="theme-title">暗色精工 · 产品看板</h1>
+    <p class="theme-desc">Linear 风格，黑底靛紫，精密工程感，适合产品 roadmap、issue 追踪、sprint 回顾。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="info" title="Sprint 25 目标">完成 RenderKit 多引擎图表支持和设计系统深化。</rk-callout>
+    <rk-callout type="warning" title="风险提示">D2 WASM 包体积较大（21MB），需评估 CDN 策略。</rk-callout>
+    <rk-metric label="Sprint 进度" value="67" unit="%" trend="+12%" trend-dir="up" />
+    <rk-stat label="已关闭 Issues" value="23" caption="共 34 个 issues" />
+    <div class="full">
+      <rk-steps title="发布流程">
+        <rk-step done>代码审查 ✓</rk-step>
+        <rk-step done>集成测试 ✓</rk-step>
+        <rk-step active>灰度发布 → 10%</rk-step>
+        <rk-step>全量上线</rk-step>
+      </rk-steps>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── amber-terminal ────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="amber-terminal">
+  <div class="theme-header">
+    <div class="theme-name">amber-terminal</div>
+    <h1 class="theme-title">琥珀终端 · 工程 Runbook</h1>
+    <p class="theme-desc">复古终端风格，琥珀色调，适合运维手册、故障排查、SRE 文档。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="warning" title="操作前请确认">此操作将重启所有 Pod，预计影响时间 2-3 分钟。</rk-callout>
+    <rk-callout type="danger" title="生产环境操作">请在变更窗口期内操作，并确保回滚方案就绪。</rk-callout>
+    <rk-stat label="故障历时" value="23 min" caption="2026-05-17 03:15 ~ 03:38" />
+    <rk-stat label="影响用户" value="~1,200" caption="华南区用户" />
+    <div class="full">
+      <rk-code lang="bash" title="快速恢复步骤">
+# 1. 切换到备用数据库
+kubectl patch configmap app-config -p '{"data":{"DB_HOST":"db-replica-01"}}'
+
+# 2. 触发滚动重启
+kubectl rollout restart deployment/api-server -n prod
+
+# 3. 验证状态
+kubectl get pods -n prod -w
+      </rk-code>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── glassmorphism ─────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="glassmorphism">
+  <div class="theme-header">
+    <div class="theme-name">glassmorphism</div>
+    <h1 class="theme-title">玻璃磨砂 · 产品发布</h1>
+    <p class="theme-desc">毛玻璃效果，渐变背景，适合产品发布、营销页面、视觉展示。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="success" title="正式发布">RenderKit 2.0 今日正式发布！支持 8 套主题与多引擎图表。</rk-callout>
+    <rk-callout type="info" title="新特性">全新 Agent Authoring Skill 让 AI 轻松生成美观文档。</rk-callout>
+    <rk-metric label="用户满意度" value="9.2" unit="/10" trend="+0.8" trend-dir="up" />
+    <rk-stat label="GitHub Stars" value="2,847" caption="本月新增 +312" />
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── ibm-enterprise ────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="ibm-enterprise">
+  <div class="theme-header">
+    <div class="theme-name">ibm-enterprise</div>
+    <h1 class="theme-title">企业精准 · 商业报告</h1>
+    <p class="theme-desc">IBM Carbon 风格，结构严谨，单色调，适合企业报告、合规文档、年度总结。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="info" title="执行摘要">本季度营收同比增长 23%，超出预期目标 8 个百分点。</rk-callout>
+    <rk-callout type="warning" title="风险因素">汇率波动与供应链压力仍是下季度的主要不确定因素。</rk-callout>
+    <rk-metric label="季度营收" value="¥4.2B" trend="+23%" trend-dir="up" />
+    <rk-stat label="净利润率" value="18.4%" caption="行业平均 12.1%" />
+    <div class="full">
+      <rk-table>
+        <thead><tr><th>部门</th><th>目标</th><th>实际</th><th>完成率</th></tr></thead>
+        <tbody>
+          <tr><td>华北区</td><td>¥1.2B</td><td>¥1.45B</td><td>121%</td></tr>
+          <tr><td>华南区</td><td>¥1.0B</td><td>¥1.12B</td><td>112%</td></tr>
+          <tr><td>华东区</td><td>¥1.5B</td><td>¥1.63B</td><td>109%</td></tr>
+        </tbody>
+      </rk-table>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ── editorial-kami ────────────────────────────────────────────── -->
+<section class="theme-section" data-rk-theme="editorial-kami">
+  <div class="theme-header">
+    <div class="theme-name">editorial-kami</div>
+    <h1 class="theme-title">日式留白 · 设计提案</h1>
+    <p class="theme-desc">衬线字体，极致留白，侘寂美学，适合设计提案、品牌文档、创意简报。</p>
+  </div>
+  <div class="demo-grid">
+    <rk-callout type="info" title="设计哲学">少即是多。每一个元素都应有其存在的理由。</rk-callout>
+    <rk-callout type="success" title="方案通过">客户对整体视觉方向表示认可，进入精细化阶段。</rk-callout>
+    <rk-quote author="原研哉" source="设计中的设计">设计不是装饰，而是沟通。</rk-quote>
+    <rk-stat label="设计迭代轮次" value="7" caption="最终版本满意度 ★★★★★" />
+  </div>
+</section>
+
+</body>
+</html>
