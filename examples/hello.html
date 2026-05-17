@@ -1,43 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <title>RenderKit Demo</title>
-</head>
+<head><meta charset="UTF-8"><title>Hello RenderKit</title></head>
 <body>
-  <h1>RenderKit HTML Demo</h1>
+<h1>Hello RenderKit</h1>
 
-  <rk-callout tone="info" title="欢迎">
-    这是 RenderKit 的 HTML-only 模式。Agent 直接写 HTML + Web Components。
-  </rk-callout>
+<rk-callout tone="info" title="欢迎">
+  这是一个最简单的 RenderKit artifact。Agent 写 HTML，push 后在浏览器查看。
+</rk-callout>
 
-  <rk-summary title="核心指标">
-    系统重构完成，从 DSL 编译模式切换为 HTML 直写模式。
-  </rk-summary>
-
-  <rk-stat label="组件数" value="11" unit="个"></rk-stat>
-
-  <h2>架构图</h2>
-
-  <rk-diagram engine="mermaid">
-    graph TD
-      A[Agent] -->|写 HTML| B[RenderKit]
-      B -->|pushHTML| C[SQLite]
-      C -->|processedHtml| D[浏览器渲染]
-  </rk-diagram>
-
-  <h2>决策</h2>
-
-  <rk-decision question="渲染架构选择" chosen="Light DOM Web Components">
-    <rk-option name="Shadow DOM" status="rejected">Selection API 不可穿透 Shadow</rk-option>
-    <rk-option name="Light DOM" status="chosen">评论系统可正常工作</rk-option>
-  </rk-decision>
-
-  <rk-timeline title="重构进度">
-    <rk-step status="done">TypeScript 迁移</rk-step>
-    <rk-step status="done">HTML-only 架构</rk-step>
-    <rk-step status="current">更多组件</rk-step>
-    <rk-step status="pending">3D 交互组件</rk-step>
-  </rk-timeline>
+<rk-stat label="组件数" value="21" unit="个" tone="positive"></rk-stat>
 </body>
 </html>

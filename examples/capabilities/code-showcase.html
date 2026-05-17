@@ -1,0 +1,37 @@
+<h1>代码展示</h1>
+
+<rk-code language="typescript" title="Web Component 示例" frame="code" showlinenumbers="true">
+class RkCallout extends HTMLElement {
+  connectedCallback() {
+    if (this._rendered) return;
+    this._rendered = true;
+
+    const tone = this.getAttribute('tone') || 'info';
+    const title = this.getAttribute('title') || '';
+    const content = this.innerHTML;
+
+    this.innerHTML = `
+      &lt;div class="rk-callout rk-callout--${tone}"&gt;
+        ${title ? `&lt;div class="rk-callout__title"&gt;${title}&lt;/div&gt;` : ''}
+        &lt;div class="rk-callout__content"&gt;${content}&lt;/div&gt;
+      &lt;/div&gt;
+    `;
+  }
+}
+customElements.define('rk-callout', RkCallout);
+</rk-code>
+
+<rk-callout tone="info" title="Light DOM 原则">
+  所有 Web Components 使用 Light DOM（无 shadow DOM），确保 Selection API 可以选中文字，评论定位精准。
+</rk-callout>
+
+<rk-code language="bash" title="推送 artifact" frame="terminal">
+# 推送并在浏览器打开
+renderkit push report.html --open
+
+# 拉取评论反馈（JSON 格式）
+renderkit feedback report.html --json
+
+# 增量更新某个 section
+renderkit patch report.html --anchor h2-architecture --fragment update.html
+</rk-code>

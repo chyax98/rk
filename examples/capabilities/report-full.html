@@ -1,0 +1,49 @@
+<h1>Q2 产品复盘报告</h1>
+
+<rk-summary title="执行摘要">
+  Q2 完成 RenderKit HTML-first 重构，21 个 Web Components 上线，评论系统可用，Agent 闭环验证通过。
+</rk-summary>
+
+<h2>关键指标</h2>
+
+<rk-grid cols="3">
+  <rk-stat label="WC 组件数" value="21" delta="+21" deltadir="up" tone="positive"></rk-stat>
+  <rk-stat label="Bundle 大小" value="45" unit="KB" delta="-95%" deltadir="down" tone="positive"></rk-stat>
+  <rk-stat label="DSL 代码" value="0" unit="行" tone="neutral"></rk-stat>
+</rk-grid>
+
+<h2>时间线</h2>
+
+<rk-timeline title="重构里程碑">
+  <rk-event date="5月1日" status="done">TypeScript 全面迁移</rk-event>
+  <rk-event date="5月8日" status="done">HTML-first 架构设计</rk-event>
+  <rk-event date="5月12日" status="done">21 个 Web Components 实现</rk-event>
+  <rk-event date="5月17日" status="done">Bug 修复 + 文档清理</rk-event>
+  <rk-event date="5月24日" status="planned">Agent 闭环 E2E 测试</rk-event>
+</rk-timeline>
+
+<h2>决策记录</h2>
+
+<rk-decision question="是否废弃 DSL" chosen="是" status="decided">
+  <rk-reason>
+    <li>HTML 是 LLM 更熟悉的格式</li>
+    <li>DSL 编译器增加维护负担</li>
+    <li>Web Components 浏览器原生支持</li>
+  </rk-reason>
+</rk-decision>
+
+<h2>架构图</h2>
+
+<rk-diagram engine="mermaid" caption="系统流程">
+flowchart LR
+  A[Agent 写 HTML] --> B[renderkit push]
+  B --> C[Server 注入 anchor]
+  C --> D[Browser 渲染 WC]
+  D --> E[人查看 + 评论]
+  E --> F[Agent 读反馈]
+  F --> A
+</rk-diagram>
+
+<rk-callout tone="success" title="结论">
+  重构成功。架构更简单，Agent 使用门槛更低，评论系统可用。
+</rk-callout>

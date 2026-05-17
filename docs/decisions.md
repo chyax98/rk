@@ -158,3 +158,27 @@ Alpha 阶段接受该风险，先验证评论反馈闭环。
 4. Web UI 接入 design token。
 5. 增加少量 block。
 6. 暂不考虑发包、部署、MCP、Docker。
+
+---
+
+## HTML-first 重构决策（2025-05）
+
+### ADR-10: 废弃 DSL，改用 HTML-first 架构
+- **决策**：Agent 直接写 HTML + `<rk-*>` Web Components，删除 packages/dsl、packages/blocks、packages/shared
+- **原因**：DSL 增加了 agent 的认知负担，HTML 是 LLM 更熟悉的格式；Web Components 可直接在浏览器渲染
+- **影响**：packages/dsl 和 packages/blocks 目录保留但为空壳
+
+### ADR-11: Light DOM（无 shadow DOM）
+- **决策**：所有 21 个 Web Components 使用 Light DOM
+- **原因**：Selection API 无法跨 shadow DOM 边界，会破坏 TextQuoteSelector 评论定位
+- **状态**：已验证
+
+### ADR-12: CDN 动态加载重型依赖
+- **决策**：Three.js、ECharts、Mermaid 通过 CDN 动态 import，不打入 bundle
+- **原因**：三者合计 >3MB，按需加载可将 bundle 控制在 50KB 以内
+- **状态**：已实施（components.js = 45KB）
+
+### ADR-13: Git Worktree 开发规范
+- **决策**：所有 feature 开发在 RenderKit-dev worktree（develop 分支），不直接改 master
+- **原因**：subagent 多次意外 git reset 污染主分支
+- **状态**：已实施，baseline tag = baseline-html-wc-v1
