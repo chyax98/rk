@@ -378,8 +378,8 @@ assert(
 
 // ── Section 9: Web metadata ──
 console.log('\n== Web metadata ==');
-const layoutSource = readFileSync(resolve(root, 'apps/web/app/layout.jsx'), 'utf8');
-const artifactPageSource = readFileSync(resolve(root, 'apps/web/app/a/[id]/page.jsx'), 'utf8');
+const layoutSource = readFileSync(resolve(root, 'apps/web/app/layout.tsx'), 'utf8');
+const artifactPageSource = readFileSync(resolve(root, 'apps/web/app/a/[id]/page.tsx'), 'utf8');
 assert('root layout declares metadataBase', layoutSource.includes('metadataBase'));
 assert(
   'root layout declares Open Graph metadata',
