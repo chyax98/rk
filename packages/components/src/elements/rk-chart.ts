@@ -92,12 +92,33 @@ class RkChart extends HTMLElement {
     `;
   }
 
+  /** Parse data: try JSON array first, then pipe table */
+  _parseData(): { header: string[]; body: string[][] } | null {
+    const raw = this._raw.trim();
+    // Try JSON
+    if (raw.startsWith('[') || raw.startsWith('{')) {
+      try {
+        const json = JSON.parse(raw);
+        const arr: Record<string, unknown>[] = Array.isArray(json) ? json : [json];
+        if (arr.length === 0) return null;
+        const header = Object.keys(arr[0]);
+        const body = arr.map(row => header.map(k => String(row[k] ?? '')));
+        return { header, body };
+      } catch { /* fall through to pipe table */ }
+    }
+    // Pipe table
+    const rows = parsePipeTable(raw);
+    if (rows.length < 2) return null;
+    return { header: rows[0], body: rows.slice(1) };
+  }
+
   async _renderEcharts(type: string, title: string, caption: string): Promise<void> {
-    const rows = parsePipeTable(this._raw);
-    if (rows.length < 2) {
+    const parsed = this._parseData();
+    if (!parsed) {
       this.innerHTML = `<div class="rk-chart"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">Insufficient data for chart</p></div>`;
       return;
     }
+    const { header, body } = parsed;
 
     // Build structure first, then async load echarts
     this.innerHTML = /* html */ `
@@ -116,8 +137,6 @@ class RkChart extends HTMLElement {
       const chart = echarts.init(container);
       this._chartInstance = chart;
 
-      const header = rows[0];
-      const body = rows.slice(1);
       const xField = this.getAttribute('xfield') || header[0] || 'x';
       const yField = this.getAttribute('yfield') || header[1] || 'y';
       const xIdx = header.indexOf(xField);
@@ -126,28 +145,42 @@ class RkChart extends HTMLElement {
       const yi = yIdx >= 0 ? yIdx : 1;
 
       const xData = body.map((r) => r[xi] || '');
-      const yData = body.map((r) => parseFloat(r[yi] || '0'));
+      const seriesType = type === 'scatter' ? 'scatter' : type === 'pie' ? 'pie' : type === 'area' ? 'line' : type;
 
-      const seriesType = type === 'scatter' ? 'scatter' : type === 'pie' ? 'pie' : type;
+      // Detect all numeric columns for multi-series
+      const numericCols = header
+        .map((h, i) => ({ h, i }))
+        .filter(({ i }) => i !== xi && body.some(r => !isNaN(parseFloat(r[i]))));
+
+      // If yfield specified, use only that; otherwise use all numeric cols
+      const seriesCols = yField !== header[0] && header.includes(yField)
+        ? [{ h: yField, i: yi }]
+        : numericCols.length > 0 ? numericCols : [{ h: header[yi] || 'value', i: yi }];
 
       const option: Record<string, any> = {
         tooltip: { trigger: seriesType === 'pie' ? 'item' : 'axis' },
+        legend: seriesCols.length > 1 ? { show: true } : { show: false },
       };
 
       if (seriesType === 'pie') {
-        option.series = [
-          {
-            type: 'pie',
-            data: body.map((r, i) => ({
-              name: r[xi] || `Item ${i + 1}`,
-              value: parseFloat(r[yi] || '0'),
-            })),
-          },
-        ];
+        option.series = [{
+          type: 'pie',
+          radius: ['40%', '70%'],
+          data: body.map((r, i) => ({
+            name: r[xi] || `Item ${i + 1}`,
+            value: parseFloat(r[seriesCols[0]?.i ?? yi] || '0'),
+          })),
+        }];
       } else {
         option.xAxis = { type: 'category', data: xData };
         option.yAxis = { type: 'value' };
-        option.series = [{ type: seriesType, data: yData }];
+        option.series = seriesCols.map(({ h, i: si }) => ({
+          name: h,
+          type: seriesType,
+          data: body.map(r => parseFloat(r[si] || '0')),
+          ...(type === 'area' ? { areaStyle: {} } : {}),
+          smooth: type === 'line' || type === 'area',
+        }));
       }
 
       chart.setOption(option);

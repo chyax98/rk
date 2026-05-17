@@ -97,32 +97,39 @@ async function preRenderCodeBlocks(document: Document): Promise<void> {
   }
 }
 
-/** Pre-process PlantUML diagrams via Kroki SSR (best-effort, failures are silent) */
+/** Fetch SVG from Kroki for a given engine (best-effort) */
+async function krokiRender(engine: string, source: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://kroki.io/${engine}/svg`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: source,
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+/** Pre-process diagrams via Kroki SSR: plantuml + graphviz (best-effort, failures are silent) */
 async function processPlantUML(html: string): Promise<string> {
-  const regex = /<rk-diagram([^>]*engine=["']plantuml["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
-  const matches: Array<{ full: string; attrs: string; source: string }> = [];
+  const regex = /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+  const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
   let m: RegExpExecArray | null;
   while ((m = regex.exec(html)) !== null) {
-    matches.push({ full: m[0], attrs: m[1], source: m[2].trim() });
+    const engine = (m[2] || 'plantuml').replace('dot', 'graphviz');
+    matches.push({ full: m[0], attrs: m[1], engine, source: m[3].trim() });
   }
   if (matches.length === 0) return html;
 
   const resolved = await Promise.all(
-    matches.map(async ({ full, attrs, source }) => {
-      try {
-        const res = await fetch('https://kroki.io/plantuml/svg', {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: source,
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!res.ok) return { full, replacement: full };
-        const svg = await res.text();
-        const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
-        return { full, replacement };
-      } catch {
-        return { full, replacement: full };
-      }
+    matches.map(async ({ full, attrs, engine, source }) => {
+      const svg = await krokiRender(engine, source);
+      if (!svg) return { full, replacement: full };
+      const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
+      return { full, replacement };
     })
   );
 
