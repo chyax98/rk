@@ -18,7 +18,10 @@
     "examples/capabilities/editorial-components.rk.md",
     "examples/capabilities/narrative-blocks.rk.md",
     "examples/capabilities/diagram-visual-language.rk.md",
-    "examples/capabilities/auto-id.rk.md"
+    "examples/capabilities/auto-id.rk.md",
+    "examples/capabilities/chart-gallery.rk.md",
+    "examples/capabilities/code-presentation.rk.md",
+    "examples/capabilities/table-profiles.rk.md"
   ],
   "bad": {
     "examples/fixtures/bad-id.rk.md": "RK_BLOCK_ID_INVALID",
