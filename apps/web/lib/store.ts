@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import { parseRK } from '@renderkit/dsl';
 import { COMMENT_STATUSES, validateTextQuoteSelector } from '@renderkit/shared/contracts';
+import { diffAnchors } from './anchor-diff.ts';
 import { getDb } from './db.ts';
+import { type ProcessedAnchor, processHTML } from './html-processor.ts';
 
 const COMMENT_OPEN = COMMENT_STATUSES[0];
 const COMMENT_RESOLVED = COMMENT_STATUSES[1];
@@ -65,6 +67,7 @@ export interface ArtifactMeta {
   id: string;
   title: string;
   currentRevision: number;
+  format: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -205,6 +208,7 @@ function rowToArtifact(r: DbArtifact): ArtifactMeta {
     id: r.id,
     title: r.title,
     currentRevision: r.current_revision,
+    format: (r as any).format || 'rkmd',
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -264,6 +268,7 @@ export async function createArtifact(source: string, title?: string) {
     id,
     title: title || parsed.model.title,
     currentRevision: 1,
+    format: 'rkmd',
     createdAt: now(),
     updatedAt: now(),
   };
@@ -415,7 +420,8 @@ export async function addComment(
   selector: unknown = null,
 ) {
   const artifact = await getArtifact(id);
-  if (!artifact) return { ok: false as const, status: 404, error: 'not found' };
+  if (!artifact || !artifact.revision)
+    return { ok: false as const, status: 404, error: 'not found' };
   const block = findBlockById(artifact.revision.model.blocks, blockId);
   if (!block) return { ok: false as const, status: 404, error: 'block not found' };
 
@@ -488,7 +494,7 @@ export async function deleteArtifact(id: string): Promise<boolean> {
 
 export async function getFeedback(id: string) {
   const artifact = await getArtifact(id);
-  if (!artifact) return null;
+  if (!artifact || !artifact.revision) return null;
   const blocks = flattenBlocks(artifact.revision.model.blocks);
   const comments = artifact.comments.filter(
     (c) => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED,
@@ -517,5 +523,162 @@ export async function getFeedback(id: string) {
         },
       };
     }),
+  };
+}
+
+/* ── HTML artifact support ─────────────────────────────── */
+
+export interface HtmlArtifactResult {
+  artifactId: string;
+  revision: number;
+  url: string;
+}
+
+export interface HtmlArtifactBundle {
+  meta: ArtifactMeta;
+  revision: {
+    id: string;
+    number: number;
+    processedHtml: string | null;
+    htmlSource: string | null;
+    createdAt: string;
+  };
+  anchors: ProcessedAnchor[];
+  comments: Comment[];
+}
+
+export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArtifactResult> {
+  const db = getDb();
+  const { processedHtml, anchors, title } = await processHTML(rawHtml);
+  const _now = now();
+
+  // Check for existing artifact by file name
+  let artifactId: string | null = null;
+  let currentRev = 0;
+
+  if (file) {
+    const existing = db
+      .prepare('SELECT id, current_revision, title FROM artifacts WHERE title = ? AND format = ?')
+      .get(file, 'html') as DbArtifact | undefined;
+    if (existing) {
+      artifactId = existing.id;
+      currentRev = existing.current_revision;
+    }
+  }
+
+  const isNew = !artifactId;
+  if (isNew) {
+    artifactId = 'art_' + crypto.randomBytes(5).toString('hex');
+    currentRev = 0;
+  }
+
+  const nextRev = currentRev + 1;
+  const revId = `${artifactId}_rev_${nextRev}`;
+  const anchorIds = anchors.map((a) => a.anchor);
+
+  // Get previous anchors for diff (only on update)
+  let prevAnchorIds: string[] = [];
+  if (!isNew) {
+    const prevAnchors = db
+      .prepare('SELECT anchor FROM anchors WHERE artifact_id = ? ORDER BY position')
+      .all(artifactId) as Array<{ anchor: string }>;
+    prevAnchorIds = prevAnchors.map((a) => a.anchor);
+  }
+
+  const txn = db.transaction(() => {
+    if (isNew) {
+      db.prepare(`
+        INSERT INTO artifacts (id, title, current_revision, format, created_at, updated_at)
+        VALUES (?, ?, ?, 'html', ?, ?)
+      `).run(artifactId, file || title, 1, _now, _now);
+    } else {
+      db.prepare(
+        `UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?`,
+      ).run(nextRev, file || title, _now, artifactId);
+    }
+
+    db.prepare(`
+      INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, block_ids, html_source, processed_html, created_at)
+      VALUES (?, ?, ?, '', '', '{}', '[]', ?, ?, ?)
+    `).run(revId, artifactId, nextRev, rawHtml, processedHtml, _now);
+
+    // Delete old anchors for this artifact and insert new ones
+    db.prepare('DELETE FROM anchors WHERE artifact_id = ?').run(artifactId);
+    const insertAnchor = db.prepare(`
+      INSERT INTO anchors (id, revision_id, artifact_id, anchor, element_tag, position, text_preview)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const a of anchors) {
+      insertAnchor.run(a.id, revId, artifactId, a.anchor, a.elementTag, a.position, a.textPreview);
+    }
+
+    // Mark orphaned comments for removed anchors
+    if (!isNew) {
+      const diff = diffAnchors(prevAnchorIds, anchorIds);
+      if (diff.removed.length > 0) {
+        const commentRows = db
+          .prepare('SELECT id, block_id FROM comments WHERE artifact_id = ? AND status = ?')
+          .all(artifactId, COMMENT_OPEN) as DbComment[];
+        for (const c of commentRows) {
+          if (diff.removed.includes(c.block_id)) {
+            db.prepare('UPDATE comments SET status = ? WHERE id = ?').run(COMMENT_ORPHANED, c.id);
+          }
+        }
+      }
+    }
+  });
+  txn();
+
+  return {
+    artifactId: artifactId!,
+    revision: nextRev,
+    url: `/a/${artifactId}`,
+  };
+}
+
+export async function getHtmlArtifact(id: string): Promise<HtmlArtifactBundle | null> {
+  const db = getDb();
+
+  const artRow = db
+    .prepare('SELECT * FROM artifacts WHERE id = ? AND format = ?')
+    .get(id, 'html') as DbArtifact | undefined;
+  if (!artRow) return null;
+
+  const revRow = db
+    .prepare('SELECT * FROM revisions WHERE artifact_id = ? AND number = ?')
+    .get(id, artRow.current_revision) as DbRevision | undefined;
+  if (!revRow) return null;
+
+  const anchorRows = db
+    .prepare('SELECT * FROM anchors WHERE artifact_id = ? ORDER BY position')
+    .all(id) as Array<{
+    id: string;
+    anchor: string;
+    element_tag: string;
+    position: number;
+    text_preview: string | null;
+  }>;
+
+  const commentRows = db
+    .prepare('SELECT * FROM comments WHERE artifact_id = ?')
+    .all(id) as DbComment[];
+
+  return {
+    meta: rowToArtifact(artRow),
+    revision: {
+      id: revRow.id,
+      number: revRow.number,
+      processedHtml: (revRow as any).processed_html || null,
+      htmlSource: (revRow as any).html_source || null,
+      createdAt: revRow.created_at,
+    },
+    anchors: anchorRows.map((a) => ({
+      id: a.id,
+      anchor: a.anchor,
+      elementTag: a.element_tag,
+      position: a.position,
+      textPreview: a.text_preview,
+    })),
+    comments: commentRows.map(rowToComment),
   };
 }

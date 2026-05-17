@@ -1,7 +1,31 @@
-import { createArtifact } from '../../../lib/store';
+import { createArtifact, pushHTML } from '../../../lib/store';
 
 export async function POST(req: Request) {
   const body = await req.json();
+
+  // HTML format path
+  if (body.format === 'html' && body.html) {
+    try {
+      const result = await pushHTML(body.html, body.title || body.file);
+      return Response.json({
+        ok: true,
+        artifactId: result.artifactId,
+        revision: result.revision,
+        path: result.url,
+        url: absolute(req, result.url),
+      });
+    } catch (e: any) {
+      return Response.json(
+        {
+          ok: false,
+          errors: [{ code: 'RK_HTML_PROCESS_ERROR', message: String(e?.message || e) }],
+        },
+        { status: 500 },
+      );
+    }
+  }
+
+  // Existing rkmd path
   const result = await createArtifact(body.source || '', body.title);
   if (!result.ok)
     return Response.json(

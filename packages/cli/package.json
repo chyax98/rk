@@ -7,15 +7,12 @@
     "renderkit": "./bin/renderkit.mjs"
   },
   "scripts": {
-    "start": "node --experimental-strip-types src/index.ts",
+    "start": "node ./bin/renderkit.mjs",
     "build": "node -e \"console.log('cli: no build yet')\""
   },
   "dependencies": {
     "@renderkit/dsl": "workspace:*",
     "@renderkit/shared": "workspace:*",
     "commander": "latest"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0"
   }
 }

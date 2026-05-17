@@ -1,5 +1,6 @@
-import { getArtifact } from '../../../lib/store';
+import { getArtifact, getHtmlArtifact } from '../../../lib/store';
 import ArtifactView from './ArtifactView';
+import HtmlArtifactView from './HtmlArtifactView';
 
 function blockText(block: any): string {
   if (!block) return '';
@@ -31,7 +32,7 @@ export async function generateMetadata({
   const sp = await searchParams;
   const rev = sp?.rev ? Number(sp.rev) : null;
   const artifact = await getArtifact(id, rev);
-  if (!artifact) return { title: 'Artifact not found' };
+  if (!artifact || !artifact.revision) return { title: 'Artifact not found' };
 
   const title = artifact.revision.model.title || artifact.meta.title || id;
   const description = artifactDescription(artifact.revision.model);
@@ -74,12 +75,34 @@ export default async function ArtifactPage({
   const sp = await searchParams;
   const rev = sp?.rev ? Number(sp.rev) : null;
   const artifact = await getArtifact(id, rev);
-  if (!artifact)
+  if (!artifact || !artifact.revision)
     return (
       <main className="rk-home">
         <h1>Not found</h1>
         <p>{id}</p>
       </main>
     );
+
+  // HTML format: use HtmlArtifactView
+  if (artifact.meta.format === 'html') {
+    const htmlArtifact = await getHtmlArtifact(id);
+    if (!htmlArtifact || !htmlArtifact.revision.processedHtml)
+      return (
+        <main className="rk-home">
+          <h1>Not found</h1>
+          <p>{id}</p>
+        </main>
+      );
+    return (
+      <HtmlArtifactView
+        artifactId={id}
+        processedHtml={htmlArtifact.revision.processedHtml}
+        anchors={htmlArtifact.anchors}
+        comments={htmlArtifact.comments}
+      />
+    );
+  }
+
+  // Existing rkmd path
   return <ArtifactView artifactId={id} revision={artifact.revision} comments={artifact.comments} />;
 }

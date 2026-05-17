@@ -6,7 +6,7 @@ const [COMMENT_OPEN, COMMENT_RESOLVED, COMMENT_ORPHANED] = COMMENT_STATUSES;
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const artifact = await getArtifact(id);
-  if (!artifact)
+  if (!artifact || !artifact.revision)
     return Response.json(
       { ok: false, error: { code: 'RK_ARTIFACT_NOT_FOUND', message: 'not found' } },
       { status: 404 },

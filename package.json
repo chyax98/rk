@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter @renderkit/web dev",
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
-    "renderkit": "node --experimental-strip-types packages/cli/src/index.ts",
+    "renderkit": "node packages/cli/bin/renderkit.mjs",
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
     "verify:contracts": "node --experimental-strip-types scripts/verify-contracts.ts",
     "lint": "node --experimental-strip-types node_modules/.bin/eslint 'packages/**/*.{ts,tsx}' 'apps/web/app/**/*.{ts,tsx}' --max-warnings 80",

@@ -47,7 +47,8 @@
         "noAssignInExpressions": "warn",
         "noArrayIndexKey": "warn",
         "noImplicitAnyLet": "warn",
-        "useIterableCallbackReturn": "warn"
+        "useIterableCallbackReturn": "warn",
+        "noExplicitAny": "warn"
       },
       "security": {
         "noDangerouslySetInnerHtml": "warn"
@@ -64,6 +65,10 @@
         "noRedundantRoles": "warn",
         "useAnchorContent": "warn",
         "useSemanticElements": "warn"
+      },
+      "complexity": {
+        "useLiteralKeys": "warn",
+        "useOptionalChain": "warn"
       }
     }
   },

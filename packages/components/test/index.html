@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RenderKit Components – Self-Test</title>
+  <link rel="stylesheet" href="../src/css/theme.css" />
+  <link rel="stylesheet" href="../src/css/components.css" />
+  <style>
+    body {
+      font-family: var(--rk-font-sans);
+      background: var(--rk-bg);
+      color: var(--rk-text);
+      margin: 0;
+      padding: var(--rk-space-8);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 { font: var(--rk-type-h1); margin: var(--rk-space-8) 0 var(--rk-space-4); }
+    h2 { font: var(--rk-type-h2); margin: var(--rk-space-8) 0 var(--rk-space-3); color: var(--rk-accent); }
+    h2::before { content: "§ "; opacity: 0.3; }
+    section { margin-bottom: var(--rk-space-8); }
+    hr { border: 0; border-top: 1px solid var(--rk-border-subtle); margin: var(--rk-space-8) 0; }
+  </style>
+  <script type="module">
+    // Inline all 11 element definitions for self-contained test page
+
+    // ── rk-callout ──
+    const ICONS = {
+      info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+      warning: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+      danger: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+      success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+      tip: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
+      decision: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.8 15-3.5 2"/><path d="m20.7 17-3.5-2"/><path d="M6 12l-2-1"/><path d="m18 11-2 1"/><circle cx="12" cy="12" r="3"/></svg>',
+      note: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>',
+    };
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    class RkCallout extends HTMLElement {
+      _raw = '';
+      static get observedAttributes() { return ['tone','title']; }
+      connectedCallback() { this._raw = this.innerHTML; this._render(); }
+      attributeChangedCallback() { if(this._raw) this._render(); }
+      _render() {
+        const tone = this.getAttribute('tone') || 'info';
+        const title = this.getAttribute('title') || '';
+        const icon = ICONS[tone] || ICONS['info'];
+        this.innerHTML = `<div class="rk-callout rk-callout--${tone}"><span class="rk-callout__icon">${icon}</span><div class="rk-callout__body">${title?`<div class="rk-callout__title">${esc(title)}</div>`:''}<div class="rk-callout__content">${this._raw}</div></div></div>`;
+      }
+    }
+    customElements.define('rk-callout', RkCallout);
+
+    // ── rk-stat ──
+    class RkStat extends HTMLElement {
+      _raw = '';
+      static get observedAttributes() { return ['value','unit','label','delta','tone']; }
+      connectedCallback() { this._raw = this.innerHTML.trim(); this._render(); }
+      attributeChangedCallback() { if(this._raw!==''||this.hasAttribute('value')) this._render(); }
+      _render() {
+        const value=this.getAttribute('value')||'',unit=this.getAttribute('unit')||'',label=this.getAttribute('label')||'',delta=this.getAttribute('delta')||'',tone=this.getAttribute('tone')||'';
+        let tc=''; if(tone==='positive'||tone==='success')tc='rk-stat--positive';else if(tone==='negative'||tone==='danger')tc='rk-stat--negative';else if(tone==='neutral')tc='rk-stat--neutral';
+        let dh='';if(delta){const p=parseFloat(delta);let dir='neutral',ar='';if(!isNaN(p)&&p>0){dir='up';ar='↑';}else if(!isNaN(p)&&p<0){dir='down';ar='↓';}else if(delta.startsWith('+')||delta.startsWith('↑')){dir='up';ar='↑';}else if(delta.startsWith('-')||delta.startsWith('↓')){dir='down';ar='↓';}dh=`<span class="rk-stat__delta rk-stat__delta--${dir}">${ar} ${esc(delta.replace(/^[↑↓+-]/,''))}</span>`;}
+        this.innerHTML=`<div class="rk-stat ${tc}"><div class="rk-stat__label">${esc(label)}</div><div><span class="rk-stat__value">${esc(value)}</span>${unit?`<span class="rk-stat__unit">${esc(unit)}</span>`:''}</div>${dh}</div>`;
+      }
+    }
+    customElements.define('rk-stat', RkStat);
+
+    // ── rk-summary ──
+    class RkSummary extends HTMLElement {
+      _raw = '';
+      static get observedAttributes() { return ['title']; }
+      connectedCallback() { this._raw = this.innerHTML.trim(); this._render(); }
+      attributeChangedCallback() { if(this._raw) this._render(); }
+      _render() {
+        const title = this.getAttribute('title') || 'Summary';
+        this.innerHTML = `<div class="rk-summary"><div class="rk-summary__title">${esc(title)}</div><div class="rk-summary__content">${this._raw}</div></div>`;
+      }
+    }
+    customElements.define('rk-summary', RkSummary);
+
+    // ── rk-code ──
+    class RkCode extends HTMLElement {
+      _raw = '';
+      static get observedAttributes() { return ['lang','title','frame','showlinenumbers','data-highlighted']; }
+      connectedCallback() { this._raw = this.textContent||''; this._render(); }
+      attributeChangedCallback() { if(this._raw) this._render(); }
+      _render() {
+        const lang=this.getAttribute('lang')||'',title=this.getAttribute('title')||'',frame=this.getAttribute('frame')||'none',sln=this.hasAttribute('showlinenumbers')||this.hasAttribute('showLineNumbers'),hl=this.getAttribute('data-highlighted')||'';
+        let fc='';if(frame==='editor')fc='rk-code--frame-editor';else if(frame==='terminal')fc='rk-code--frame-terminal';
+        let hh='';const showH=frame==='editor'||frame==='terminal'||title||lang;
+        if(showH){let dots='';if(frame==='editor'||frame==='terminal')dots='<span class="rk-code__dots"><i></i><i></i><i></i></span>';let prompt='';if(frame==='terminal')prompt='<span class="rk-code__title" style="color:var(--rk-muted)">$</span>';hh=`<div class="rk-code__header">${dots}${prompt}${title?`<span class="rk-code__title">${esc(title)}</span>`:''}${lang?`<span class="rk-code__lang">${esc(lang)}</span>`:''}</div>`;}
+        let bc='';if(hl){try{bc=atob(hl);}catch{bc=escHtml(this._raw);}}else{bc=escHtml(this._raw);}
+        if(sln){const lines=bc.split('\n');if(lines.length&&lines[lines.length-1].trim()==='')lines.pop();bc='<table><tbody>'+lines.map((l,i)=>`<tr><td class="rk-ln">${i+1}</td><td class="rk-lc">${l}</td></tr>`).join('')+'</tbody></table>';}
+        this.innerHTML=`<div class="rk-code ${fc}">${hh}<div class="rk-code__body"><code>${bc}</code></div></div>`;
+      }
+    }
+    customElements.define('rk-code', RkCode);
+
+    // ── rk-table ──
+    function parsePipeTable(raw){const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);const rows=[];for(const line of lines){if(/^\|?\s*[-:]+[\s|:-]*$/.test(line))continue;const cells=line.split('|').map(c=>c.trim()).filter(c=>c.length>0);if(cells.length>0)rows.push(cells);}return rows;}
+
+    class RkTable extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['title','profile'];}
+      connectedCallback(){this._raw=this.textContent||'';this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const title=this.getAttribute('title')||'',profile=this.getAttribute('profile')||'';
+        const rows=parsePipeTable(this._raw);if(!rows.length){this.innerHTML=`<div class="rk-table"><p>No data</p></div>`;return;}
+        const header=rows[0],body=rows.slice(1);
+        const pc=profile?`rk-table--${profile}`:'';
+        const hHtml=header.map(h=>`<th>${esc(h)}</th>`).join('');
+        const bHtml=body.map(row=>{const cells=row.map((cell,ci)=>{let c=esc(cell);if(profile==='status'&&ci===0){const lo=cell.toLowerCase().trim();let dc='';if(lo.includes('healthy')||lo.includes('ok'))dc='healthy';else if(lo.includes('degraded')||lo.includes('warn'))dc='degraded';else if(lo.includes('critical')||lo.includes('error'))dc='critical';if(dc)c=`<span class="rk-status-dot rk-status-dot--${dc}"></span>${c}`;}return`<td>${c}</td>`;}).join('');return`<tr>${cells}</tr>`;}).join('');
+        this.innerHTML=`<div class="rk-table ${pc}">${title?`<div class="rk-table__title">${esc(title)}</div>`:''}<div class="rk-table__wrap"><table><thead><tr>${hHtml}</tr></thead><tbody>${bHtml}</tbody></table></div></div>`;
+      }
+    }
+    customElements.define('rk-table', RkTable);
+
+    // ── rk-chart (kpi only for self-test, echarts needs import) ──
+    class RkChart extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['type','title','caption','xfield','yfield'];}
+      connectedCallback(){this._raw=this.textContent||'';this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const type=this.getAttribute('type')||'bar',title=this.getAttribute('title')||'',caption=this.getAttribute('caption')||'';
+        if(type==='kpi'){const rows=parsePipeTable(this._raw);if(!rows.length){this.innerHTML='<div class="rk-chart rk-chart-kpi"><p>No data</p></div>';return;}
+        const header=rows[0],body=rows.slice(1);
+        const items=body.map(row=>`<div class="rk-chart-kpi__item"><div class="rk-kpi-value">${esc(row[0]||'')}</div><div class="rk-kpi-label">${esc(row[1]||header[1]||'')}</div></div>`).join('');
+        this.innerHTML=`<div class="rk-chart rk-chart-kpi">${title?`<div class="rk-chart__title">${esc(title)}</div>`:''}<div class="rk-chart-kpi__grid">${items}</div>${caption?`<div class="rk-chart__caption">${esc(caption)}</div>`:''}</div>`;return;}
+        this.innerHTML=`<div class="rk-chart">${title?`<div class="rk-chart__title">${esc(title)}</div>`:''}<div class="rk-chart__canvas" style="min-height:200px;display:flex;align-items:center;justify-content:center;color:var(--rk-muted)">Chart type="${esc(type)}" — requires echarts import</div>${caption?`<div class="rk-chart__caption">${esc(caption)}</div>`:''}</div>`;
+      }
+    }
+    customElements.define('rk-chart', RkChart);
+
+    // ── rk-diagram ──
+    class RkDiagram extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['title','caption','engine'];}
+      connectedCallback(){this._raw=(this.textContent||'').trim();this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const title=this.getAttribute('title')||'',caption=this.getAttribute('caption')||'';
+        this.innerHTML=`<div class="rk-diagram">${title?`<div style="margin-bottom:var(--rk-space-3);color:var(--rk-text);font:var(--rk-type-label);letter-spacing:var(--rk-tracking-wide);text-transform:uppercase">${esc(title)}</div>`:''}<div class="rk-diagram__loading">Loading diagram…</div><div class="rk-diagram__canvas"><pre style="padding:var(--rk-space-4);font:var(--rk-type-mono);font-size:var(--rk-text-sm);color:var(--rk-code-text);background:var(--rk-code-bg);border-radius:var(--rk-radius-md);overflow:auto">${escHtml(this._raw)}</pre></div>${caption?`<div class="rk-diagram__caption">${esc(caption)}</div>`:''}</div>`;
+        const loading=this.querySelector('.rk-diagram__loading');if(loading)loading.remove();
+      }
+    }
+    customElements.define('rk-diagram', RkDiagram);
+
+    // ── rk-decision ──
+    class RkDecision extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['question','chosen','status'];}
+      connectedCallback(){this._raw=this.innerHTML;this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const question=this.getAttribute('question')||'',chosen=this.getAttribute('chosen')||'',status=this.getAttribute('status')||'proposed';
+        const reasons=this.querySelectorAll('rk-reason li');const ri=Array.from(reasons).map(li=>`<li>${li.textContent||''}</li>`).join('');
+        const alts=this.querySelectorAll('rk-alternative');const ai=Array.from(alts).map(a=>`<li>${a.textContent||''}</li>`).join('');
+        let sc='proposed';if(['approved','draft','blocked','resolved'].includes(status))sc=status;
+        this.innerHTML=`<div class="rk-decision"><div class="rk-decision__eyebrow">Decision</div>${question?`<h3 class="rk-decision__question">${esc(question)}</h3>`:''}${chosen?`<div class="rk-decision__chosen"><span>Chosen: <strong>${esc(chosen)}</strong></span><span class="rk-decision__status rk-decision__status--${sc}">${esc(status)}</span></div>`:''}${ri?`<div class="rk-decision__rationale"><h4>Rationale</h4><ul>${ri}</ul></div>`:''}${ai?`<div class="rk-decision__alternatives"><h4>Alternatives Considered</h4><ul>${ai}</ul></div>`:''}</div>`;
+      }
+    }
+    customElements.define('rk-decision', RkDecision);
+
+    // ── rk-checklist ──
+    class RkChecklist extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['title'];}
+      connectedCallback(){this._raw=this.innerHTML;this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const title=this.getAttribute('title')||'';
+        const items=this.querySelectorAll('rk-item');
+        const html=Array.from(items).map(item=>{const checked=item.hasAttribute('checked'),note=item.getAttribute('note')||'',text=item.textContent||'';return`<li class="rk-checklist__item${checked?' is-checked':''}"><span class="rk-checklist__check">${checked?'✓':''}</span><span class="rk-checklist__text">${esc(text)}${note?`<span class="rk-checklist__note">${esc(note)}</span>`:''}</span></li>`;}).join('');
+        this.innerHTML=`<div class="rk-checklist">${title?`<div class="rk-checklist__title">${esc(title)}</div>`:''}<ul class="rk-checklist__list">${html}</ul></div>`;
+      }
+    }
+    customElements.define('rk-checklist', RkChecklist);
+
+    // ── rk-comparison ──
+    class RkComparison extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['title','variant'];}
+      connectedCallback(){this._raw=this.textContent||'';this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const title=this.getAttribute('title')||'',variant=this.getAttribute('variant')||'proscons';
+        const rows=parsePipeTable(this._raw);if(!rows.length){this.innerHTML=`<div class="rk-comparison"><p>No data</p></div>`;return;}
+        if(variant==='matrix'){const h=rows[0],b=rows.slice(1);this.innerHTML=`<div class="rk-comparison rk-comparison--matrix">${title?`<div class="rk-comparison__title">${esc(title)}</div>`:''}<div class="rk-comparison__table"><table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${b.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;return;}
+        const header=rows[0],body=rows.slice(1);const pros=body.map(r=>r[0]||'').filter(Boolean),cons=body.map(r=>r[1]||'').filter(Boolean);
+        this.innerHTML=`<div class="rk-comparison rk-comparison--proscons">${title?`<div class="rk-comparison__title">${esc(title)}</div>`:''}<div class="rk-comparison__table"><div class="rk-comparison__column"><div class="rk-comparison__column-title">${esc(header[0]||'Pros')}</div><ul>${pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div><div class="rk-comparison__column"><div class="rk-comparison__column-title">${esc(header[1]||'Cons')}</div><ul>${cons.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div></div></div>`;
+      }
+    }
+    customElements.define('rk-comparison', RkComparison);
+
+    // ── rk-timeline ──
+    class RkTimeline extends HTMLElement {
+      _raw='';
+      static get observedAttributes(){return['title'];}
+      connectedCallback(){this._raw=this.innerHTML;this._render();}
+      attributeChangedCallback(){if(this._raw)this._render();}
+      _render(){
+        const title=this.getAttribute('title')||'';
+        const steps=this.querySelectorAll('rk-step');
+        const html=Array.from(steps).map((step,i)=>{const status=step.getAttribute('status')||'next',tags=step.getAttribute('tags')||'',text=step.textContent||'';let sc='next';if(['done','active','next'].includes(status))sc=status;
+        const tagHtml=tags?`<div class="rk-timeline__tags">${tags.split(',').map(t=>`<span>${esc(t.trim())}</span>`).join('')}</div>`:'';
+        return`<li class="rk-timeline__step rk-timeline__step--${sc}"><span class="rk-timeline__num">${i+1}</span><div class="rk-timeline__body"><div class="rk-timeline__body-label">${esc('Step '+(i+1))}</div><p class="rk-timeline__body-desc">${esc(text)}</p>${tagHtml}</div></li>`;}).join('');
+        this.innerHTML=`<div class="rk-timeline">${title?`<div class="rk-timeline__title">${esc(title)}</div>`:''}<ol class="rk-timeline__steps">${html}</ol></div>`;
+      }
+    }
+    customElements.define('rk-timeline', RkTimeline);
+  </script>
+</head>
+<body>
+
+<h1>RenderKit Components</h1>
+<p style="color:var(--rk-muted)">Self-test page: all 11 components rendered below.</p>
+
+<hr />
+
+<!-- 1. Callout -->
+<h2>Callout</h2>
+<section>
+  <rk-callout tone="info" title="Information">
+    <p>This is an informational callout.</p>
+  </rk-callout>
+
+  <rk-callout tone="warning" title="Warning">
+    <p>Something might go wrong.</p>
+  </rk-callout>
+
+  <rk-callout tone="danger" title="Danger">
+    <p>Critical issue detected.</p>
+  </rk-callout>
+
+  <rk-callout tone="success" title="Success">
+    <p>Operation completed successfully.</p>
+  </rk-callout>
+
+  <rk-callout tone="tip">
+    <p>Here is a helpful tip for you.</p>
+  </rk-callout>
+
+  <rk-callout tone="note">
+    <p>A general note for reference.</p>
+  </rk-callout>
+
+  <rk-callout tone="decision" title="Decision Required">
+    <p>We need to choose between Option A and Option B.</p>
+  </rk-callout>
+</section>
+
+<hr />
+
+<!-- 2. Stat -->
+<h2>Stat</h2>
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+  <rk-stat value="42" unit="ms" label="Avg Response" delta="+12%" tone="positive"></rk-stat>
+  <rk-stat value="99.9" unit="%" label="Uptime" delta="-0.1" tone="negative"></rk-stat>
+  <rk-stat value="1.2K" unit="req/s" label="Throughput" delta="0" tone="neutral"></rk-stat>
+</section>
+
+<hr />
+
+<!-- 3. Summary -->
+<h2>Summary</h2>
+<section>
+  <rk-summary title="Executive Summary">
+    <p>The migration to the new architecture is 85% complete. All critical services have been moved. Remaining work involves legacy batch jobs scheduled for Q2.</p>
+  </rk-summary>
+</section>
+
+<hr />
+
+<!-- 4. Code -->
+<h2>Code</h2>
+<section>
+  <rk-code lang="typescript" title="hello.ts" frame="editor" showlinenumbers>
+function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+console.log(greet("RenderKit"));
+  </rk-code>
+
+  <rk-code lang="bash" frame="terminal">
+curl -s https://api.example.com/health | jq .
+  </rk-code>
+
+  <rk-code lang="python" showlinenumbers>
+def fibonacci(n):
+    if n &lt;= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+print(fibonacci(10))
+  </rk-code>
+</section>
+
+<hr />
+
+<!-- 5. Table -->
+<h2>Table</h2>
+<section>
+  <rk-table title="Service Status" profile="status">
+| Service | Status | Latency |
+|---------|--------|---------|
+| API Gateway | healthy | 12ms |
+| Auth Service | degraded | 45ms |
+| Payment | critical | 230ms |
+  </rk-table>
+
+  <rk-table title="Feature Matrix" profile="matrix">
+| Feature | Plan A | Plan B |
+|---------|--------|--------|
+| Speed | Fast | Slow |
+| Cost | $10 | $5 |
+| Support | 24/7 | Business hours |
+  </rk-table>
+</section>
+
+<hr />
+
+<!-- 6. Chart (KPI) -->
+<h2>Chart (KPI)</h2>
+<section>
+  <rk-chart type="kpi" title="Key Metrics" caption="Last 30 days">
+| Value | Label |
+|-------|-------|
+| 12.4K | Users |
+| $84K | Revenue |
+| 99.9% | Uptime |
+| 340ms | P99 Latency |
+  </rk-chart>
+</section>
+
+<hr />
+
+<!-- 7. Diagram -->
+<h2>Diagram</h2>
+<section>
+  <rk-diagram title="System Architecture" caption="High-level overview" engine="mermaid">
+graph TD
+  A[Client] --> B[API Gateway]
+  B --> C[Auth Service]
+  B --> D[Core Service]
+  D --> E[(Database)]
+  D --> F[Cache]
+  </rk-diagram>
+</section>
+
+<hr />
+
+<!-- 8. Decision -->
+<h2>Decision</h2>
+<section>
+  <rk-decision question="Which database should we use for the new service?" chosen="PostgreSQL" status="approved">
+    <rk-reason>
+      <li>Strong ACID compliance</li>
+      <li>Excellent JSON support for semi-structured data</li>
+      <li>Team has deep operational experience</li>
+      <li>Good ecosystem of tooling and extensions</li>
+    </rk-reason>
+    <rk-alternative>MongoDB — rejected due to consistency concerns</rk-alternative>
+    <rk-alternative>CockroachDB — rejected due to operational complexity</rk-alternative>
+  </rk-decision>
+</section>
+
+<hr />
+
+<!-- 9. Checklist -->
+<h2>Checklist</h2>
+<section>
+  <rk-checklist title="Release Checklist">
+    <rk-item checked>Unit tests passing</rk-item>
+    <rk-item checked>Integration tests passing</rk-item>
+    <rk-item checked note="Requires QA sign-off">E2E smoke tests</rk-item>
+    <rk-item>Performance benchmarks</rk-item>
+    <rk-item note="Target: < 200ms P95">Load testing</rk-item>
+    <rk-item checked>Documentation updated</rk-item>
+  </rk-checklist>
+</section>
+
+<hr />
+
+<!-- 10. Comparison -->
+<h2>Comparison</h2>
+<section>
+  <rk-comparison title="Approach Comparison" variant="proscons">
+| Pros | Cons |
+|------|------|
+| Faster development | Higher memory usage |
+| Better developer experience | Less mature ecosystem |
+| Built-in type safety | Steeper learning curve |
+  </rk-comparison>
+
+  <rk-comparison title="Tool Comparison" variant="matrix">
+| Criteria | Tool A | Tool B | Tool C |
+|----------|--------|--------|--------|
+| Performance | ★★★ | ★★ | ★★★★ |
+| Ease of use | ★★★★ | ★★★ | ★★ |
+| Price | Free | $50/mo | $20/mo |
+  </rk-comparison>
+</section>
+
+<hr />
+
+<!-- 11. Timeline -->
+<h2>Timeline</h2>
+<section>
+  <rk-timeline title="Project Roadmap">
+    <rk-step status="done">Requirements gathering and stakeholder alignment</rk-step>
+    <rk-step status="done" tags="backend,database">Database schema design and migration scripts</rk-step>
+    <rk-step status="active" tags="frontend,api">API implementation and frontend integration</rk-step>
+    <rk-step status="next" tags="testing">End-to-end testing and performance optimization</rk-step>
+    <rk-step status="next">Production deployment and monitoring setup</rk-step>
+  </rk-timeline>
+</section>
+
+</body>
+</html>

@@ -60,6 +60,30 @@ function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_comments_artifact
       ON comments(artifact_id);
   `);
+
+  // schema migrations for HTML format
+  try {
+    db.exec(`ALTER TABLE artifacts ADD COLUMN format TEXT NOT NULL DEFAULT 'rkmd'`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE revisions ADD COLUMN html_source TEXT`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE revisions ADD COLUMN processed_html TEXT`);
+  } catch {}
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS anchors (
+      id           TEXT PRIMARY KEY,
+      revision_id  TEXT NOT NULL REFERENCES revisions(id) ON DELETE CASCADE,
+      artifact_id  TEXT NOT NULL,
+      anchor       TEXT NOT NULL,
+      element_tag  TEXT NOT NULL,
+      position     INTEGER NOT NULL,
+      text_preview TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_anchors_revision ON anchors(revision_id);
+    CREATE INDEX IF NOT EXISTS idx_anchors_artifact ON anchors(artifact_id);
+  `);
 }
 
 export function closeDb(): void {
