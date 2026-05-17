@@ -157,8 +157,8 @@ export function findCode(node: RemarkNode): RemarkNode | null {
   return null;
 }
 
-export function firstHeading(blocks: Array<{ type: string; props?: { text?: string } }>): string | undefined {
-  return blocks.find(b => b.type === 'heading')?.props?.text;
+export function firstHeading(blocks: Array<{ type: string; props?: Record<string, unknown> }>): string | undefined {
+  return blocks.find(b => b.type === 'heading')?.props?.text as string | undefined;
 }
 
 // ── Diagnostic factory ──

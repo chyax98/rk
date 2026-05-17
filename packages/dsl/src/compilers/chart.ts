@@ -1,6 +1,6 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
 import { validateChartType, validateChartTemplate } from '../renderer-validation';
-import type { RemarkNode, BlockAttrs, CompiledBlock } from '../types';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
 import { pos, excerpt, rawDirectiveBody, directiveBodyText, plainText, diag } from '../helpers';
 
 /**
@@ -34,7 +34,7 @@ export function compileChart(
       }
       for (const row of bodyRows) {
         const cells: string[] = [];
-        for (const cell of (row as RemarkNode).children || []) {
+        for (const cell of row.children || []) {
           cells.push(plainText(cell));
         }
         rows.push(cells);
@@ -78,9 +78,7 @@ export function compileChart(
   };
 }
 
-import type { CompileContext } from '../types';
-
-function parseBodyAsPipeTable(body: string): { headers: string[]; rows: string[][] } {
+function parseBodyAsPipeTable(body: string | undefined) {
   const lines = String(body || '').split('\n').map(l => l.trim()).filter(Boolean);
   const tableLines = lines.filter(l => l.includes('|'));
   if (tableLines.length < 2) return { headers: [], rows: [] };

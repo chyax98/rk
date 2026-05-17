@@ -38,13 +38,14 @@ export function parseRK(
 ): import('@renderkit/shared').ParseResult {
   const errors: import('@renderkit/shared').Diagnostic[] = [];
   const warnings: import('@renderkit/shared').Diagnostic[] = [];
-  let frontmatter: Record<string, any> = {};
+  let frontmatter: Record<string, unknown> = {};
 
   const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
   if (fm) {
-    try { frontmatter = (yaml.load(fm[1]) || {}) as Record<string, any>; }
-    catch (e: any) {
-      errors.push(diag('RK_FRONTMATTER_INVALID', e.message, file, rangeFromOffsets(source, 0, fm[0].length)));
+    try { frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>; }
+    catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      errors.push(diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)));
     }
   }
 
@@ -56,8 +57,9 @@ export function parseRK(
       .use(remarkGfm)
       .use(remarkDirective)
       .parse(source) as RemarkNode;
-  } catch (e: any) {
-    return { ok: false, model: null, errors: [diag('RK_PARSE_ERROR', e.message, file)], warnings };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, model: null, errors: [diag('RK_PARSE_ERROR', msg, file)], warnings };
   }
 
   const blocks: import('@renderkit/shared').RenderKitBlock[] = [];
@@ -146,16 +148,16 @@ export function parseRK(
       warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${frontmatter.theme}", falling back to "${DEFAULT_THEME}"`, file));
     }
   }
-  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface as any)) {
+  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface)) {
     warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
   }
 
   const model: import('@renderkit/shared').RenderKitModel = {
     rk: '1.0',
-    title: frontmatter.title || firstHeading(blocks) || 'Untitled Artifact',
-    template: frontmatter.template,
-    theme: effectiveTheme as any,
-    surface: effectiveSurface as any,
+    title: (frontmatter.title as string | undefined) || firstHeading(blocks) || 'Untitled Artifact',
+    template: frontmatter.template as string | undefined,
+    theme: effectiveTheme as import('@renderkit/shared').ThemeName,
+    surface: effectiveSurface as import('@renderkit/shared').SurfaceName | undefined,
     blocks,
   };
 

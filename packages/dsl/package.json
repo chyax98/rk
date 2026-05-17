@@ -6,8 +6,8 @@
   "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.d.ts",
-      "import": "./src/index.mjs"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     }
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "unified": "latest"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "typescript": "^5.8.0"
   }
 }

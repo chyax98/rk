@@ -22,7 +22,10 @@ export function compileDecision(
     };
   } else {
     try { data = (yaml.load(body) || {}) as Record<string, unknown>; }
-    catch (e: any) { errors.push(diag('RK_DECISION_YAML_INVALID', e.message, file, pos(node))); }
+    catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      errors.push(diag('RK_DECISION_YAML_INVALID', msg, file, pos(node)));
+    }
   }
 
   for (const k of ['question', 'chosen']) {

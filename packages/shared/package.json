@@ -3,19 +3,21 @@
   "version": "0.0.2-alpha.0",
   "private": true,
   "type": "module",
-  "types": "./src/contracts.ts",
   "exports": {
     ".": {
-      "types": "./src/contracts.ts",
-      "import": "./src/index.mjs"
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
     },
     "./contracts": {
       "types": "./src/contracts.ts",
-      "import": "./src/contracts.mjs"
+      "import": "./src/contracts.ts"
     },
     "./design-assets": {
       "types": "./src/design-assets.ts",
-      "import": "./src/design-assets.mjs"
+      "import": "./src/design-assets.ts"
     }
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
   }
 }

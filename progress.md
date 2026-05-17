@@ -1,29 +1,26 @@
 # Progress
 
 ## Status
-Wave 3 - A11y cleanup DONE
+Wave 3: TypeScript strict 收紧完成
 
 ## Tasks
-- CLI commands 拆分为 12 个独立 command 模块
-- lib/lock.ts 修复 lock 路径格式
-- CLI src/ 结构：commands/ + lib/
-- Mermaid SVG a11y 清理
-  - sanitizeSvg 移除 <style> 标签（防止 CSS 内容被 read-text 读到）
-  - SVG 注入 <title> + <desc> + aria-labelledby
-  - 所有 <text> 元素标记 aria-hidden="true"
-  - DiagramBlock server-rendered SVG 同样处理
-  - SourceFallback 文案中文化
+- [x] packages/shared/tsconfig.json strict: true
+- [x] packages/dsl/tsconfig.json strict: true
+- [x] packages/dsl/src/index.ts 去掉所有 any
+- [x] packages/dsl/src/parse.ts 去掉所有 any
+- [x] packages/dsl/src/compilers/decision.ts catch(e: unknown)
+- [x] packages/dsl/src/compilers/chart.ts 修复 import 顺序和多余 cast
+- [x] 全量验证：dsl/shared 中 0 处 any 残留
 
 ## Files Changed
-- packages/cli/src/commands/*.ts (12 个命令)
-- packages/cli/src/index.ts (主入口)
-- packages/cli/src/lib/http.ts
-- packages/cli/src/lib/lock.ts
-- packages/cli/src/lib/output.ts
-- packages/cli/src/lib/open.ts (新增)
-- packages/blocks/src/MermaidDiagram.tsx (重写)
-- packages/blocks/src/DiagramBlock.tsx (重写)
+- packages/shared/tsconfig.json
+- packages/dsl/tsconfig.json
+- packages/dsl/src/index.ts
+- packages/dsl/src/parse.ts
+- packages/dsl/src/compilers/decision.ts
+- packages/dsl/src/compilers/chart.ts
 
 ## Notes
-- bin/renderkit.mjs 保持不动，作为运行时入口
-- src/ 为 TypeScript 参考实现
+- catch 子句全部改为 `catch (e: unknown)` + `e instanceof Error` 守卫
+- `Record<string, any>` 全部改为 `Record<string, unknown>`
+- chart.ts 底部 import 移到顶部，消除循环引用风险

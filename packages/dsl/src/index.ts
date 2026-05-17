@@ -15,7 +15,7 @@ import {
   validateRenderKitModel,
   normalizeBlockWidth,
 } from '@renderkit/shared/contracts';
-import type { SourceRange, Diagnostic } from '@renderkit/shared';
+import type { SourceRange, Diagnostic, RenderKitModel } from '@renderkit/shared';
 import type { RemarkNode, BlockAttrs, CompileContext } from './types';
 import {
   pos,
@@ -43,19 +43,20 @@ const VALID_SURFACES = new Set(SURFACE_NAMES);
 function parseRK(
   source: string,
   file = '<source>',
-): { ok: boolean; model: any; errors: Diagnostic[]; warnings: Diagnostic[] } {
+): { ok: boolean; model: RenderKitModel | null; errors: Diagnostic[]; warnings: Diagnostic[] } {
   const errors: Diagnostic[] = [];
   const warnings: Diagnostic[] = [];
-  let frontmatter: Record<string, any> = {};
+    let frontmatter: Record<string, unknown> = {};
 
-  const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
-  if (fm) {
-    try {
-      frontmatter = (yaml.load(fm[1]) || {}) as Record<string, any>;
-    } catch (e: any) {
-      errors.push(diag('RK_FRONTMATTER_INVALID', e.message, file, rangeFromOffsets(source, 0, fm[0].length)));
+    const fm = source.match(/^---\n([\s\S]*?)\n---\n?/);
+    if (fm) {
+      try {
+        frontmatter = (yaml.load(fm[1]) || {}) as Record<string, unknown>;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(diag('RK_FRONTMATTER_INVALID', msg, file, rangeFromOffsets(source, 0, fm[0].length)));
+      }
     }
-  }
 
   let tree: RemarkNode;
   try {
@@ -65,12 +66,13 @@ function parseRK(
       .use(remarkGfm)
       .use(remarkDirective)
       .parse(source) as unknown as RemarkNode;
-  } catch (e: any) {
-    return { ok: false, model: null, errors: [diag('RK_PARSE_ERROR', e.message, file)], warnings };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, model: null, errors: [diag('RK_PARSE_ERROR', msg, file)], warnings };
   }
 
-  const blocks: any[] = [];
-  const ids = new Map<string, any>();
+  const blocks: Array<Record<string, unknown>> = [];
+  const ids = new Map<string, unknown>();
   const explicitDirectiveIds = collectDirectiveIds(tree);
   const generatedDirectiveIds = new Set<string>();
   const ctx: CompileContext = { source, file, errors, warnings };
@@ -88,7 +90,7 @@ function parseRK(
       blocks.push({
         id: `heading-${headingN}`,
         type: 'heading',
-        props: { level: (node as any).depth, text: plainText(node) },
+        props: { level: node.depth || 1, text: plainText(node) },
         sourceRange: pos(node),
         sourceExcerpt: excerpt(source, node.position),
       });
@@ -149,21 +151,21 @@ function parseRK(
   // Duplicate ID check
   for (const block of blocks) {
     if (ids.has(block.id)) {
-      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${block.id}`, file, block.sourceRange));
+      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${block.id}`, file, block.sourceRange as import('@renderkit/shared').SourceRange | undefined));
     } else {
       ids.set(block.id, block);
     }
   }
 
   // Theme and surface validation
-  let effectiveTheme = frontmatter.theme || null;
-  let effectiveSurface = frontmatter.surface || null;
+  let effectiveTheme = (frontmatter.theme as string | null) || null;
+  let effectiveSurface = (frontmatter.surface as string | null) || null;
 
-  if (effectiveTheme && !VALID_THEMES.has(effectiveTheme)) {
+  if (effectiveTheme && !VALID_THEMES.has(effectiveTheme as any)) {
     warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${effectiveTheme}", falling back to "${DEFAULT_THEME}"`, file));
     effectiveTheme = DEFAULT_THEME;
   }
-  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface)) {
+  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface as any)) {
     warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
   }
 
