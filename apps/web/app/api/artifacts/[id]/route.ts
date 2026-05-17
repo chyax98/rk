@@ -17,6 +17,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     ok: true,
     artifact: artifact.meta,
     revision: artifact.revision.number,
+    anchors: artifact.anchors ?? [],
     comments: {
       open: openCount,
       resolved: resolvedCount,

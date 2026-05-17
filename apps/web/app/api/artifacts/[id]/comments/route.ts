@@ -4,6 +4,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   try {
     const body = await req.json();
+    if (!body.anchor && !body.blockId) {
+      return Response.json({ ok: false, error: 'blockId (anchor) is required' }, { status: 400 });
+    }
     if (!body.text?.trim()) {
       return Response.json({ ok: false, error: 'text required' }, { status: 400 });
     }

@@ -203,6 +203,7 @@ program
         revision: json.currentRevision,
         openCount: json.openComments?.length ?? 0,
         comments: json.openComments ?? [],
+        submissions: json.submissions ?? [],  // form submissions from rk-form WC
       });
     }
   });
