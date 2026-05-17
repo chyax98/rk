@@ -3,7 +3,7 @@
   "name": "design-system",
   "title": "Design system deepening — multi-theme token system",
   "description": "",
-  "status": "in_progress",
+  "status": "done",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -22,5 +22,6 @@
   "parent": null,
   "relatedFiles": [],
   "notes": "",
-  "meta": {}
+  "meta": {},
+  "updated_at": "2026-05-17T08:00:00Z"
 }
