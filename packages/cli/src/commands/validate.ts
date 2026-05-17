@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import { parseRK } from '@renderkit/dsl';
-import { output } from '../lib/output';
+import { output } from '../lib/output.ts';
 
 export function registerValidate(program: Command): void {
   program.command('validate <file>').option('--json', 'json output').action(async (file: string, opts: { json?: boolean }) => {

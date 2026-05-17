@@ -1,9 +1,9 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import { coerceBool, coerceEnum, parseHighlightRanges } from '../attrs';
-import { validateCodeRenderer, validateCodeFrame, validateCodeCopyMode } from '../renderer-validation';
-import { CODE_RENDERERS, CODE_FRAMES, CODE_COPY_MODES } from '../types';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
-import { pos, excerpt, findCode, diag } from '../helpers';
+import { coerceBool, coerceEnum, parseHighlightRanges } from '../attrs.ts';
+import { validateCodeRenderer, validateCodeFrame, validateCodeCopyMode } from '../renderer-validation.ts';
+import { CODE_RENDERERS, CODE_FRAMES, CODE_COPY_MODES } from '../types.ts';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
+import { pos, excerpt, findCode, diag } from '../helpers.ts';
 
 export function compileCode(
   node: RemarkNode,

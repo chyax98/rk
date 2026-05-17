@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { output } from '../lib/output';
-import { getEndpoint } from '../lib/http';
+import { output } from '../lib/output.ts';
+import { getEndpoint } from '../lib/http.ts';
 
 function repoRoot(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');

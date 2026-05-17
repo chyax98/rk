@@ -2,7 +2,7 @@
  * Alias resolution — delegates to shared contracts.
  */
 import { resolveBlockAlias } from '@renderkit/shared/contracts';
-import type { BlockAttrs } from './types';
+import type { BlockAttrs } from './types.ts';
 
 export function resolveDirective(
   name: string,

@@ -15,10 +15,10 @@ import {
   validateRenderKitModel,
 } from '@renderkit/shared/contracts';
 
-import type { RemarkNode, CompileContext, BlockAttrs } from './types';
-import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers';
-import { resolveDirective } from './alias';
-import { ID_FORMAT, generatedBlockId } from './id';
+import type { RemarkNode, CompileContext, BlockAttrs } from './types.ts';
+import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers/index.ts';
+import { resolveDirective } from './alias.ts';
+import { ID_FORMAT, generatedBlockId } from './id.ts';
 import {
   pos,
   excerpt,
@@ -27,7 +27,7 @@ import {
   diag,
   rangeFromOffsets,
   collectDirectiveIds,
-} from './helpers';
+} from './helpers.ts';
 
 const VALID_THEMES = new Set(THEME_NAMES);
 const VALID_SURFACES = new Set(SURFACE_NAMES);

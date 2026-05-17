@@ -16,7 +16,7 @@ import {
   normalizeBlockWidth,
 } from '@renderkit/shared/contracts';
 import type { SourceRange, Diagnostic, RenderKitModel } from '@renderkit/shared';
-import type { RemarkNode, BlockAttrs, CompileContext } from './types';
+import type { RemarkNode, BlockAttrs, CompileContext } from './types.ts';
 import {
   pos,
   excerpt,
@@ -26,10 +26,10 @@ import {
   walkNodes,
   firstHeading,
   diag,
-} from './helpers';
-import { generatedBlockId, slugId, ID_FORMAT } from './id';
-import { resolveDirective } from './alias';
-import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers';
+} from './helpers.ts';
+import { generatedBlockId, slugId, ID_FORMAT } from './id.ts';
+import { resolveDirective } from './alias.ts';
+import { BLOCK_COMPILERS, KNOWN_BLOCK_TYPES, compileBlock } from './compilers/index.ts';
 
 // Re-export for consumers that import from the package root
 export { parseRK };

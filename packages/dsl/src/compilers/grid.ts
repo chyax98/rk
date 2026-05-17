@@ -1,8 +1,8 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock, ChildCompileOptions } from '../types';
-import { pos, excerpt, diag } from '../helpers';
-import { resolveDirective } from '../alias';
-import { compileBlock } from './index';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock, ChildCompileOptions } from '../types.ts';
+import { pos, excerpt, diag } from '../helpers.ts';
+import { resolveDirective } from '../alias.ts';
+import { compileBlock } from './index.ts';
 
 export function compileGrid(
   node: RemarkNode,

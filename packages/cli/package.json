@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "bin": {
-"renderkit": "./dist/index.js"
+    "renderkit": "./bin/renderkit.mjs"
   },
   "scripts": {
-    "start": "node ./bin/renderkit.mjs",
+    "start": "node --experimental-strip-types src/index.ts",
     "build": "node -e \"console.log('cli: no build yet')\""
   },
   "dependencies": {

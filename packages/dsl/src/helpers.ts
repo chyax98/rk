@@ -2,7 +2,7 @@
  * Shared helper functions for all DSL compilers.
  * Pure functions with no side effects.
  */
-import type { RemarkNode, RemarkPosition, ParsedPipeTable } from './types';
+import type { RemarkNode, RemarkPosition, ParsedPipeTable } from './types.ts';
 
 // ── Position / source helpers ──
 

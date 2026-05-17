@@ -1,22 +1,22 @@
 /**
  * Compiler barrel — maps block type names to their compile functions.
  */
-import type { BlockCompiler, BlockAttrs, CompileContext } from '../types';
-import { compileCallout } from './callout';
-import { compileChecklist } from './checklist';
-import { compileCode } from './code';
-import { compileComparison } from './comparison';
-import { compileDecision } from './decision';
-import { compileDiagram } from './diagram';
-import { compileGrid } from './grid';
-import { compileImage } from './image';
-import { compileQuote } from './quote';
-import { compileStat } from './stat';
-import { compileSummary } from './summary';
-import { compileTable } from './table';
-import { compileTabs } from './tabs';
-import { compileTimeline } from './timeline';
-import { compileChart } from './chart';
+import type { BlockCompiler, BlockAttrs, CompileContext } from '../types.ts';
+import { compileCallout } from './callout.ts';
+import { compileChecklist } from './checklist.ts';
+import { compileCode } from './code.ts';
+import { compileComparison } from './comparison.ts';
+import { compileDecision } from './decision.ts';
+import { compileDiagram } from './diagram.ts';
+import { compileGrid } from './grid.ts';
+import { compileImage } from './image.ts';
+import { compileQuote } from './quote.ts';
+import { compileStat } from './stat.ts';
+import { compileSummary } from './summary.ts';
+import { compileTable } from './table.ts';
+import { compileTabs } from './tabs.ts';
+import { compileTimeline } from './timeline.ts';
+import { compileChart } from './chart.ts';
 
 export const BLOCK_COMPILERS: Record<string, BlockCompiler> = {
   'callout': (node, attrs, ctx) => compileCallout(node, attrs, ctx.source),

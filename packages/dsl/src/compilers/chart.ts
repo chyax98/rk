@@ -1,7 +1,7 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import { validateChartType, validateChartTemplate } from '../renderer-validation';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, plainText, diag } from '../helpers';
+import { validateChartType, validateChartTemplate } from '../renderer-validation.ts';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
+import { pos, excerpt, rawDirectiveBody, directiveBodyText, plainText, diag } from '../helpers.ts';
 
 /**
  * Chart block compiler.

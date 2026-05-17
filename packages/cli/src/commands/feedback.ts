@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { output } from '../lib/output';
-import { getEndpoint } from '../lib/http';
-import { readLock } from '../lib/lock';
+import { output } from '../lib/output.ts';
+import { getEndpoint } from '../lib/http.ts';
+import { readLock } from '../lib/lock.ts';
 
 export function registerFeedback(program: Command): void {
   program.command('feedback <target>').option('--json', 'json output').action(async (target: string, opts: { json?: boolean }) => {

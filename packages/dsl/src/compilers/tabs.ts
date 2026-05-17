@@ -1,8 +1,8 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
-import { pos, excerpt, plainText, diag } from '../helpers';
-import { resolveDirective } from '../alias';
-import { compileBlock } from './index';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
+import { pos, excerpt, plainText, diag } from '../helpers.ts';
+import { resolveDirective } from '../alias.ts';
+import { compileBlock } from './index.ts';
 
 export function compileTabs(
   node: RemarkNode,

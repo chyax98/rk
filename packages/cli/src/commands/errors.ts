@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { ERROR_CODES } from '@renderkit/shared';
-import { output } from '../lib/output';
+import { output } from '../lib/output.ts';
 
 export function registerErrors(program: Command): void {
   program.command('errors').option('--json', 'json output').action((opts: { json?: boolean }) => {

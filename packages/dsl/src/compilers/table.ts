@@ -1,7 +1,7 @@
 import { normalizeBlockWidth } from '@renderkit/shared/contracts';
-import { validateTableProfile, validateTableRenderer } from '../renderer-validation';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, parsePipeTable, diag } from '../helpers';
+import { validateTableProfile, validateTableRenderer } from '../renderer-validation.ts';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
+import { pos, excerpt, rawDirectiveBody, directiveBodyText, parsePipeTable, diag } from '../helpers.ts';
 
 export function compileTable(
   node: RemarkNode,

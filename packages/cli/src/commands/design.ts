@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { listDesignResources, listDesignResourcePriorities, getDesignResource, getDesignRecommendation, listRecipeSurfaces } from '@renderkit/shared';
-import { output } from '../lib/output';
+import { output } from '../lib/output.ts';
 
 export function registerDesign(parent: Command): void {
   const design = parent.command('design').description('inspect local design resource assets');

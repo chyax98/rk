@@ -1,10 +1,10 @@
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import { parseRK } from '@renderkit/dsl';
-import { output } from '../lib/output';
-import { getEndpoint } from '../lib/http';
-import { readLock, writeLock } from '../lib/lock';
-import { openUrl } from '../lib/open';
+import { output } from '../lib/output.ts';
+import { getEndpoint } from '../lib/http.ts';
+import { readLock, writeLock } from '../lib/lock.ts';
+import { openUrl } from '../lib/open.ts';
 
 export function registerPush(program: Command): void {
   program

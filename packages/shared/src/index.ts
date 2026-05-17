@@ -1,8 +1,8 @@
-import { listDesignResources } from './design-assets';
-import { BLOCK_ALIASES } from './contracts';
+import { listDesignResources } from './design-assets.ts';
+import { BLOCK_ALIASES } from './contracts.ts';
 
-export * from './contracts';
-export * from './design-assets';
+export * from './contracts.ts';
+export * from './design-assets.ts';
 
 export const RK_VERSION = '1.0';
 export const DEFAULT_PORT = 3737;

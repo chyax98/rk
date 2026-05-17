@@ -1,8 +1,8 @@
 /**
  * Block ID generation utilities.
  */
-import type { RemarkNode } from './types';
-import { plainText, rawDirectiveBody, directiveBodyText } from './helpers';
+import type { RemarkNode } from './types.ts';
+import { plainText, rawDirectiveBody, directiveBodyText } from './helpers.ts';
 
 export function generatedBlockId(
   name: string,

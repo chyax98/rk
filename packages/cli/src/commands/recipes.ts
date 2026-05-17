@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { getRecipe, listRecipeSurfaces } from '@renderkit/shared';
-import { output } from '../lib/output';
+import { output } from '../lib/output.ts';
 
 export function registerRecipes(parent: Command): void {
   const recipes = parent.command('recipes').description('inspect Agent authoring recipes');

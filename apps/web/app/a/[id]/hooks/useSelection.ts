@@ -18,7 +18,8 @@ export function useSelection() {
 
   const captureSelection = useCallback(() => {
     const selection = window.getSelection?.();
-    const exact = selection?.toString?.().trim();
+    if (!selection) { setSelectionMenu(null); return; }
+    const exact = selection.toString?.().trim();
     if (!exact || exact.length < 2) { setSelectionMenu(null); return; }
 
     const range = selection.rangeCount ? selection.getRangeAt(0) : null;

@@ -1,16 +1,16 @@
 import { Command } from 'commander';
-import { registerValidate } from './commands/validate';
-import { registerPush } from './commands/push';
-import { registerStatus } from './commands/status';
-import { registerFeedback } from './commands/feedback';
-import { registerSurfaces } from './commands/surfaces';
-import { registerThemes } from './commands/themes';
-import { registerBlocks } from './commands/blocks';
-import { registerAliases } from './commands/aliases';
-import { registerErrors } from './commands/errors';
-import { registerRecipes } from './commands/recipes';
-import { registerDesign } from './commands/design';
-import { registerServer } from './commands/server';
+import { registerValidate } from './commands/validate.ts';
+import { registerPush } from './commands/push.ts';
+import { registerStatus } from './commands/status.ts';
+import { registerFeedback } from './commands/feedback.ts';
+import { registerSurfaces } from './commands/surfaces.ts';
+import { registerThemes } from './commands/themes.ts';
+import { registerBlocks } from './commands/blocks.ts';
+import { registerAliases } from './commands/aliases.ts';
+import { registerErrors } from './commands/errors.ts';
+import { registerRecipes } from './commands/recipes.ts';
+import { registerDesign } from './commands/design.ts';
+import { registerServer } from './commands/server.ts';
 
 const program = new Command();
 program.name('renderkit').description('Local Agent artifact renderer').version('0.0.1');

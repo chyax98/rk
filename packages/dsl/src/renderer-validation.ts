@@ -10,8 +10,8 @@ import {
   CODE_FRAMES,
   CODE_RENDERERS,
   CODE_COPY_MODES,
-} from './types';
-import { coerceEnum } from './attrs';
+} from './types.ts';
+import { coerceEnum } from './attrs.ts';
 
 export function validateTableProfile(
   profile: string | undefined,

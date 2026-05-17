@@ -1,6 +1,6 @@
 import { normalizeBlockWidth, isKnownDiagramEngine } from '@renderkit/shared/contracts';
-import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types';
-import { pos, excerpt, rawDirectiveBody, directiveBodyText, stripFenceLikeBody, findCode, diag } from '../helpers';
+import type { RemarkNode, BlockAttrs, CompileContext, CompiledBlock } from '../types.ts';
+import { pos, excerpt, rawDirectiveBody, directiveBodyText, stripFenceLikeBody, findCode, diag } from '../helpers.ts';
 
 export function compileDiagram(
   node: RemarkNode,

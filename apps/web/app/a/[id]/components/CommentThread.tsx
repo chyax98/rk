@@ -3,12 +3,14 @@ import CommentCard from './CommentCard';
 import CommentFilters from './CommentFilters';
 import type { Comment } from '../hooks/useComments';
 
+import type { DrawerMode } from '../hooks/useReviewState';
+
 interface CommentThreadProps {
   comments: Comment[];
   commentFilter: string;
   setCommentFilter: (s: string) => void;
   setSelected: (id: string | null) => void;
-  setDrawerMode: (m: string) => void;
+  setDrawerMode: (m: DrawerMode) => void;
   setCommentStatus: (id: string, status: string) => void;
 }
 
