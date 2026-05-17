@@ -23,9 +23,10 @@ export function useSelection() {
     if (!exact || exact.length < 2) { setSelectionMenu(null); return; }
 
     const range = selection.rangeCount ? selection.getRangeAt(0) : null;
-    const container = range?.commonAncestorContainer?.nodeType === (Node as any).ELEMENT_NODE
+    if (!range) { setSelectionMenu(null); return; }
+    const container = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
       ? range.commonAncestorContainer as HTMLElement
-      : (range?.commonAncestorContainer as HTMLElement)?.parentElement;
+      : (range.commonAncestorContainer as HTMLElement).parentElement;
     const el = container?.closest?.('[data-block-id]');
     if (!el) { setSelectionMenu(null); return; }
 

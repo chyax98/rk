@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 async function renderD2(code: string) {
   const { D2 } = await import('@terrastruct/d2');
   const d2 = new D2();
-  const result = await d2.compile(code, { layout: 'dagre' });
+  const result = await d2.compile(code, { layout: 'dagre' } as any);
   return await d2.render(result.diagram, { ...result.renderOptions, noXMLTag: true, pad: 32 });
 }
 

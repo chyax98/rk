@@ -1,7 +1,13 @@
 import crypto from 'node:crypto';
 import { parseRK } from '@renderkit/dsl';
 import { COMMENT_STATUSES, validateTextQuoteSelector } from '@renderkit/shared/contracts';
-import { getDb } from './db';
+import { getDb } from './db.ts';
+
+/* ── DB row types ──────────────────────────────────────── */
+interface ArtifactRow { id: string; title: string; current_revision: number; created_at: string; updated_at: string; }
+interface RevisionRow { id: number; artifact_id: string; revision: number; source: string; model_json: string; created_at: string; }
+interface CommentRow { id: string; artifact_id: string; block_id: string; text: string; status: string; selector_json: string | null; created_at: string; resolved_at: string | null; }
+type RkBlock = { id: string; type: string; props?: Record<string, unknown>; sourceRange?: unknown; sourceExcerpt?: unknown; };
 
 const COMMENT_OPEN = COMMENT_STATUSES[0];
 const COMMENT_RESOLVED = COMMENT_STATUSES[1];
@@ -13,8 +19,8 @@ const HUMAN_EDITABLE_COMMENT_STATUSES = new Set([COMMENT_OPEN, COMMENT_RESOLVED]
 function sha(s: string) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function now() { return new Date().toISOString(); }
 
-function flattenBlocks(blocks: any[]): any[] {
-  const out: any[] = [];
+function flattenBlocks(blocks: RkBlock[]): RkBlock[] {
+  const out: RkBlock[] = [];
   for (const block of blocks || []) {
     out.push(block);
     if (Array.isArray(block.props?.children)) out.push(...flattenBlocks(block.props.children));
@@ -27,7 +33,7 @@ function flattenBlocks(blocks: any[]): any[] {
   return out;
 }
 
-function findBlockById(blocks: any[], id: string): any | null {
+function findBlockById(blocks: RkBlock[], id: string): RkBlock | null {
   for (const block of blocks || []) {
     if (block.id === id) return block;
     const child = findBlockById(block.props?.children || [], id);
@@ -56,18 +62,18 @@ function normalizeSelector(selector: any): any | null {
   };
 }
 
-function brief(b: any) { return b ? { id: b.id, type: b.type } : null; }
+function brief(b: RkBlock | null) { return b ? { id: b.id, type: b.type } : null; }
 
-function diffBlocks(a: any, b: any) {
-  const am = new Map(flattenBlocks(a.blocks).map((x: any) => [x.id, x]));
-  const bm = new Map(flattenBlocks(b.blocks).map((x: any) => [x.id, x]));
+function diffBlocks(a: { blocks: RkBlock[] }, b: { blocks: RkBlock[] }) {
+  const am = new Map(flattenBlocks(a.blocks).map(x => [x.id, x]));
+  const bm = new Map(flattenBlocks(b.blocks).map(x => [x.id, x]));
   const addedBlocks = [...bm.keys()].filter(k => !am.has(k));
   const removedBlocks = [...am.keys()].filter(k => !bm.has(k));
   const modifiedBlocks = [...bm.keys()].filter(k => am.has(k) && sha(JSON.stringify(am.get(k).props)) !== sha(JSON.stringify(bm.get(k).props)));
   return { addedBlocks, removedBlocks, modifiedBlocks };
 }
 
-function rowToArtifact(r: any) {
+function rowToArtifact(r: ArtifactRow) {
   return {
     id: r.id,
     title: r.title,
@@ -77,7 +83,7 @@ function rowToArtifact(r: any) {
   };
 }
 
-function rowToRevision(r: any) {
+function rowToRevision(r: RevisionRow) {
   return {
     id: r.id,
     artifactId: r.artifact_id,
@@ -90,8 +96,8 @@ function rowToRevision(r: any) {
   };
 }
 
-function rowToComment(r: any) {
-  const c: any = {
+function rowToComment(r: CommentRow & { created_at_revision?: number; block_snapshot?: string; selector?: string }) {
+  const c = {
     id: r.id,
     artifactId: r.artifact_id,
     blockId: r.block_id,

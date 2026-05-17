@@ -1,3 +1,4 @@
+import React from 'react';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +22,7 @@ interface GalleryData {
   surfaces: GallerySurface[];
 }
 
-export default async function GalleryPage(): Promise<JSX.Element> {
+export default async function GalleryPage(): Promise<React.ReactElement> {
   const raw = fs.readFileSync(galleryPath, 'utf8');
   const gallery: GalleryData = JSON.parse(raw);
 
