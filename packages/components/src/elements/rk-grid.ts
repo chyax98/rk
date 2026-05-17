@@ -1,18 +1,28 @@
 // ─── rk-grid ──────────────────────────────────────────────────
 class RkGrid extends HTMLElement {
-  _raw = '';
+  private _cols: string[] = [];
+  private _rendered = false;
 
   static get observedAttributes() {
     return ['cols', 'gap'];
   }
 
   connectedCallback(): void {
-    this._raw = this.innerHTML;
+    if (this._rendered) return;
+    // Capture child content BEFORE browser upgrades child Web Components
+    const cols = Array.from(this.querySelectorAll('rk-col'));
+    if (cols.length > 0) {
+      this._cols = cols.map((c) => c.innerHTML);
+    } else {
+      // No rk-col wrapper — treat entire innerHTML as single cell
+      this._cols = [this.innerHTML];
+    }
+    this._rendered = true;
     this._render();
   }
 
   attributeChangedCallback(): void {
-    if (this._raw) this._render();
+    if (this._rendered) this._render();
   }
 
   _render(): void {
@@ -20,10 +30,9 @@ class RkGrid extends HTMLElement {
     const gap = this.getAttribute('gap') || 'md';
     const colCount = ['2', '3', '4'].includes(cols) ? cols : '2';
 
-    const cells = Array.from(this.querySelectorAll('rk-col'));
-    const content = cells.length > 0
-      ? cells.map((c) => `<div class="rk-grid__cell">${c.innerHTML}</div>`).join('')
-      : this._raw;
+    const content = this._cols
+      .map((html) => `<div class="rk-grid__cell">${html}</div>`)
+      .join('');
 
     this.innerHTML = /* html */ `
       <div class="rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}">

@@ -59,9 +59,11 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }}
         />
 
-        {/* anchor bubble rail */}
+        {/* anchor bubble rail — only show meaningful anchors */}
         <div className="rk-block-rail">
-          {anchors.map((a) => {
+          {anchors
+            .filter((a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3'].includes(a.elementTag))
+            .map((a) => {
             const anchorComments = commentsByAnchor.get(a.anchor) || [];
             const count = anchorComments.length;
             const isActive = activeAnchor === a.anchor;

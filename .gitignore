@@ -10,3 +10,4 @@ node_modules
 research/design-assets/external-repos/
 dist/
 .pwcli/
+.alma-snapshots

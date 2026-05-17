@@ -69,9 +69,17 @@ class RkChart extends HTMLElement {
 
     const items = body
       .map((row) => {
-        const value = row[0] || '';
-        const label = row[1] || header[1] || '';
-        return `<div class="rk-chart-kpi__item"><div class="rk-kpi-value">${this._escape(value)}</div><div class="rk-kpi-label">${this._escape(label)}</div></div>`;
+        const label = row[0] || header[0] || '';
+        const value = row[1] || '—';
+        const delta = row[2] || '';
+        const deltaHtml = delta
+          ? `<span class="rk-chart-kpi__delta">${this._escape(delta)}</span>`
+          : '';
+        return `<div class="rk-chart-kpi__item">
+          <div class="rk-chart-kpi__value">${this._escape(value)}</div>
+          <div class="rk-chart-kpi__label">${this._escape(label)}</div>
+          ${deltaHtml}
+        </div>`;
       })
       .join('');
 

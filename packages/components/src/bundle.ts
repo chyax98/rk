@@ -19,3 +19,4 @@ import './elements/rk-highlight.ts';
 import './elements/rk-progress.ts';
 import './elements/rk-steps.ts';
 import './elements/rk-metric.ts';
+import './elements/rk-3d.ts';
