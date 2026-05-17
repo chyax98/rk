@@ -534,6 +534,107 @@ var RkDiagram = class extends HTMLElement {
     }
     return bg.includes("0b1") || bg.includes("08090a") || bg.includes("161616");
   }
+  /**
+   * Read design system CSS variables from computed styles and build
+   * Mermaid themeVariables. Inspired by beautiful-mermaid's DiagramColors →
+   * themeVariables mapping, adapted to RenderKit's --rk-* token schema.
+   *
+   * Token mapping:
+   *   --rk-bg              → background
+   *   --rk-text            → primaryTextColor
+   *   --rk-accent          → primaryColor (node fill accent tint), primaryBorderColor
+   *   --rk-border          → lineColor (edge color)
+   *   --rk-surface         → clusterBkg, nodeBorder
+   *   --rk-text-secondary  → secondaryTextColor
+   *   --rk-muted           → tertiaryTextColor, edgeLabelBackground
+   */
+  _getMermaidThemeVars() {
+    const cs = getComputedStyle(this);
+    const token = (name, fallback) => cs.getPropertyValue(name).trim() || fallback;
+    let bgRaw = token("--rk-bg", "#ffffff");
+    if (bgRaw.includes("gradient") || bgRaw.includes("(")) {
+      bgRaw = token("--rk-surface-solid", token("--rk-surface", "#ffffff"));
+    }
+    bgRaw = bgRaw.replace(/^["']|["']$/g, "");
+    const text = token("--rk-text", "#1a1a1a");
+    const textSec = token("--rk-text-secondary", "#3d3d3d");
+    const muted = token("--rk-muted", "#737373");
+    const accent = token("--rk-accent", "#0267a5");
+    const border = token("--rk-border", "#dfe3ea");
+    const surface = token("--rk-surface", "#ffffff");
+    const surfaceR = token("--rk-surface-raised", surface);
+    const fontFamily = token("--rk-font-sans", "'Inter', 'Noto Sans SC', sans-serif");
+    const isDark = this._isDark();
+    const nodeFill = isDark ? this._mixColors(accent, bgRaw, 0.18) : this._mixColors(accent, bgRaw, 0.1);
+    const nodeBorder = this._mixColors(accent, bgRaw, isDark ? 0.35 : 0.3);
+    return {
+      // Background
+      background: bgRaw,
+      // Primary nodes
+      primaryColor: nodeFill,
+      primaryTextColor: text,
+      primaryBorderColor: nodeBorder,
+      // Secondary / tertiary nodes
+      secondaryColor: this._mixColors(accent, bgRaw, 0.06),
+      secondaryTextColor: textSec,
+      secondaryBorderColor: this._mixColors(accent, bgRaw, 0.15),
+      tertiaryColor: surfaceR,
+      tertiaryTextColor: muted,
+      tertiaryBorderColor: border,
+      // Lines & edges
+      lineColor: border,
+      edgeLabelBackground: this._mixColors(text, bgRaw, 0.06),
+      // Clusters / subgraphs
+      clusterBkg: this._mixColors(text, bgRaw, 0.03),
+      clusterBorder: border,
+      // Font
+      fontFamily,
+      // Title
+      titleColor: text,
+      // Node-specific
+      nodeBorder,
+      nodeTextColor: text,
+      // Notes
+      noteBkgColor: this._mixColors(accent, bgRaw, 0.08),
+      noteTextColor: text,
+      noteBorderColor: this._mixColors(accent, bgRaw, 0.2)
+    };
+  }
+  /**
+   * Simple two-color mix at a given ratio (0-1).
+   * Returns hex string. Used to derive Mermaid theme colors from --rk-* tokens.
+   */
+  _mixColors(color1, color2, ratio) {
+    const c1 = this._parseColor(color1);
+    const c2 = this._parseColor(color2);
+    if (!c1 || !c2) return color1;
+    const r = Math.round(c1.r * ratio + c2.r * (1 - ratio));
+    const g = Math.round(c1.g * ratio + c2.g * (1 - ratio));
+    const b = Math.round(c1.b * ratio + c2.b * (1 - ratio));
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  }
+  /** Parse a CSS color string (#hex or rgb/rgba) to {r,g,b} */
+  _parseColor(s) {
+    s = s.trim();
+    const hex = s.match(/^#?([0-9a-f]{6})$/i);
+    if (hex) {
+      const v = parseInt(hex[1], 16);
+      return { r: v >> 16 & 255, g: v >> 8 & 255, b: v & 255 };
+    }
+    const shex = s.match(/^#?([0-9a-f]{3})$/i);
+    if (shex) {
+      const v = parseInt(shex[1], 16);
+      const r = (v >> 8 & 15) * 17;
+      const g = (v >> 4 & 15) * 17;
+      const b = (v & 15) * 17;
+      return { r, g, b };
+    }
+    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (rgb) {
+      return { r: parseInt(rgb[1]), g: parseInt(rgb[2]), b: parseInt(rgb[3]) };
+    }
+    return null;
+  }
   async _renderMermaid() {
     const canvas = this.querySelector(".rk-diagram__canvas");
     const loading = this.querySelector(".rk-diagram__loading");
@@ -541,14 +642,12 @@ var RkDiagram = class extends HTMLElement {
     try {
       const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
       const isDark = this._isDark();
+      const themeVars = this._getMermaidThemeVars();
       mermaid.default.initialize({
         startOnLoad: false,
         theme: isDark ? "dark" : "default",
         securityLevel: "loose",
-        themeVariables: {
-          background: "transparent",
-          fontFamily: getComputedStyle(this).getPropertyValue("--rk-font-sans").trim() || "'Inter', 'Noto Sans SC', sans-serif"
-        }
+        themeVariables: themeVars
       });
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.default.render(id, this._raw);

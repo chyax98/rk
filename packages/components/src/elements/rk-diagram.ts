@@ -73,14 +73,141 @@ class RkDiagram extends HTMLElement {
   /** Detect if current theme is dark based on CSS var */
   _isDark(): boolean {
     const bg = getComputedStyle(this).getPropertyValue('--rk-bg').trim();
-    // Simple heuristic: if bg starts with #0-3 or is a dark named value, it's dark
     if (!bg) return false;
     if (bg.startsWith('#')) {
       const hex = bg.slice(1);
-      const r = parseInt(hex.slice(0,2), 16);
+      const r = parseInt(hex.slice(0, 2), 16);
       return !isNaN(r) && r < 80;
     }
     return bg.includes('0b1') || bg.includes('08090a') || bg.includes('161616');
+  }
+
+  /**
+   * Read design system CSS variables from computed styles and build
+   * Mermaid themeVariables. Inspired by beautiful-mermaid's DiagramColors →
+   * themeVariables mapping, adapted to RenderKit's --rk-* token schema.
+   *
+   * Token mapping:
+   *   --rk-bg              → background
+   *   --rk-text            → primaryTextColor
+   *   --rk-accent          → primaryColor (node fill accent tint), primaryBorderColor
+   *   --rk-border          → lineColor (edge color)
+   *   --rk-surface         → clusterBkg, nodeBorder
+   *   --rk-text-secondary  → secondaryTextColor
+   *   --rk-muted           → tertiaryTextColor, edgeLabelBackground
+   */
+  _getMermaidThemeVars(): Record<string, string> {
+    const cs = getComputedStyle(this);
+
+    // Helper: read --rk-* token with fallback
+    const token = (name: string, fallback: string): string =>
+      cs.getPropertyValue(name).trim() || fallback;
+
+    // Resolve background — may be a gradient in glassmorphism theme
+    let bgRaw = token('--rk-bg', '#ffffff');
+    // If bg is a gradient, extract first solid color or use surface
+    if (bgRaw.includes('gradient') || bgRaw.includes('(')) {
+      bgRaw = token('--rk-surface-solid', token('--rk-surface', '#ffffff'));
+    }
+    // Strip any remaining quotes
+    bgRaw = bgRaw.replace(/^["']|["']$/g, '');
+
+    const text       = token('--rk-text', '#1a1a1a');
+    const textSec    = token('--rk-text-secondary', '#3d3d3d');
+    const muted      = token('--rk-muted', '#737373');
+    const accent     = token('--rk-accent', '#0267a5');
+    const border     = token('--rk-border', '#dfe3ea');
+    const surface    = token('--rk-surface', '#ffffff');
+    const surfaceR   = token('--rk-surface-raised', surface);
+    const fontFamily = token('--rk-font-sans', "'Inter', 'Noto Sans SC', sans-serif");
+
+    // Build node fill: subtle accent tint (light theme = accent at ~10%, dark = accent at ~20%)
+    const isDark = this._isDark();
+    const nodeFill = isDark
+      ? this._mixColors(accent, bgRaw, 0.18)
+      : this._mixColors(accent, bgRaw, 0.10);
+    const nodeBorder = this._mixColors(accent, bgRaw, isDark ? 0.35 : 0.30);
+
+    return {
+      // Background
+      background: bgRaw,
+
+      // Primary nodes
+      primaryColor: nodeFill,
+      primaryTextColor: text,
+      primaryBorderColor: nodeBorder,
+
+      // Secondary / tertiary nodes
+      secondaryColor: this._mixColors(accent, bgRaw, 0.06),
+      secondaryTextColor: textSec,
+      secondaryBorderColor: this._mixColors(accent, bgRaw, 0.15),
+      tertiaryColor: surfaceR,
+      tertiaryTextColor: muted,
+      tertiaryBorderColor: border,
+
+      // Lines & edges
+      lineColor: border,
+      edgeLabelBackground: this._mixColors(text, bgRaw, 0.06),
+
+      // Clusters / subgraphs
+      clusterBkg: this._mixColors(text, bgRaw, 0.03),
+      clusterBorder: border,
+
+      // Font
+      fontFamily,
+
+      // Title
+      titleColor: text,
+
+      // Node-specific
+      nodeBorder: nodeBorder,
+      nodeTextColor: text,
+
+      // Notes
+      noteBkgColor: this._mixColors(accent, bgRaw, 0.08),
+      noteTextColor: text,
+      noteBorderColor: this._mixColors(accent, bgRaw, 0.20),
+    };
+  }
+
+  /**
+   * Simple two-color mix at a given ratio (0-1).
+   * Returns hex string. Used to derive Mermaid theme colors from --rk-* tokens.
+   */
+  _mixColors(color1: string, color2: string, ratio: number): string {
+    const c1 = this._parseColor(color1);
+    const c2 = this._parseColor(color2);
+    if (!c1 || !c2) return color1;
+    const r = Math.round(c1.r * ratio + c2.r * (1 - ratio));
+    const g = Math.round(c1.g * ratio + c2.g * (1 - ratio));
+    const b = Math.round(c1.b * ratio + c2.b * (1 - ratio));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+
+  /** Parse a CSS color string (#hex or rgb/rgba) to {r,g,b} */
+  _parseColor(s: string): { r: number; g: number; b: number } | null {
+    s = s.trim();
+    // Hex
+    const hex = s.match(/^#?([0-9a-f]{6})$/i);
+    if (hex) {
+      const v = parseInt(hex[1], 16);
+      return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
+    }
+    // Short hex
+    const shex = s.match(/^#?([0-9a-f]{3})$/i);
+    if (shex) {
+      const v = parseInt(shex[1], 16);
+      const r = ((v >> 8) & 0xf) * 17;
+      const g = ((v >> 4) & 0xf) * 17;
+      const b = (v & 0xf) * 17;
+      return { r, g, b };
+    }
+    // rgb/rgba
+    const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (rgb) {
+      return { r: parseInt(rgb[1]), g: parseInt(rgb[2]), b: parseInt(rgb[3]) };
+    }
+    return null;
   }
 
   async _renderMermaid(): Promise<void> {
@@ -90,17 +217,16 @@ class RkDiagram extends HTMLElement {
 
     try {
       const mermaid = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
-      // Theme-aware: detect dark mode from CSS custom properties
+
+      // Beautiful-mermaid style: CSS variable driven themeVariables
       const isDark = this._isDark();
+      const themeVars = this._getMermaidThemeVars();
+
       mermaid.default.initialize({
         startOnLoad: false,
         theme: isDark ? 'dark' : 'default',
         securityLevel: 'loose',
-        themeVariables: {
-          background: 'transparent',
-          fontFamily: getComputedStyle(this).getPropertyValue('--rk-font-sans').trim() ||
-            "'Inter', 'Noto Sans SC', sans-serif",
-        },
+        themeVariables: themeVars,
       });
 
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
