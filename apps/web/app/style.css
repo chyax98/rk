@@ -708,6 +708,22 @@ button, textarea { font: inherit; }
   min-height: 60px;
 }
 
+/* ── CommentCard status badges ───────────────────── */
+.rk-comment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: 2px var(--rk-space-2);
+  border-radius: var(--rk-radius-full);
+  font-size: 10px;
+  font-weight: var(--rk-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--rk-tracking-wide);
+}
+.rk-comment-status-badge[data-status="open"]     { background: var(--rk-tone-warning-bg);  color: var(--rk-tone-warning-border); }
+.rk-comment-status-badge[data-status="resolved"] { background: var(--rk-tone-success-bg);  color: var(--rk-tone-success-border); }
+.rk-comment-status-badge[data-status="orphaned"] { background: var(--rk-surface-raised);   color: var(--rk-muted); }
+
 /* ── Outline: heading-first with secondary blocks ─── */
 .rk-outline-divider {
   height: 1px;

@@ -490,6 +490,95 @@ An index of all gallery entries is at `examples/gallery.json`. The web app serve
 
 When in doubt about how a surface should look, read the corresponding example file.
 
+## v2 新增 Block Types 和 Attrs
+
+### :::chart （新 block type）
+数据图表，区别于 :::diagram（流程图/架构图）。
+
+属性：
+- `type`：`bar` | `line` | `pie` | `scatter` | `kpi`（必填）
+- `template`：`default` | `minimal` | `report`（默认 default）
+- `title`：图表标题
+- `xField`：x 轴对应的列名（缺省第一列）
+- `yField`：y 轴对应的列名（缺省第二列）
+- `caption`：图表说明
+
+body：Markdown 表格（必要）
+
+```md
+:::chart{id="monthly" type="bar" title="月度活跃" xField="月份" yField="用户" template="report" width="wide"}
+| 月份 | 用户 |
+|---|---|
+| 1月 | 1200 |
+| 2月 | 1580 |
+:::
+```
+
+kpi 类型渲染大数字卡片：
+```md
+:::chart{id="dau" type="kpi" title="DAU"}
+| 指标 | 数值 |
+|---|---|
+| DAU | 12,480 |
+:::
+```
+
+**何时用 chart vs diagram**
+- `chart` → 数据图表（柱状图、折线图、饿图、KPI）
+- `diagram` → 流程图、架构图（Mermaid/D2/PlantUML）
+
+---
+
+### :::code 新属性
+
+- `filename`：文件名，在 editor frame 中显示为标签页
+- `frame`：`editor` | `terminal` | `none`（默认 none）
+- `showLineNumbers`：`true` | `false`（默认 false）
+- `highlight`：高亮行号，如 `"1,3-5"`
+- `diff`：`true` — 解析 `+`/`-` 前缀为 diff 行（还未完全实现）
+- `copyMode`：`code`（默认，复制时去掉 prompt）| `all`
+- `renderer`：`shiki`（默认，服务端高亮）| `hljs`（客户端 fallback）
+
+```md
+:::code{id="ex" language="tsx" filename="packages/blocks/src/CodeBlock.tsx" frame="editor" showLineNumbers="true" highlight="3,8-12"}
+```tsx
+// 代码内容
+```
+:::
+
+:::code{id="cmd" language="bash" frame="terminal" copyMode="code"}
+```bash
+$ pnpm install
+$ pnpm dev
+```
+:::
+```
+
+---
+
+### :::table 新属性
+
+- `profile`：`matrix`（默认）| `status` | `key-value` | `cards` | `compact`
+  - `matrix` — 标准矩阵，适合方案对比
+  - `status` — 第一列自动彩色 badge，适合任务/风险列表
+  - `key-value` — 两列 KV，适合配置/元信息
+  - `cards` — 每行变卡片，适合长文本内容
+  - `compact` — 小字体高密度，适合数字指标
+
+- `renderer`：`default` | `tanstack`（暂不建议使用 tanstack，预留手动）
+
+**约束**：列数超过 6 列会自动强制降级为 `profile="cards"`。
+
+```md
+:::table{id="risks" profile="status" title="风险清单" width="wide"}
+| 状态 | 风险事项 | owner | 下一步 |
+|---|---|---|---|
+| 🔴 | 主链路暂无监控 | 工程 | 接入告警 |
+| 🟡 | 查询性能待优化 | 后端 | 库加索引 |
+| 🟢 | 重要测试覆盖充分 | - | - |
+:::
+```
+
 ## Error codes
 
 | Code | Fix |
