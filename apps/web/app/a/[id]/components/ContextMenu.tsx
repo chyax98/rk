@@ -25,7 +25,7 @@ export default function ContextMenu({ x, y, block, feedbackCmd, onInspect, onCom
       <button className="rk-context-menu-item" onClick={() => onCopy(block.id)}>⎘ 复制 Block ID</button>
       <button className="rk-context-menu-item" onClick={() => onCopy(feedbackCmd)}>⎘ 复制反馈命令</button>
       {block.sourceRange && (
-onClick={() => onCopy(`第 ${block.sourceRange!.startLine}–${block.sourceRange!.endLine} 行`)}
+        <button className="rk-context-menu-item" onClick={() => onCopy(`第 ${block.sourceRange!.startLine}–${block.sourceRange!.endLine} 行`)}>
           ⎘ 复制源文件位置
         </button>
       )}
