@@ -25,6 +25,10 @@ class RkDiagram extends HTMLElement {
     const caption = this.getAttribute('caption') || '';
     const engine = this.getAttribute('engine') || 'mermaid';
 
+    // !! Capture prerendered content BEFORE replacing innerHTML (Kroki SSR result)
+    const existingPrerendered = this.querySelector('.rk-diagram__prerendered');
+    const prerenderedHTML = existingPrerendered ? existingPrerendered.outerHTML : null;
+
     this.innerHTML = /* html */ `
       <div class="rk-diagram">
         ${title ? `<div class="rk-diagram__title" style="margin-bottom:var(--rk-space-3);color:var(--rk-text);font:var(--rk-type-label);letter-spacing:var(--rk-tracking-wide);text-transform:uppercase">${this._escape(title)}</div>` : ''}
@@ -34,15 +38,13 @@ class RkDiagram extends HTMLElement {
       </div>
     `;
 
-    // For ALL engines: if pre-rendered SVG is present (from server Kroki SSR), display it
-    const prerendered = this.querySelector('.rk-diagram__prerendered');
-    if (prerendered) {
+    // For ALL engines: if server pre-rendered SVG existed, restore and display it
+    if (prerenderedHTML) {
       const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
       if (loading) loading.style.display = 'none';
-      // Move prerendered into canvas if not already there
       const canvas = this.querySelector('.rk-diagram__canvas') as HTMLElement;
-      if (canvas && !canvas.contains(prerendered)) canvas.appendChild(prerendered);
-      this._makeSvgResponsive(this.querySelector('.rk-diagram__canvas') as HTMLElement);
+      if (canvas) canvas.innerHTML = prerenderedHTML;
+      this._makeSvgResponsive(canvas);
       return;
     }
 
