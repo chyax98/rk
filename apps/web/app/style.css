@@ -1837,3 +1837,60 @@ textarea {
     width: min(100vw, 360px);
   }
 }
+
+/* ── Home Page ─────────────────────────────────────────────────── */
+.rk-home { max-width: 960px; margin: 0 auto; padding: 48px 32px; }
+.rk-home__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 40px; gap: 16px; flex-wrap: wrap;
+}
+.rk-home__logo { display: flex; align-items: center; gap: 16px; }
+.rk-home__logo-mark {
+  width: 48px; height: 48px; background: #111; color: #fff;
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; letter-spacing: -0.5px; flex-shrink: 0;
+}
+.rk-home__title { font-size: 24px; font-weight: 700; margin: 0 0 4px; color: #111; }
+.rk-home__subtitle { font-size: 13px; color: #6b7280; margin: 0; }
+.rk-home__stats { display: flex; gap: 12px; }
+.rk-stat-pill {
+  background: #f3f4f6; border-radius: 999px; padding: 8px 20px;
+  text-align: center; min-width: 80px;
+}
+.rk-stat-pill__value { display: block; font-size: 22px; font-weight: 700; color: #111; line-height: 1.2; }
+.rk-stat-pill__label { display: block; font-size: 11px; color: #6b7280; }
+.rk-artifact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.rk-artifact-card {
+  display: block; padding: 20px;
+  border: 1px solid #e5e7eb; border-radius: 12px;
+  background: #fff; text-decoration: none; color: inherit;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.rk-artifact-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #d1d5db;
+}
+.rk-artifact-card__header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 8px; margin-bottom: 12px;
+}
+.rk-artifact-card__title {
+  font-size: 15px; font-weight: 600; margin: 0;
+  color: #111; line-height: 1.4;
+}
+.rk-artifact-card__rev {
+  font-size: 11px; color: #6b7280; background: #f3f4f6;
+  padding: 2px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.rk-artifact-card__meta { font-size: 12px; color: #9ca3af; font-family: monospace; }
+.rk-home__empty { text-align: center; padding: 80px 32px; }
+.rk-home__empty-icon { font-size: 48px; margin-bottom: 16px; }
+.rk-home__empty h2 { font-size: 20px; margin: 0 0 8px; color: #111; }
+.rk-home__empty p { color: #6b7280; margin: 0 0 20px; }
+.rk-home__code {
+  background: #f3f4f6; border-radius: 8px; padding: 12px 24px;
+  font-family: monospace; font-size: 14px; display: inline-block; color: #374151;
+}
