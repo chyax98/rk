@@ -6,18 +6,13 @@ import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
 
 interface AddingState { anchor: string; text: string }
 interface BtnState { anchor: string; top: number; left: number }
+interface RevisionSummary { revisionNumber: number; createdAt: number; title: string }
 
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
   const { meta, revision, anchors, comments } = artifact;
 
   const bodyRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Extract theme from processedHtml (agent sets data-rk-theme in their HTML)
-  const theme = useMemo(() => {
-    const m = revision.processedHtml?.match(/data-rk-theme="([^"]+)"/);
-    return m?.[1] || 'paper-light';
-  }, [revision.processedHtml]);
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [localComments, setLocalComments] = useState<Comment[]>(
@@ -28,6 +23,19 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
   const [submitting, setSubmitting] = useState(false);
   // Floating "+" button — positioned via getBoundingClientRect (not rendered inside innerHTML)
   const [addBtn, setAddBtn] = useState<BtnState | null>(null);
+
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [revisions, setRevisions] = useState<RevisionSummary[]>([]);
+  const [viewingRev, setViewingRev] = useState<number>(meta.currentRevision);
+  const [revHtml, setRevHtml] = useState<string | null>(null);
+
+  const displayedHtml = revHtml ?? revision.processedHtml ?? '';
+
+  // Extract theme from displayed HTML (agent sets data-rk-theme in their HTML)
+  const theme = useMemo(() => {
+    const m = displayedHtml.match(/data-rk-theme="([^"]+)"/);
+    return m?.[1] || 'paper-light';
+  }, [displayedHtml]);
 
   const visibleAnchors = useMemo(
     () =>
@@ -59,6 +67,11 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     [localComments, anchorPos],
   );
 
+  // Set artifact ID on document element so rk-form can POST submissions
+  useEffect(() => {
+    document.documentElement.setAttribute('data-rk-artifact-id', meta.id);
+  }, [meta.id]);
+
   // Auto-open panel when comments exist
   useEffect(() => {
     if (openComments.length > 0) setPanelOpen(true);
@@ -70,6 +83,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     if (!el) return;
 
     const show = (e: Event) => {
+      if (viewingRev !== meta.currentRevision) return;
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       const target = (e.target as HTMLElement).closest('[data-rk-anchor]') as HTMLElement | null;
       if (!target) return;
@@ -91,7 +105,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
       el.removeEventListener('mouseover', show);
       el.removeEventListener('mouseout', hide);
     };
-  }, []);
+  }, [meta.currentRevision, viewingRev]);
 
   // Mark anchors that have comments
   useEffect(() => {
@@ -103,7 +117,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
       if (!target) continue;
       target.classList.toggle('rk-has-comment', withComments.has(a.anchor));
     }
-  }, [openComments, visibleAnchors]);
+  }, [openComments, visibleAnchors, displayedHtml]);
 
   const scrollToAnchor = useCallback((anchor: string, commentId: string) => {
     setActiveComment(commentId);
@@ -143,19 +157,42 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     }
   }, [adding, meta.id]);
 
+  const loadRevisions = useCallback(async () => {
+    const res = await fetch(`/api/artifacts/${meta.id}/revisions/list`);
+    const data = await res.json();
+    if (data.ok) setRevisions(data.revisions);
+  }, [meta.id]);
+
+  const switchRevision = useCallback(async (rev: number) => {
+    if (rev === meta.currentRevision) {
+      setRevHtml(null);
+      setViewingRev(rev);
+      return;
+    }
+
+    const res = await fetch(`/api/artifacts/${meta.id}/revisions/${rev}`);
+    const data = await res.json();
+    if (data.ok) {
+      setRevHtml(data.processedHtml);
+      setViewingRev(rev);
+      setAddBtn(null);
+      setAdding(null);
+    }
+  }, [meta.id, meta.currentRevision]);
+
   return (
     <div className={`rk-layout${panelOpen ? ' panel-open' : ''}`} data-rk-theme={theme}>
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
       {/* ── Document area ── */}
-      <div ref={bodyRef} className="rk-html-body">
+      <div ref={bodyRef} id="rk-main" className="rk-html-body">
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: server-processed HTML */}
-        <div dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }} />
+        <div dangerouslySetInnerHTML={{ __html: displayedHtml }} />
       </div>
 
       {/* ── Floating "+" button (JS-positioned, not inside innerHTML) ── */}
-      {addBtn && (
+      {addBtn && viewingRev === meta.currentRevision && (
         <button
           type="button"
           className="rk-add-comment-btn"
@@ -181,6 +218,40 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           <span className="rk-panel-tab__count">{openComments.length}</span>
         )}
       </button>
+
+      <button
+        type="button"
+        className="rk-version-tab"
+        onClick={() => {
+          setShowRevisions((v) => !v);
+          if (!showRevisions) loadRevisions();
+        }}
+        title="版本历史"
+      >
+        v{viewingRev}
+        {viewingRev !== meta.currentRevision && <span className="rk-version-tab__old">历史</span>}
+      </button>
+
+      {showRevisions && (
+        <div className="rk-version-panel">
+          <div className="rk-version-panel__header">版本历史</div>
+          {revisions.map((r) => (
+            <button
+              key={r.revisionNumber}
+              type="button"
+              className={`rk-version-item${viewingRev === r.revisionNumber ? ' is-current' : ''}`}
+              onClick={() => switchRevision(r.revisionNumber)}
+              title={r.title}
+            >
+              <span className="rk-version-item__num">v{r.revisionNumber}</span>
+              <span className="rk-version-item__time">
+                {new Date(r.createdAt).toLocaleDateString('zh-CN')}
+              </span>
+              {r.revisionNumber === meta.currentRevision && <span className="rk-version-item__badge">最新</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Comment panel ── */}
       <aside className={`rk-comment-panel${panelOpen ? ' is-open' : ''}`}>

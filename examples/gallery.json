@@ -1,0 +1,8 @@
+{
+  "description": "RenderKit 能力展示",
+  "surfaces": [
+    { "id": "all-wc", "label": "全部组件", "description": "24个Web Components完整展示", "theme": "paper-light", "file": "examples/test-all-wc.html" },
+    { "id": "diagrams", "label": "图表引擎", "description": "Mermaid/D2/Graphviz/PlantUML", "theme": "dark-pro", "file": "examples/test-diagrams.html" },
+    { "id": "themes", "label": "主题对比", "description": "8套设计主题", "theme": "notion-clean", "file": "examples/test-themes.html" }
+  ]
+}

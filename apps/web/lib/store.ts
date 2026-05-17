@@ -103,6 +103,12 @@ export interface HtmlArtifactBundle {
   comments: Comment[];
 }
 
+export interface RevisionSummary {
+  revisionNumber: number;
+  createdAt: number;
+  title: string;
+}
+
 /* ── helpers ────────────────────────────────────────────── */
 
 function sha(s: string): string {
@@ -259,6 +265,30 @@ export async function updateCommentStatus(
   return { ok: true as const, comment: rowToComment(updated) };
 }
 
+export async function updateCommentText(
+  artifactId: string,
+  commentId: string,
+  text: string,
+) {
+  const nextText = text.trim();
+  if (!nextText) return { ok: false as const, status: 400, error: 'text required' };
+
+  const db = getDb();
+  const row = db
+    .prepare('SELECT * FROM comments WHERE id = ? AND artifact_id = ?')
+    .get(commentId, artifactId) as DbComment | undefined;
+  if (!row) return { ok: false as const, status: 404, error: 'comment not found' };
+
+  db.prepare('UPDATE comments SET text = ? WHERE id = ? AND artifact_id = ?').run(
+    nextText,
+    commentId,
+    artifactId,
+  );
+
+  const updated = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId) as DbComment;
+  return { ok: true as const, comment: rowToComment(updated) };
+}
+
 export async function resolveComment(commentId: string) {
   const db = getDb();
   const row = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId) as
@@ -279,9 +309,46 @@ export async function deleteArtifact(id: string): Promise<boolean> {
   if (!row) return false;
   db.prepare('DELETE FROM comments WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM anchors WHERE artifact_id = ?').run(id);
+  db.prepare('DELETE FROM form_submissions WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM revisions WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
   return true;
+}
+
+/* ── Form Submissions ───────────────────────────────────── */
+
+export interface FormSubmission {
+  id: string;
+  formTitle: string;
+  fields: { name: string; label: string; value: unknown }[];
+  createdAt: number;
+}
+
+export async function addFormSubmission(
+  artifactId: string,
+  formTitle: string,
+  fields: { name: string; label: string; value: unknown }[],
+): Promise<{ id: string }> {
+  const db = getDb();
+  const id = `sub_${crypto.randomBytes(8).toString('hex')}`;
+  const ts = Date.now();
+  db.prepare(
+    'INSERT INTO form_submissions (id, artifact_id, form_title, fields, created_at) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, artifactId, formTitle, JSON.stringify(fields), ts);
+  return { id };
+}
+
+export async function getFormSubmissions(artifactId: string): Promise<FormSubmission[]> {
+  const db = getDb();
+  const rows = db
+    .prepare('SELECT * FROM form_submissions WHERE artifact_id = ? ORDER BY created_at DESC')
+    .all(artifactId) as Array<{ id: string; form_title: string; fields: string; created_at: number }>;
+  return rows.map((r) => ({
+    id: r.id,
+    formTitle: r.form_title,
+    fields: JSON.parse(r.fields),
+    createdAt: r.created_at,
+  }));
 }
 
 /* ── Feedback (CLI) ─────────────────────────────────────── */
@@ -293,6 +360,8 @@ export async function getFeedback(id: string) {
   const openComments = artifact.comments.filter(
     (c) => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED,
   );
+
+  const submissions = await getFormSubmissions(id);
 
   return {
     artifactId: id,
@@ -307,6 +376,7 @@ export async function getFeedback(id: string) {
       createdAtRevision: c.createdAtRevision,
       createdAt: c.createdAt,
     })),
+    submissions,
   };
 }
 
@@ -405,6 +475,45 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
     revision: nextRev,
     url: `/a/${artifactId}`,
   };
+}
+
+/* ── HTML artifact: revision history ────────────────────── */
+
+function extractRevisionTitle(processedHtml: string | null | undefined, revisionNumber: number): string {
+  if (!processedHtml) return `版本 ${revisionNumber}`;
+  const title = processedHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
+  if (title) return title;
+  const h1 = processedHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
+    ?.replace(/<[^>]+>/g, '')
+    ?.replace(/\s+/g, ' ')
+    ?.trim();
+  return h1 || `版本 ${revisionNumber}`;
+}
+
+export async function listRevisions(artifactId: string): Promise<RevisionSummary[]> {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      'SELECT number, created_at, processed_html FROM revisions WHERE artifact_id = ? ORDER BY number DESC',
+    )
+    .all(artifactId) as Array<{ number: number; created_at: string; processed_html: string | null }>;
+
+  return rows.map((r) => ({
+    revisionNumber: r.number,
+    createdAt: Date.parse(r.created_at) || 0,
+    title: extractRevisionTitle(r.processed_html, r.number),
+  }));
+}
+
+export async function getRevision(
+  artifactId: string,
+  revisionNumber: number,
+): Promise<{ processedHtml: string | null }> {
+  const db = getDb();
+  const row = db
+    .prepare('SELECT processed_html FROM revisions WHERE artifact_id = ? AND number = ?')
+    .get(artifactId, revisionNumber) as { processed_html: string | null } | undefined;
+  return { processedHtml: row?.processed_html || null };
 }
 
 /* ── HTML artifact: read ────────────────────────────────── */

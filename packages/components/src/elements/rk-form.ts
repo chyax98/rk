@@ -179,9 +179,10 @@ class RkForm extends HTMLElement {
           onclick="(function(btn){
             const form = btn.closest('.rk-form');
             const fields = form.querySelectorAll('rk-field');
-            const result = {};
+            const result = [];
             fields.forEach(f => {
               const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
+              const name = f.getAttribute('name') || label.toLowerCase().replace(/\s+/g, '_');
               const type = f.getAttribute('type') || 'text';
               let val;
               if(type==='rating'){
@@ -192,14 +193,39 @@ class RkForm extends HTMLElement {
               } else {
                 val = f.querySelector('input,textarea,select')?.value ?? '';
               }
-              result[label] = val;
+              result.push({ name, label, value: val });
             });
-            console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
-            btn.textContent = '✓ 已提交（见控制台）';
-            btn.style.background = 'var(--rk-tone-success-bg)';
-            btn.style.color = 'var(--rk-tone-success-border)';
-            btn.style.borderColor = 'var(--rk-tone-success-border)';
-            btn.disabled = true;
+
+            const artifactId = document.documentElement.dataset.rkArtifactId;
+            if (artifactId) {
+              btn.disabled = true; btn.textContent = '提交中…';
+              const formTitle = form.closest('rk-form')?.getAttribute('title') || '';
+              fetch('/api/artifacts/' + artifactId + '/submissions', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ formTitle, fields: result }),
+              }).then(r => r.json()).then(data => {
+                if (data.ok) {
+                  btn.textContent = '✓ 已提交';
+                  btn.style.background = 'var(--rk-tone-success-bg)';
+                  btn.style.color = 'var(--rk-tone-success-border)';
+                  btn.style.borderColor = 'var(--rk-tone-success-border)';
+                  btn.disabled = true;
+                  form.classList.add('rk-form--submitted');
+                } else {
+                  btn.disabled = false; btn.textContent = '提交失败，重试';
+                }
+              }).catch(() => {
+                btn.disabled = false; btn.textContent = '网络错误，重试';
+              });
+            } else {
+              console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
+              btn.textContent = '✓ 已提交（预览模式）';
+              btn.style.background = 'var(--rk-tone-success-bg)';
+              btn.style.color = 'var(--rk-tone-success-border)';
+              btn.style.borderColor = 'var(--rk-tone-success-border)';
+              btn.disabled = true;
+            }
           })(this)"
           style="
             display:inline-flex;align-items:center;gap:6px;

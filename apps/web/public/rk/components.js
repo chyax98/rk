@@ -1880,9 +1880,10 @@ var RkForm = class extends HTMLElement {
           onclick="(function(btn){
             const form = btn.closest('.rk-form');
             const fields = form.querySelectorAll('rk-field');
-            const result = {};
+            const result = [];
             fields.forEach(f => {
               const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
+              const name = f.getAttribute('name') || label.toLowerCase().replace(/s+/g, '_');
               const type = f.getAttribute('type') || 'text';
               let val;
               if(type==='rating'){
@@ -1893,14 +1894,39 @@ var RkForm = class extends HTMLElement {
               } else {
                 val = f.querySelector('input,textarea,select')?.value ?? '';
               }
-              result[label] = val;
+              result.push({ name, label, value: val });
             });
-            console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
-            btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4\uFF08\u89C1\u63A7\u5236\u53F0\uFF09';
-            btn.style.background = 'var(--rk-tone-success-bg)';
-            btn.style.color = 'var(--rk-tone-success-border)';
-            btn.style.borderColor = 'var(--rk-tone-success-border)';
-            btn.disabled = true;
+
+            const artifactId = document.documentElement.dataset.rkArtifactId;
+            if (artifactId) {
+              btn.disabled = true; btn.textContent = '\u63D0\u4EA4\u4E2D\u2026';
+              const formTitle = form.closest('rk-form')?.getAttribute('title') || '';
+              fetch('/api/artifacts/' + artifactId + '/submissions', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ formTitle, fields: result }),
+              }).then(r => r.json()).then(data => {
+                if (data.ok) {
+                  btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4';
+                  btn.style.background = 'var(--rk-tone-success-bg)';
+                  btn.style.color = 'var(--rk-tone-success-border)';
+                  btn.style.borderColor = 'var(--rk-tone-success-border)';
+                  btn.disabled = true;
+                  form.classList.add('rk-form--submitted');
+                } else {
+                  btn.disabled = false; btn.textContent = '\u63D0\u4EA4\u5931\u8D25\uFF0C\u91CD\u8BD5';
+                }
+              }).catch(() => {
+                btn.disabled = false; btn.textContent = '\u7F51\u7EDC\u9519\u8BEF\uFF0C\u91CD\u8BD5';
+              });
+            } else {
+              console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
+              btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4\uFF08\u9884\u89C8\u6A21\u5F0F\uFF09';
+              btn.style.background = 'var(--rk-tone-success-bg)';
+              btn.style.color = 'var(--rk-tone-success-border)';
+              btn.style.borderColor = 'var(--rk-tone-success-border)';
+              btn.disabled = true;
+            }
           })(this)"
           style="
             display:inline-flex;align-items:center;gap:6px;

@@ -84,6 +84,19 @@ function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_anchors_revision ON anchors(revision_id);
     CREATE INDEX IF NOT EXISTS idx_anchors_artifact ON anchors(artifact_id);
   `);
+
+  // form submissions
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS form_submissions (
+      id           TEXT PRIMARY KEY,
+      artifact_id  TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+      form_title   TEXT NOT NULL DEFAULT '',
+      fields       TEXT NOT NULL,
+      created_at   INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_form_submissions_artifact
+      ON form_submissions(artifact_id);
+  `);
 }
 
 export function closeDb(): void {
