@@ -1,7 +1,19 @@
 # Progress
 
 ## Status
-Wave 3: TypeScript strict 收紧完成
+Wave 3: TypeScript strict 收紧 + .mjs 全删完成
+
+## .mjs Deletion Results
+
+| 包 | .mjs 状态 | package.json |
+|---|---|---|
+| packages/shared/src/ | 0 个 .mjs（contracts.mjs / design-assets.mjs / index.mjs 已消失） | exports → .ts ✅ |
+| packages/dsl/src/ | 0 个 .mjs（index.mjs 已消失） | exports → .ts ✅ |
+| packages/cli/bin/ | renderkit.mjs 保留（thin loader） | 指向 src/index.ts ✅ |
+
+## CLI bin 修正
+- bin/renderkit.mjs 从 import `../src/cli.ts` 改为 `../src/index.ts`
+- Node 24 `--experimental-strip-types` 直接跑 .ts
 
 ## Tasks
 - [x] packages/shared/tsconfig.json strict: true

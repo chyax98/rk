@@ -1,8 +1,9 @@
+import type { Metadata } from 'next';
 import './style.css';
 
 const description = 'Local-first Agent artifact renderer for beautiful reading and precise review comments.';
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL('http://localhost:3737'),
   title: {
     default: 'RenderKit',
@@ -25,6 +26,6 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="zh-CN"><body><a href="#rk-main" className="rk-skip-link">跳到正文</a>{children}</body></html>;
 }
