@@ -1344,3 +1344,418 @@ var RkThreeD = class extends HTMLElement {
   }
 };
 customElements.define("rk-3d", RkThreeD);
+
+// packages/components/src/elements/rk-badge.ts
+var RkBadge = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["color", "icon"];
+  }
+  connectedCallback() {
+    this._render();
+  }
+  attributeChangedCallback() {
+    this._render();
+  }
+  _render() {
+    const color = this.getAttribute("color") || "accent";
+    const icon = this.getAttribute("icon") || "";
+    const text = this.textContent?.trim() || "";
+    const colorMap = {
+      blue: { bg: "var(--rk-tone-info-bg, #eff6ff)", text: "var(--rk-tone-info-border, #2563eb)", border: "var(--rk-tone-info-border, #2563eb)" },
+      green: { bg: "var(--rk-tone-success-bg, #f0fdf4)", text: "var(--rk-tone-success-border, #16a34a)", border: "var(--rk-tone-success-border, #16a34a)" },
+      red: { bg: "var(--rk-tone-danger-bg, #fef2f2)", text: "var(--rk-tone-danger-border, #dc2626)", border: "var(--rk-tone-danger-border, #dc2626)" },
+      orange: { bg: "var(--rk-tone-warning-bg, #fffbeb)", text: "var(--rk-tone-warning-border, #d97706)", border: "var(--rk-tone-warning-border, #d97706)" },
+      purple: { bg: "rgba(139,92,246,0.1)", text: "#7c3aed", border: "#7c3aed" },
+      gray: { bg: "var(--rk-surface, #f5f5f4)", text: "var(--rk-text-tertiary, #6b6b66)", border: "var(--rk-border, #e5e4dc)" },
+      accent: { bg: "var(--rk-accent-muted, rgba(2,103,165,0.1))", text: "var(--rk-accent, #0267a5)", border: "var(--rk-accent, #0267a5)" }
+    };
+    const c = colorMap[color] || colorMap.accent;
+    this.innerHTML = `<span class="rk-badge rk-badge--${color}" style="
+      display:inline-flex;align-items:center;gap:4px;
+      padding:2px 8px;border-radius:var(--rk-radius-full,9999px);
+      font:var(--rk-weight-medium,500) var(--rk-text-xs,11px)/1.6 var(--rk-font-sans,sans-serif);
+      letter-spacing:var(--rk-tracking-wide,0.02em);
+      background:${c.bg};color:${c.text};
+      border:1px solid ${c.border};
+      white-space:nowrap;
+    ">${icon ? `<span>${icon}</span>` : ""}<span>${this._escape(text)}</span></span>`;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkBadgeGroup = class extends HTMLElement {
+  connectedCallback() {
+    if (!this.style.display) {
+      this.style.cssText = `
+        display:flex;flex-wrap:wrap;gap:var(--rk-space-2,8px);
+        align-items:center;
+      `;
+    }
+  }
+};
+customElements.define("rk-badge", RkBadge);
+customElements.define("rk-badge-group", RkBadgeGroup);
+
+// packages/components/src/elements/rk-kanban.ts
+var RkKanbanCard = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["priority", "tag", "assignee", "due"];
+  }
+  connectedCallback() {
+    this._render();
+  }
+  attributeChangedCallback() {
+    this._render();
+  }
+  _render() {
+    const priority = this.getAttribute("priority") || "";
+    const tag = this.getAttribute("tag") || "";
+    const assignee = this.getAttribute("assignee") || "";
+    const due = this.getAttribute("due") || "";
+    const text = (this.textContent || "").trim();
+    const priorityColors = {
+      high: "var(--rk-tone-danger-border, #dc2626)",
+      medium: "var(--rk-tone-warning-border, #d97706)",
+      low: "var(--rk-tone-info-border, #2563eb)"
+    };
+    const priorityBg = {
+      high: "var(--rk-tone-danger-bg, #fef2f2)",
+      medium: "var(--rk-tone-warning-bg, #fffbeb)",
+      low: "var(--rk-tone-info-bg, #eff6ff)"
+    };
+    const borderColor = priority ? priorityColors[priority] || "var(--rk-border)" : "var(--rk-border)";
+    this.innerHTML = `
+      <div class="rk-kanban-card" style="
+        background:var(--rk-surface,#fff);
+        border:1px solid var(--rk-border,#e5e4dc);
+        border-left:3px solid ${borderColor};
+        border-radius:var(--rk-radius-md,10px);
+        padding:var(--rk-space-3,12px) var(--rk-space-4,16px);
+        margin-bottom:var(--rk-space-2,8px);
+        box-shadow:var(--rk-shadow-xs,0 1px 2px rgba(0,0,0,0.06));
+        cursor:default;
+      ">
+        ${tag || priority ? `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            ${tag ? `<span style="
+              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
+              text-transform:uppercase;letter-spacing:0.05em;
+              padding:2px 6px;border-radius:4px;
+              background:var(--rk-accent-muted,rgba(2,103,165,0.1));
+              color:var(--rk-accent,#0267a5);
+            ">${this._escape(tag)}</span>` : ""}
+            ${priority ? `<span style="
+              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
+              text-transform:uppercase;letter-spacing:0.05em;
+              padding:2px 6px;border-radius:4px;
+              background:${priorityBg[priority] || "var(--rk-surface-2)"};
+              color:${priorityColors[priority] || "var(--rk-text-muted)"};
+            ">${priority === "high" ? "\u2191 \u9AD8\u4F18" : priority === "medium" ? "\u2192 \u4E2D" : "\u2193 \u4F4E"}</span>` : ""}
+          </div>
+        ` : ""}
+        <div style="
+          font:var(--rk-weight-normal,400) var(--rk-text-sm,13px)/1.6 var(--rk-font-sans,sans-serif);
+          color:var(--rk-text,#1a1a1a);
+        ">${this._escape(text)}</div>
+        ${assignee || due ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            ${assignee ? `<span style="
+              font:500 11px/1 var(--rk-font-sans,sans-serif);
+              color:var(--rk-text-tertiary,#6b6b66);
+            ">@${this._escape(assignee)}</span>` : "<span></span>"}
+            ${due ? `<span style="
+              font:400 11px/1 var(--rk-font-sans,sans-serif);
+              color:var(--rk-muted,#a0a0a0);
+            ">${this._escape(due)}</span>` : ""}
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkKanbanCol = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["title", "accent", "done"];
+  }
+  connectedCallback() {
+    this._upgradeCards();
+    this._renderShell();
+  }
+  attributeChangedCallback() {
+    this._renderShell();
+  }
+  _upgradeCards() {
+  }
+  _renderShell() {
+    const title = this.getAttribute("title") || "Column";
+    const done = this.hasAttribute("done");
+    const accent = this.getAttribute("accent") || (done ? "green" : "");
+    const accentColor = accent === "green" ? "var(--rk-tone-success-border,#16a34a)" : accent === "blue" ? "var(--rk-tone-info-border,#2563eb)" : accent === "orange" ? "var(--rk-tone-warning-border,#d97706)" : accent === "red" ? "var(--rk-tone-danger-border,#dc2626)" : "var(--rk-border,#e5e4dc)";
+    const existingCards = Array.from(this.querySelectorAll("rk-kanban-card"));
+    const cardCount = existingCards.length;
+    this.style.cssText = `
+      display:flex;flex-direction:column;
+      min-width:220px;flex:1;
+      background:var(--rk-surface,#fafafa);
+      border:1px solid var(--rk-border,#e5e4dc);
+      border-top:3px solid ${accentColor};
+      border-radius:var(--rk-radius-lg,14px);
+      padding:var(--rk-space-4,16px);
+      min-height:200px;
+    `;
+    let header = this.querySelector(".rk-kanban-col__header");
+    if (!header) {
+      header = document.createElement("div");
+      header.className = "rk-kanban-col__header";
+      this.insertBefore(header, this.firstChild);
+    }
+    header.style.cssText = `
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:var(--rk-space-3,12px);
+    `;
+    header.innerHTML = `
+      <span style="
+        font:600 13px/1.4 var(--rk-font-sans,sans-serif);
+        color:var(--rk-text,#1a1a1a);
+        letter-spacing:0.01em;
+      ">${this._escape(title)}</span>
+      <span style="
+        font:600 11px/1.4 var(--rk-font-sans,sans-serif);
+        color:var(--rk-text-tertiary,#6b6b66);
+        background:var(--rk-surface-2,#eee);
+        padding:2px 7px;border-radius:9999px;
+      ">${cardCount}</span>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkKanban = class extends HTMLElement {
+  connectedCallback() {
+    this.style.cssText = `
+      display:flex;gap:var(--rk-space-4,16px);
+      overflow-x:auto;
+      padding-bottom:var(--rk-space-2,8px);
+    `;
+    if (!this.querySelector(".rk-kanban__scroll-hint")) {
+      const hint = document.createElement("style");
+      hint.textContent = `.rk-kanban { scrollbar-width:thin; }`;
+      this.appendChild(hint);
+    }
+  }
+};
+customElements.define("rk-kanban-card", RkKanbanCard);
+customElements.define("rk-kanban-col", RkKanbanCol);
+customElements.define("rk-kanban", RkKanban);
+
+// packages/components/src/elements/rk-form.ts
+var RkField = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["label", "type", "max", "placeholder", "options", "required", "name", "value"];
+  }
+  connectedCallback() {
+    this._render();
+  }
+  attributeChangedCallback() {
+    this._render();
+  }
+  getValue() {
+    const input = this.querySelector("input,textarea,select");
+    const type = this.getAttribute("type") || "text";
+    if (type === "rating") {
+      const checked = this.querySelector(".rk-field__star--active:last-of-type");
+      return checked ? Number(checked.dataset.value) : 0;
+    }
+    if (type === "checkbox") {
+      return input?.checked ?? false;
+    }
+    return input?.value ?? "";
+  }
+  _render() {
+    const label = this.getAttribute("label") || "";
+    const type = this.getAttribute("type") || "text";
+    const max = Number(this.getAttribute("max") || 5);
+    const placeholder = this.getAttribute("placeholder") || "";
+    const options = (this.getAttribute("options") || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const required = this.hasAttribute("required");
+    const name = this.getAttribute("name") || label.toLowerCase().replace(/\s+/g, "_");
+    const fieldId = `rk-field-${Math.random().toString(36).slice(2, 8)}`;
+    const sharedStyle = `
+      font:400 var(--rk-text-base,15px)/1.5 var(--rk-font-sans,sans-serif);
+      color:var(--rk-text,#1a1a1a);
+      background:var(--rk-surface,#fff);
+      border:1px solid var(--rk-border,#e5e4dc);
+      border-radius:var(--rk-radius-sm,6px);
+      padding:var(--rk-space-2,8px) var(--rk-space-3,12px);
+      width:100%;box-sizing:border-box;
+      outline:none;transition:border-color 150ms;
+    `;
+    let control = "";
+    if (type === "textarea") {
+      control = `<textarea id="${fieldId}" name="${name}" placeholder="${this._escape(placeholder)}" rows="4"
+        style="${sharedStyle}min-height:96px;resize:vertical;"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      ></textarea>`;
+    } else if (type === "select") {
+      const opts = options.map((o) => `<option value="${this._escape(o)}">${this._escape(o)}</option>`).join("");
+      control = `<select id="${fieldId}" name="${name}" style="${sharedStyle}cursor:pointer;"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      ><option value="">\u8BF7\u9009\u62E9...</option>${opts}</select>`;
+    } else if (type === "rating") {
+      const stars = Array.from({ length: max }, (_, i) => {
+        const v = i + 1;
+        return `<button type="button" class="rk-field__star" data-value="${v}"
+          style="background:none;border:none;cursor:pointer;padding:2px;font-size:22px;line-height:1;
+            color:var(--rk-border-hover,#ccc);transition:color 150ms;outline:none;"
+          onclick="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            stars.forEach((s,idx)=>{
+              s.style.color=idx<${v}?'#f59e0b':'var(--rk-border-hover,#ccc)';
+              s.classList.toggle('rk-field__star--active',idx<${v});
+              if(idx===${v}-1)s.classList.add('rk-field__star--active');
+            });
+          })(this)"
+          onmouseover="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            stars.forEach((s,idx)=>{s.style.color=idx<${v}?'#fbbf24':'var(--rk-border-hover,#ccc)';});
+          })(this)"
+          onmouseout="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            const active=parseInt(el.closest('.rk-field__stars').dataset.rating||'0');
+            stars.forEach((s,idx)=>{s.style.color=idx<active?'#f59e0b':'var(--rk-border-hover,#ccc)';});
+          })(this)"
+        >\u2605</button>`;
+      }).join("");
+      control = `<div class="rk-field__stars" data-rating="0" style="display:flex;gap:2px;">${stars}</div>`;
+    } else if (type === "checkbox") {
+      control = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="${fieldId}" name="${name}"
+          style="width:16px;height:16px;accent-color:var(--rk-accent,#0267a5);cursor:pointer;">
+        <span style="font:400 var(--rk-text-sm,13px)/1.5 var(--rk-font-sans);color:var(--rk-text);">
+          ${this._escape(placeholder || label)}
+        </span>
+      </label>`;
+    } else {
+      control = `<input type="${type === "number" ? "number" : "text"}" id="${fieldId}" name="${name}"
+        placeholder="${this._escape(placeholder)}"
+        style="${sharedStyle}"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      >`;
+    }
+    this.innerHTML = `
+      <div class="rk-field" style="margin-bottom:var(--rk-space-4,16px);">
+        ${type !== "checkbox" ? `
+          <label for="${fieldId}" style="
+            display:block;margin-bottom:6px;
+            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
+            color:var(--rk-text,#1a1a1a);
+          ">${this._escape(label)}${required ? ' <span style="color:var(--rk-tone-danger-border,#dc2626)">*</span>' : ""}</label>
+        ` : ""}
+        ${control}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkForm = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["title", "submit-label", "description"];
+  }
+  connectedCallback() {
+    this._render();
+  }
+  attributeChangedCallback() {
+    this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "\u8868\u5355";
+    const submitLabel = this.getAttribute("submit-label") || "\u63D0\u4EA4";
+    const description = this.getAttribute("description") || "";
+    const fields = Array.from(this.querySelectorAll("rk-field"));
+    const fieldHTML = fields.map((f) => f.outerHTML).join("");
+    this.innerHTML = `
+      <div class="rk-form" style="
+        background:var(--rk-surface,#fff);
+        border:1px solid var(--rk-border,#e5e4dc);
+        border-radius:var(--rk-radius-lg,14px);
+        padding:var(--rk-space-6,24px);
+        max-width:560px;
+      ">
+        <h3 style="
+          margin:0 0 var(--rk-space-2,8px);
+          font:700 var(--rk-text-lg,20px)/1.3 var(--rk-font-sans,sans-serif);
+          color:var(--rk-text,#1a1a1a);
+        ">${this._escape(title)}</h3>
+        ${description ? `<p style="
+          margin:0 0 var(--rk-space-4,16px);
+          font:400 var(--rk-text-sm,13px)/1.6 var(--rk-font-sans);
+          color:var(--rk-text-tertiary,#6b6b66);
+        ">${this._escape(description)}</p>` : `<div style="margin-bottom:var(--rk-space-4,16px)"></div>`}
+        <div class="rk-form__fields">${fieldHTML}</div>
+        <button type="button" class="rk-form__submit"
+          onclick="(function(btn){
+            const form = btn.closest('.rk-form');
+            const fields = form.querySelectorAll('rk-field');
+            const result = {};
+            fields.forEach(f => {
+              const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
+              const type = f.getAttribute('type') || 'text';
+              let val;
+              if(type==='rating'){
+                const lastActive = f.querySelector('.rk-field__star--active');
+                val = lastActive ? Number(lastActive.dataset.value) : 0;
+              } else if(type==='checkbox'){
+                val = f.querySelector('input')?.checked ?? false;
+              } else {
+                val = f.querySelector('input,textarea,select')?.value ?? '';
+              }
+              result[label] = val;
+            });
+            console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
+            btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4\uFF08\u89C1\u63A7\u5236\u53F0\uFF09';
+            btn.style.background = 'var(--rk-tone-success-bg)';
+            btn.style.color = 'var(--rk-tone-success-border)';
+            btn.style.borderColor = 'var(--rk-tone-success-border)';
+            btn.disabled = true;
+          })(this)"
+          style="
+            display:inline-flex;align-items:center;gap:6px;
+            padding:var(--rk-space-2,8px) var(--rk-space-6,24px);
+            background:var(--rk-accent,#0267a5);color:white;
+            border:1px solid var(--rk-accent,#0267a5);
+            border-radius:var(--rk-radius-sm,6px);
+            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
+            cursor:pointer;transition:all 150ms;
+          "
+          onmouseover="if(!this.disabled)this.style.background='var(--rk-accent-hover)'"
+          onmouseout="if(!this.disabled)this.style.background='var(--rk-accent)'"
+        >${this._escape(submitLabel)}</button>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-field", RkField);
+customElements.define("rk-form", RkForm);

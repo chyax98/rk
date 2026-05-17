@@ -313,9 +313,65 @@ B --> A: 响应
 <!-- preset: globe | particles | wave | torus -->
 ```
 
+### rk-badge & rk-badge-group — 标签组
+
+```html
+<rk-badge-group>
+  <rk-badge color="blue">TypeScript</rk-badge>
+  <rk-badge color="green" icon="✓">已上线</rk-badge>
+  <rk-badge color="orange">Beta</rk-badge>
+  <rk-badge color="red">Breaking</rk-badge>
+  <rk-badge color="purple">实验性</rk-badge>
+  <rk-badge color="gray">已废弃</rk-badge>
+  <rk-badge color="accent">核心功能</rk-badge>
+</rk-badge-group>
+
+<!-- standalone -->
+<rk-badge color="blue">TypeScript</rk-badge>
+<!-- color: blue | green | red | orange | purple | gray | accent -->
+```
+
+### rk-kanban — 看板
+
+```html
+<rk-kanban>
+  <rk-kanban-col title="待办">
+    <rk-kanban-card priority="high" tag="bug" assignee="张三" due="05-20">
+      修复登录问题
+    </rk-kanban-card>
+    <rk-kanban-card priority="medium" tag="feature">
+      重写文档
+    </rk-kanban-card>
+  </rk-kanban-col>
+  <rk-kanban-col title="进行中" accent="blue">
+    <rk-kanban-card tag="design">设计系统扩展</rk-kanban-card>
+  </rk-kanban-col>
+  <rk-kanban-col title="完成" done>
+    <rk-kanban-card>CLI 重写</rk-kanban-card>
+  </rk-kanban-col>
+</rk-kanban>
+<!-- priority: high | medium | low -->
+<!-- accent: blue | green | orange | red -->
+<!-- done: 完成列（绿色顶部边框）-->
+```
+
+### rk-form — 结构化反馈表单
+
+```html
+<rk-form title="文档审阅" submit-label="提交反馈" description="请对文档提供意见。">
+  <rk-field label="整体评分" type="rating" max="5" required />
+  <rk-field label="主要问题" type="textarea" placeholder="描述问题..." />
+  <rk-field label="优先级" type="select" options="高,中,低" />
+  <rk-field label="联系方式" type="text" placeholder="邮箱或姓名" />
+  <rk-field label="同意公开" type="checkbox" placeholder="允许公开此反馈" />
+</rk-form>
+<!-- type: text | textarea | select | rating | checkbox | number -->
+<!-- 提交后结果以 JSON 输出到浏览器控制台，Agent 可通过截图或 feedback 命令获取 -->
+```
+
 ---
 
-## 4. 设计规则（Anti-Slop）
+## 4.
 
 来源：html-anything、md2html、open-design 最佳实践。
 
