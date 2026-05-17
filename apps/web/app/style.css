@@ -1753,6 +1753,73 @@ textarea {
   color: var(--rk-text-tertiary, #9ca3af);
 }
 
+.rk-version-tab {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 190;
+  border: 1px solid var(--rk-border, #e5e7eb);
+  border-radius: 999px;
+  background: var(--rk-surface, #fff);
+  color: var(--rk-text-secondary, #6b7280);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.rk-version-tab__old {
+  margin-left: 6px;
+  color: #f59e0b;
+  font-weight: 700;
+}
+.rk-version-panel {
+  position: fixed;
+  left: 16px;
+  bottom: 54px;
+  z-index: 190;
+  width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--rk-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--rk-surface, #fff);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  padding: 8px;
+}
+.rk-version-panel__header {
+  color: var(--rk-text, #111);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 6px 8px;
+}
+.rk-version-item {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--rk-text-secondary, #6b7280);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 6px;
+  text-align: left;
+}
+.rk-version-item:hover,
+.rk-version-item.is-current {
+  background: var(--rk-bg-secondary, #f9fafb);
+  border-color: var(--rk-border, #e5e7eb);
+}
+.rk-version-item__num { font-weight: 700; color: var(--rk-text, #111); }
+.rk-version-item__time { flex: 1; font-size: 11px; }
+.rk-version-item__badge {
+  background: var(--rk-accent, #2563eb);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 1px 5px;
+}
+
 @media (max-width: 768px) {
   .rk-html-body {
     max-width: 100%;
