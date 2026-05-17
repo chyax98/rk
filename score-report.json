@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-05-17T17:31:42.021Z",
-  "total": 94,
+  "timestamp": "2026-05-17T18:09:40.761Z",
+  "total": 99,
   "maxTotal": 100,
-  "percentage": 94,
+  "percentage": 99,
   "dimensions": [
     {
       "name": "渲染质量",
@@ -11,7 +11,7 @@
       "percentage": 100,
       "details": [
         "✓ WC 数量: 24/24+",
-        "✓ Bundle: 72.7KB (< 100KB)",
+        "✓ Bundle: 74.1KB (< 100KB)",
         "✓ 图表引擎: mermaid, d2, graphviz, plantuml (4/4)",
         "✓ HTML processor 完整",
         "✓ Kroki SSR 集成",
@@ -35,13 +35,14 @@
     },
     {
       "name": "CLI 成熟度",
-      "score": 17,
+      "score": 19,
       "max": 20,
-      "percentage": 85,
+      "percentage": 95,
       "details": [
         "✓ 命令: push, feedback, open, status, serve (5/5)",
         "✓ 错误处理 (try/catch)",
         "✓ Lock 文件管理",
+        "✓ --help 支持",
         "✓ 可配置端点",
         "✓ JSON 输出支持",
         "✓ Markdown 格式输出"
@@ -62,9 +63,9 @@
     },
     {
       "name": "生产就绪",
-      "score": 17,
+      "score": 20,
       "max": 20,
-      "percentage": 85,
+      "percentage": 100,
       "details": [
         "✓ Skip link (a11y)",
         "✓ lang=\"zh-CN\"",
@@ -72,8 +73,9 @@
         "✓ 主题提取确定性 (useMemo)",
         "✓ 评论按钮 JS 定位",
         "✓ HTML 包装剥离 (hydration fix)",
+        "✓ DB 安全创建",
         "✓ 架构文档 + ADR",
-        "△ Authoring skill 较小 (17KB)",
+        "✓ Authoring skill (22KB)",
         "✓ 服务器健康检查通过"
       ]
     }

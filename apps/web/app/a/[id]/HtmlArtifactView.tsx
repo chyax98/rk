@@ -16,7 +16,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [localComments, setLocalComments] = useState<Comment[]>(
-    comments.map((c) => ({ ...c, anchor: (c as any).blockId || c.anchor || '' })),
+    comments.map((c) => ({ ...c, anchor: c.anchor || '' })),
   );
   const [activeComment, setActiveComment] = useState<string | null>(null);
   const [adding, setAdding] = useState<AddingState | null>(null);
@@ -198,7 +198,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           ...prev,
           {
             id: c.id,
-            anchor: c.blockId || c.anchor || adding.anchor,
+            anchor: c.anchor || adding.anchor,
             text: c.text,
             status: c.status || 'open',
             createdAt: c.createdAt,

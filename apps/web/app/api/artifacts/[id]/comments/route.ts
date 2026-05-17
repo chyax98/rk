@@ -2,9 +2,17 @@ import { addComment } from '../../../../../lib/store.ts';
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = await req.json();
-  const result = await addComment(id, body.anchor || body.blockId, body.text || '', body.selector || null);
-  if (!result.ok)
-    return Response.json({ ok: false, error: result.error }, { status: result.status || 400 });
-  return Response.json({ ok: true, comment: result.comment });
+  try {
+    const body = await req.json();
+    if (!body.text?.trim()) {
+      return Response.json({ ok: false, error: 'text required' }, { status: 400 });
+    }
+    const result = await addComment(id, body.anchor || body.blockId, body.text, body.selector || null);
+    if (!result.ok)
+      return Response.json({ ok: false, error: result.error }, { status: result.status || 400 });
+    return Response.json({ ok: true, comment: result.comment });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'internal error';
+    return Response.json({ ok: false, error: message }, { status: 500 });
+  }
 }
