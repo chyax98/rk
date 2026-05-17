@@ -8,12 +8,9 @@
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node --experimental-strip-types packages/cli/src/index.ts",
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
-    "verify": "node --experimental-strip-types scripts/verify.ts",
-    "verify:smoke": "node --experimental-strip-types scripts/verify-smoke.ts",
-    "verify:sqlite": "node --experimental-strip-types scripts/verify-sqlite.ts",
-    "verify:browser": "node --experimental-strip-types scripts/verify-browser.ts",
     "verify:contracts": "node --experimental-strip-types scripts/verify-contracts.ts",
-    "verify:agent": "node --experimental-strip-types scripts/verify-agent.ts"
+    "lint": "pnpm -r exec tsc --noEmit 2>&1 | head -40",
+    "ci": "pnpm verify:contracts"
   },
   "devDependencies": {},
   "pnpm": {

@@ -735,3 +735,232 @@ button, textarea { font: inherit; }
   color: var(--rk-text-tertiary);
   padding: var(--rk-space-1) var(--rk-space-2);
 }
+
+/* ─── Feishu-model artifact layout ───────────────────────────────────────── */
+/* Replaces .rk-page / .rk-floating-tools / .rk-review-pane complex model.  */
+
+.rk-artifact {
+  min-height: 100vh;
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  padding: clamp(24px, 5vw, 64px) clamp(12px, 3vw, 40px);
+}
+
+/* Each block is a flex row: content + 44px right rail */
+.rk-block-row {
+  display: flex;
+  align-items: flex-start;
+  max-width: 960px;
+  margin: 0 auto;
+  gap: 0;
+  position: relative;
+}
+.rk-block-row > .rk-block {
+  flex: 1;
+  min-width: 0;
+}
+.rk-block-row.is-active > .rk-block {
+  border-left: 2px solid var(--rk-accent);
+  padding-left: calc(var(--rk-space-4) - 2px);
+  border-radius: 0 var(--rk-radius-md) var(--rk-radius-md) 0;
+  background: var(--rk-accent-subtle);
+}
+
+/* Right-margin comment rail */
+.rk-block-rail {
+  flex-shrink: 0;
+  width: 44px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 0.75rem;
+  padding-left: 6px;
+}
+
+/* Comment count bubble — amber, like Feishu */
+.rk-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: var(--rk-radius-full);
+  border: 1.5px solid transparent;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.rk-bubble:hover { transform: scale(1.1); box-shadow: 0 2px 8px rgba(245,158,11,.35); }
+.rk-bubble.is-active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,.25); }
+
+/* Add-comment button — hidden until hover */
+.rk-bubble-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--rk-radius-full);
+  border: 1.5px dashed var(--rk-border);
+  background: transparent;
+  color: var(--rk-muted);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.rk-block-row:hover .rk-bubble-add { opacity: 1; }
+.rk-bubble-add:hover { border-color: var(--rk-accent); color: var(--rk-accent); background: var(--rk-accent-subtle); }
+
+/* ─── Floating comment thread (Feishu panel) ──────────────────────────────── */
+.rk-comment-thread {
+  position: fixed;
+  top: 50%;
+  right: var(--rk-space-5);
+  transform: translateY(-50%);
+  z-index: var(--rk-z-overlay);
+  width: 300px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  border: var(--rk-border-width) solid var(--rk-rail-border);
+  border-radius: var(--rk-radius-xl);
+  background: var(--rk-rail-bg);
+  box-shadow: var(--rk-shadow-xl);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+.rk-thread-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--rk-space-3) var(--rk-space-4);
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-semibold);
+  color: var(--rk-text-secondary);
+}
+.rk-thread-close {
+  border: 0;
+  background: transparent;
+  color: var(--rk-muted);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+.rk-thread-close:hover { color: var(--rk-text); }
+.rk-thread-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--rk-space-3) var(--rk-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-3);
+}
+.rk-thread-empty {
+  color: var(--rk-muted);
+  font-size: var(--rk-text-sm);
+  text-align: center;
+  padding: var(--rk-space-5) 0;
+}
+.rk-thread-input {
+  border-top: var(--rk-border-width) solid var(--rk-border-subtle);
+  padding: var(--rk-space-3) var(--rk-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rk-space-2);
+}
+.rk-thread-input textarea {
+  width: 100%;
+  resize: none;
+  border: var(--rk-border-width) solid var(--rk-border);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text);
+  font-size: var(--rk-text-sm);
+  font-family: inherit;
+}
+.rk-thread-input textarea:focus { outline: none; border-color: var(--rk-accent); }
+.rk-send-btn {
+  align-self: flex-end;
+  border: 0;
+  background: var(--rk-btn-primary);
+  color: var(--rk-btn-primary-text);
+  border-radius: var(--rk-radius-md);
+  padding: var(--rk-space-2) var(--rk-space-4);
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-semibold);
+  cursor: pointer;
+}
+.rk-send-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── Comment card (inside thread) ─────────────────────────────────────────── */
+.rk-comment-card {
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  background: var(--rk-surface-raised);
+  padding: var(--rk-space-3);
+  font-size: var(--rk-text-sm);
+}
+.rk-comment-quote {
+  display: block;
+  border-left: 3px solid var(--rk-accent);
+  background: var(--rk-accent-subtle);
+  border-radius: 0 var(--rk-radius-sm) var(--rk-radius-sm) 0;
+  padding: var(--rk-space-2) var(--rk-space-3);
+  margin-bottom: var(--rk-space-2);
+  color: var(--rk-text-secondary);
+  font-style: italic;
+  font-size: var(--rk-text-xs);
+}
+.rk-comment-text {
+  color: var(--rk-text);
+  line-height: 1.5;
+  margin: 0 0 var(--rk-space-2);
+}
+.rk-comment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rk-space-2);
+  color: var(--rk-muted);
+  font-size: var(--rk-text-xs);
+}
+.rk-comment-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+}
+.rk-comment-actions button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--rk-muted);
+  font-size: var(--rk-text-xs);
+  padding: 2px;
+  border-radius: var(--rk-radius-sm);
+}
+.rk-comment-actions button:hover { color: var(--rk-accent); }
+.rk-comment-status {
+  color: var(--rk-muted);
+  font-size: var(--rk-text-xs);
+}
+.rk-comment-open .rk-comment-status { color: var(--rk-tone-warning); }
+.rk-comment-resolved .rk-comment-status { color: var(--rk-tone-success); }
+
+@media (max-width: 760px) {
+  .rk-artifact { padding: var(--rk-space-4); }
+  .rk-block-row { max-width: 100%; }
+  .rk-comment-thread { right: var(--rk-space-3); left: var(--rk-space-3); width: auto; }
+}
+@media print {
+  .rk-block-rail, .rk-bubble, .rk-bubble-add, .rk-comment-thread { display: none !important; }
+  .rk-block-row > .rk-block { flex: 1; }
+  .rk-block-row.is-active > .rk-block { border-left: none; background: none; padding: 0; }
+}
