@@ -172,14 +172,24 @@ class RkChart extends HTMLElement {
           })),
         }];
       } else {
-        option.xAxis = { type: 'category', data: xData };
-        option.yAxis = { type: 'value' };
+        // Smart Y-axis formatter for large numbers
+        const allVals = seriesCols.flatMap(({ i: si }) => body.map(r => parseFloat(r[si] || '0')));
+        const maxVal = Math.max(...allVals.filter(v => !isNaN(v)));
+        const axisFormatter = maxVal >= 10000
+          ? (v: number) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
+              : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)
+          : (v: number) => String(v);
+
+        option.grid = { left: '12%', right: '5%', top: '15%', bottom: '10%', containLabel: true };
+        option.xAxis = { type: 'category', data: xData, axisLabel: { interval: 0, rotate: xData.length > 6 ? 30 : 0 } };
+        option.yAxis = { type: 'value', axisLabel: { formatter: axisFormatter } };
         option.series = seriesCols.map(({ h, i: si }) => ({
           name: h,
           type: seriesType,
           data: body.map(r => parseFloat(r[si] || '0')),
-          ...(type === 'area' ? { areaStyle: {} } : {}),
+          ...(type === 'area' ? { areaStyle: { opacity: 0.2 } } : {}),
           smooth: type === 'line' || type === 'area',
+          symbolSize: 6,
         }));
       }
 
