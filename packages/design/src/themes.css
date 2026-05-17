@@ -649,6 +649,6 @@
 
   --rk-shadow: var(--rk-shadow-sm);
 
-  --rk-font-sans: "IBM Plex Sans
+  --rk-font-sans: "IBM Plex Sans", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   --rk-font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
 }
