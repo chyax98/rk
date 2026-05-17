@@ -1,138 +1,274 @@
 #!/usr/bin/env node
+/**
+ * RenderKit CLI — HTML-first agent loop
+ *
+ * rk push <file.html>      Upload or update an artifact
+ * rk feedback <file.html>  Get open comments as JSON (for agent)
+ * rk open <file.html>      Open artifact in browser
+ * rk status <file.html>    Show artifact status
+ * rk serve [--port 3737]   Start the local dev server
+ */
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseRK } from '@renderkit/dsl';
-import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, BLOCK_ALIASES, ERROR_CODES, getRecipe, listRecipeSurfaces, listDesignResources, getDesignResource, listDesignResourcePriorities, getDesignRecommendation } from '@renderkit/shared';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getEndpoint() {
+  return process.env.RENDERKIT_ENDPOINT || 'http://localhost:3737';
+}
+
+/** .rk-lock/<basename>.json  (basename = filename without extension) */
+function getLockPath(file) {
+  const dir = path.dirname(file);
+  const base = path.basename(file, path.extname(file));
+  return path.join(dir, '.rk-lock', `${base}.json`);
+}
+
+async function readLock(file) {
+  try {
+    const raw = await fs.readFile(getLockPath(file), 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function writeLock(file, data) {
+  const lockPath = getLockPath(file);
+  await fs.mkdir(path.dirname(lockPath), { recursive: true });
+  await fs.writeFile(lockPath, JSON.stringify({ ...data, lockedAt: new Date().toISOString() }, null, 2));
+}
+
+function output(data, json = true) {
+  if (json) {
+    console.log(JSON.stringify(data, null, 2));
+  } else {
+    // Human-readable fallback
+    if (data.ok === false) {
+      console.error('Error:', data.error || JSON.stringify(data));
+    } else {
+      console.log(JSON.stringify(data, null, 2));
+    }
+  }
+}
+
+function openUrl(url) {
+  const platform = process.platform;
+  const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'start' : 'xdg-open';
+  spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref();
+}
+
+function formatFeedbackMarkdown(feedback) {
+  if (!feedback.openComments?.length) {
+    return `# RenderKit Feedback\n\nartifactId: ${feedback.artifactId}\n\n✅ 暂无待处理评论。\n`;
+  }
+  const lines = [
+    `# RenderKit Feedback`,
+    ``,
+    `artifactId: ${feedback.artifactId}`,
+    `revision: ${feedback.currentRevision}`,
+    `url: ${getEndpoint()}${feedback.url}`,
+    ``,
+    `## 待处理评论（${feedback.openComments.length} 条）`,
+    ``,
+  ];
+  for (const c of feedback.openComments) {
+    lines.push(`### ${c.anchor || '(全局)'}`);
+    lines.push(`- **状态**: ${c.status}`);
+    lines.push(`- **时间**: ${c.createdAt}`);
+    lines.push(`- **内容**: ${c.text}`);
+    if (c.selector) lines.push(`- **选区**: \`${c.selector}\``);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+// ── Commands ──────────────────────────────────────────────────────────────────
 
 const program = new Command();
-program.name('renderkit').description('Local Agent artifact renderer').version('0.0.1');
+program
+  .name('rk')
+  .description('RenderKit CLI — push HTML artifacts and get feedback')
+  .version('0.1.0');
 
-program.command('validate <file>').option('--json', 'json output').action(async (file, opts) => {
-  const source = await fs.readFile(file, 'utf8');
-  const result = parseRK(source, file);
-  output(result, opts.json);
-  process.exit(result.ok ? 0 : 1);
-});
+// rk push <file.html>
+program
+  .command('push <file>')
+  .description('Upload or update an HTML artifact')
+  .option('--open', 'Open in browser after push')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .option('--json', 'Force JSON output (default: true)')
+  .action(async (file, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    let html;
+    try {
+      html = await fs.readFile(file, 'utf8');
+    } catch {
+      output({ ok: false, error: `Cannot read file: ${file}` });
+      process.exit(1);
+    }
 
-program.command('push <file>').option('--open', 'open browser').option('--json', 'json output').option('--resolve <ids>', 'comma separated comment ids').action(async (file, opts) => {
-  const source = await fs.readFile(file, 'utf8');
-  const validation = parseRK(source, file);
-  if (!validation.ok) { output(validation, opts.json); process.exit(1); }
-  const endpoint = getEndpoint();
-  const lock = await readLock(file);
-  const resolvedCommentIds = opts.resolve ? opts.resolve.split(',').map(s => s.trim()).filter(Boolean) : [];
-  const url = lock?.artifactId ? `${endpoint}/api/artifacts/${lock.artifactId}/revisions` : `${endpoint}/api/artifacts`;
-  const body = lock?.artifactId ? { source, resolvedCommentIds } : { source, title: validation.model.title };
-  let res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  let json = await res.json();
-  if ((!res.ok || !json.ok) && lock?.artifactId && JSON.stringify(json).includes('RK_ARTIFACT_NOT_FOUND')) {
-    res = await fetch(`${endpoint}/api/artifacts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ source, title: validation.model.title }) });
-    json = await res.json();
-  }
-  if (!res.ok || !json.ok) { output(json, opts.json); process.exit(1); }
-  const artifactId = json.artifactId;
-  await writeLock(file, { artifactId, url: json.url, lastRevision: json.revision, endpoint });
+    const lock = await readLock(file);
+    const title = path.basename(file, path.extname(file));
 
-  const result = { ok: true, artifactId, revision: json.revision, url: json.url, diff: json.diff, resolved: json.resolved || [] };
-  output(result, opts.json);
+    let res, json;
+    if (lock?.artifactId) {
+      // Update existing artifact
+      res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/revisions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ html }),
+      }).catch(() => null);
 
-  if (opts.open && json.url) {
-    try { openUrl(json.url); } catch (_e) { /* browser open failure is non-fatal */ }
-  }
-});
+      // If artifact not found on server, create new
+      if (!res || !res.ok) {
+        const err = res ? await res.json().catch(() => ({})) : {};
+        if (!res || JSON.stringify(err).includes('NOT_FOUND')) {
+          res = await fetch(`${endpoint}/api/artifacts`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ html, title }),
+          });
+        }
+      }
+    } else {
+      res = await fetch(`${endpoint}/api/artifacts`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ html, title }),
+      });
+    }
 
-program.command('status <target>').option('--json', 'json output').action(async (target, opts) => {
-  const endpoint = getEndpoint();
-  const id = target.endsWith('.md') || target.endsWith('.rk') ? (await readLock(target))?.artifactId : target;
-  if (!id) { output({ ok: false, error: 'No artifact lock found' }, opts.json); process.exit(1); }
-  const res = await fetch(`${endpoint}/api/artifacts/${id}`);
-  const json = await res.json();
-  output(json, opts.json);
-  process.exit(res.ok ? 0 : 1);
-});
+    if (!res) {
+      output({ ok: false, error: `Cannot connect to server at ${endpoint}. Is it running? Try: rk serve` });
+      process.exit(1);
+    }
 
-program.command('feedback <target>').option('--json', 'json output').action(async (target, opts) => {
-  const endpoint = getEndpoint();
-  const id = target.endsWith('.md') || target.endsWith('.rk') ? (await readLock(target))?.artifactId : target;
-  if (!id) { output({ ok: false, error: 'No artifact lock found' }, opts.json); process.exit(1); }
-  const res = await fetch(`${endpoint}/api/artifacts/${id}/feedback`);
-  const json = await res.json();
-  output(json, opts.json);
-  process.exit(res.ok ? 0 : 1);
-});
+    json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
 
-program.command('surfaces').option('--json', 'json output').action((opts) => {
-  output({ ok: true, surfaces: SURFACE_NAMES.map(surface => ({ surface, recipe: getRecipe(surface) || null })) }, opts.json);
-});
-program.command('themes').option('--json', 'json output').action((opts) => {
-  output({ ok: true, themes: THEME_NAMES }, opts.json);
-});
-program.command('blocks').option('--json', 'json output').action((opts) => {
-  output({ ok: true, blocks: BLOCK_TYPES }, opts.json);
-});
-program.command('aliases').option('--json', 'json output').action((opts) => {
-  output({ ok: true, aliases: BLOCK_ALIASES }, opts.json);
-});
-program.command('errors').option('--json', 'json output').action((opts) => {
-  output({ ok: true, errors: ERROR_CODES }, opts.json);
-});
+    const artifactUrl = `${endpoint}/a/${json.artifactId}`;
+    await writeLock(file, { artifactId: json.artifactId, url: artifactUrl, endpoint });
 
-const recipes = program.command('recipes').description('inspect Agent authoring recipes');
-recipes.command('list').option('--json', 'json output').action((opts) => {
-  const surfaces = listRecipeSurfaces().map(surface => ({ surface, ...getRecipe(surface) }));
-  output({ ok: true, surfaces }, opts.json);
-});
-recipes.command('show <surface>').option('--json', 'json output').action((surface, opts) => {
-  const recipe = getRecipe(surface);
-  if (!recipe) { output({ ok: false, error: `Unknown recipe surface: ${surface}`, surfaces: listRecipeSurfaces() }, opts.json); process.exit(1); }
-  output({ ok: true, surface, recipe }, opts.json);
-});
+    const result = {
+      ok: true,
+      artifactId: json.artifactId,
+      revision: json.revision,
+      url: artifactUrl,
+    };
+    output(result);
 
-const design = program.command('design').description('inspect local design resource assets');
-design.command('resources').option('--json', 'json output').option('--priority <priority>', 'filter priority, e.g. P0/P1/P2').action((opts) => {
-  output({ ok: true, priorities: listDesignResourcePriorities(), resources: listDesignResources({ priority: opts.priority }) }, opts.json);
-});
-design.command('resource <id>').option('--json', 'json output').action((id, opts) => {
-  const resource = getDesignResource(id);
-  if (!resource) { output({ ok: false, error: `Unknown design resource: ${id}`, resources: listDesignResources().map(r => r.id) }, opts.json); process.exit(1); }
-  output({ ok: true, resource }, opts.json);
-});
-design.command('recommend').requiredOption('--surface <surface>', 'target surface').option('--json', 'json output').action((opts) => {
-  const recommendation = getDesignRecommendation(opts.surface);
-  if (!recommendation) { output({ ok: false, error: `Unknown surface: ${opts.surface}`, surfaces: listRecipeSurfaces() }, opts.json); process.exit(1); }
-  output({ ok: true, recommendation }, opts.json);
-});
+    if (opts.open) openUrl(artifactUrl);
+  });
 
-const server = program.command('server').description('manage local RenderKit server');
-server.command('start').option('--port <port>', 'port', '3737').action(async (opts) => {
-  const root = repoRoot();
-  const child = spawn('pnpm', ['--filter', '@renderkit/web', 'dev', '--', '-p', String(opts.port)], { cwd: root, stdio: 'inherit' });
-  child.on('exit', code => process.exit(code ?? 0));
-});
-server.command('status').option('--json', 'json output').action(async (opts) => {
-  const endpoint = getEndpoint();
-  try {
-    const res = await fetch(`${endpoint}/api/health`);
-    const json = await res.json();
-    output({ ok: res.ok, endpoint, ...json }, opts.json);
-    process.exit(res.ok ? 0 : 1);
-  } catch (e) {
-    output({ ok: false, endpoint, error: String(e.message || e) }, opts.json);
-    process.exit(2);
-  }
-});
+// rk feedback <file.html>
+program
+  .command('feedback <file>')
+  .description('Get open comments for an artifact (JSON for agent, --format md for human)')
+  .option('--format <fmt>', 'Output format: json or md', 'json')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
 
-program.parseAsync().catch(e => { console.error(e); process.exit(2); });
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/feedback`);
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
 
-function getEndpoint() { return process.env.RENDERKIT_ENDPOINT || 'http://localhost:3737'; }
-function lockPath(file) { const p = path.resolve(file); return path.join(path.dirname(p), `.${path.basename(p).replace(/\.(rk\.)?md$/, '')}.rk.lock.json`); }
-async function readLock(file) { try { return JSON.parse(await fs.readFile(lockPath(file), 'utf8')); } catch { return null; } }
-async function writeLock(file, data) { await fs.writeFile(lockPath(file), JSON.stringify(data, null, 2)); }
-function output(obj, forceJson) { if (forceJson || !process.stdout.isTTY) console.log(JSON.stringify(obj, null, 2)); else pretty(obj); }
-function pretty(obj) { if (obj.ok === false) { console.error('RenderKit error'); console.error(JSON.stringify(obj, null, 2)); return; } console.log(JSON.stringify(obj, null, 2)); }
-function openUrl(url) { const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'cmd' : 'xdg-open'; const args = process.platform === 'win32' ? ['/c', 'start', url] : [url]; const child = spawn(cmd, args, { detached: true, stdio: 'ignore' }); child.on('error', () => { /* opener missing — non-fatal */ }); child.unref(); }
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
 
-function repoRoot() { return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'); }
+    if (opts.format === 'md') {
+      console.log(formatFeedbackMarkdown(json));
+    } else {
+      output({
+        ok: true,
+        artifactId: json.artifactId,
+        url: `${endpoint}${json.url}`,
+        revision: json.currentRevision,
+        openCount: json.openComments?.length ?? 0,
+        comments: json.openComments ?? [],
+      });
+    }
+  });
+
+// rk open <file.html>
+program
+  .command('open <file>')
+  .description('Open artifact in browser')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+    const url = `${endpoint}/a/${lock.artifactId}`;
+    openUrl(url);
+    output({ ok: true, url });
+  });
+
+// rk status <file.html>
+program
+  .command('status <file>')
+  .description('Show artifact status and comment counts')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}`);
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
+
+    output({
+      ok: true,
+      artifactId: lock.artifactId,
+      url: `${endpoint}/a/${lock.artifactId}`,
+      revision: json.revision,
+      comments: json.comments,
+    });
+  });
+
+// rk serve
+program
+  .command('serve')
+  .description('Start the local RenderKit web server')
+  .option('-p, --port <port>', 'Port number', '3737')
+  .action((opts) => {
+    const root = path.resolve(__dirname, '../../..'); // repo root
+    console.log(`Starting RenderKit server on port ${opts.port}...`);
+    const child = spawn(
+      'pnpm',
+      ['--filter', '@renderkit/web', 'dev', '--', '-p', String(opts.port)],
+      { cwd: root, stdio: 'inherit' },
+    );
+    child.on('error', (e) => {
+      console.error('Failed to start server:', e.message);
+      process.exit(1);
+    });
+  });
+
+program.parse();
