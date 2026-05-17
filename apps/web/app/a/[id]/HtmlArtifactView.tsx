@@ -4,55 +4,53 @@ import Script from 'next/script';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
 
-interface Anchor {
-  id: string;
-  anchor: string;
-  elementTag: string;
-  position: number;
-  textPreview: string | null;
-}
-
-interface AddingState {
-  anchor: string;
-  text: string;
-}
+interface AddingState { anchor: string; text: string }
+interface BtnState { anchor: string; top: number; left: number }
 
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
   const { meta, revision, anchors, comments } = artifact;
 
   const bodyRef = useRef<HTMLDivElement>(null);
-  const [panelOpen, setPanelOpen] = useState(false); // default: closed, full-width doc
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Extract theme from processedHtml (agent sets data-rk-theme in their HTML)
+  const theme = useMemo(() => {
+    const m = revision.processedHtml?.match(/data-rk-theme="([^"]+)"/);
+    return m?.[1] || 'paper-light';
+  }, [revision.processedHtml]);
+
+  const [panelOpen, setPanelOpen] = useState(false);
   const [localComments, setLocalComments] = useState<Comment[]>(
     comments.map((c) => ({ ...c, anchor: (c as any).blockId || c.anchor || '' })),
   );
   const [activeComment, setActiveComment] = useState<string | null>(null);
-  const [adding, setAdding] = useState<AddingState | null>(null); // which anchor is being commented
+  const [adding, setAdding] = useState<AddingState | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [hoveredAnchor, setHoveredAnchor] = useState<string | null>(null);
+  // Floating "+" button — positioned via getBoundingClientRect (not rendered inside innerHTML)
+  const [addBtn, setAddBtn] = useState<BtnState | null>(null);
 
-  // Only meaningful anchors
   const visibleAnchors = useMemo(
     () =>
       anchors.filter(
-        (a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3', 'h4', 'p', 'section'].includes(a.elementTag),
+        (a) =>
+          a.elementTag.startsWith('rk-') ||
+          ['h1', 'h2', 'h3', 'h4', 'p', 'section', 'div'].includes(a.elementTag),
       ),
     [anchors],
   );
 
-  // anchor → label map
   const anchorLabel = useMemo(() => {
     const m = new Map<string, string>();
-    for (const a of visibleAnchors) m.set(a.anchor, a.textPreview?.slice(0, 60) || a.anchor);
+    for (const a of visibleAnchors)
+      m.set(a.anchor, a.textPreview?.slice(0, 60) || a.anchor);
     return m;
   }, [visibleAnchors]);
 
-  // anchor → position map
   const anchorPos = useMemo(
     () => new Map(visibleAnchors.map((a) => [a.anchor, a.position])),
     [visibleAnchors],
   );
 
-  // Open comments sorted by document position
   const openComments = useMemo(
     () =>
       localComments
@@ -61,34 +59,41 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     [localComments, anchorPos],
   );
 
-  // Auto-open panel when there are comments
+  // Auto-open panel when comments exist
   useEffect(() => {
     if (openComments.length > 0) setPanelOpen(true);
   }, [openComments.length]);
 
-  // Attach hover listeners to anchor elements
+  // Attach hover → floating "+" button via JS getBoundingClientRect
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
 
-    const onMouseEnter = (e: Event) => {
+    const show = (e: Event) => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       const target = (e.target as HTMLElement).closest('[data-rk-anchor]') as HTMLElement | null;
-      if (target) setHoveredAnchor(target.dataset.rkAnchor || null);
-    };
-    const onMouseLeave = (e: Event) => {
-      const related = (e as MouseEvent).relatedTarget as HTMLElement | null;
-      if (!related?.closest('[data-rk-anchor]')) setHoveredAnchor(null);
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      setAddBtn({
+        anchor: target.dataset.rkAnchor || '',
+        top: rect.top + rect.height / 2 - 12, // vertically centered on block
+        left: rect.right + 10,                 // 10px right of block edge
+      });
     };
 
-    el.addEventListener('mouseover', onMouseEnter);
-    el.addEventListener('mouseout', onMouseLeave);
+    const hide = () => {
+      hideTimerRef.current = setTimeout(() => setAddBtn(null), 300);
+    };
+
+    el.addEventListener('mouseover', show);
+    el.addEventListener('mouseout', hide);
     return () => {
-      el.removeEventListener('mouseover', onMouseEnter);
-      el.removeEventListener('mouseout', onMouseLeave);
+      el.removeEventListener('mouseover', show);
+      el.removeEventListener('mouseout', hide);
     };
   }, []);
 
-  // Highlight anchor elements that have comments
+  // Mark anchors that have comments
   useEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
@@ -100,26 +105,23 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     }
   }, [openComments, visibleAnchors]);
 
-  // Click panel comment → scroll to block
   const scrollToAnchor = useCallback((anchor: string, commentId: string) => {
     setActiveComment(commentId);
-    if (!bodyRef.current) return;
-    const target = bodyRef.current.querySelector(`[data-rk-anchor="${anchor}"]`);
+    const target = bodyRef.current?.querySelector(`[data-rk-anchor="${anchor}"]`);
     if (!target) return;
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     target.classList.add('rk-comment-flash');
     setTimeout(() => target.classList.remove('rk-comment-flash'), 1400);
   }, []);
 
-  // Open inline comment box for an anchor
   const openAdding = useCallback((anchor: string) => {
     setAdding({ anchor, text: '' });
+    setAddBtn(null);
     setPanelOpen(true);
   }, []);
 
-  // Submit comment
   const submitComment = useCallback(async () => {
-    if (!adding || !adding.text.trim()) return;
+    if (!adding?.text.trim()) return;
     setSubmitting(true);
     try {
       const res = await fetch(`/api/artifacts/${meta.id}/comments`, {
@@ -132,13 +134,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         const c = data.comment;
         setLocalComments((prev) => [
           ...prev,
-          {
-            id: c.id,
-            anchor: c.blockId || adding.anchor,
-            text: c.text,
-            status: c.status || 'open',
-            createdAt: c.createdAt,
-          },
+          { id: c.id, anchor: c.blockId || adding.anchor, text: c.text, status: 'open', createdAt: c.createdAt },
         ]);
         setAdding(null);
       }
@@ -148,33 +144,32 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
   }, [adding, meta.id]);
 
   return (
-    <div className={`rk-layout${panelOpen ? ' panel-open' : ''}`}>
+    <div className={`rk-layout${panelOpen ? ' panel-open' : ''}`} data-rk-theme={theme}>
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
-      {/* ── Main document ── */}
-      <div ref={bodyRef} className="rk-html-body" data-rk-theme={revision.processedHtml?.includes('data-rk-theme') ? undefined : 'paper-light'}>
+      {/* ── Document area ── */}
+      <div ref={bodyRef} className="rk-html-body">
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: server-processed HTML */}
         <div dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }} />
-
-        {/* "+ add comment" buttons — appear on hover */}
-        {visibleAnchors.map((a) =>
-          hoveredAnchor === a.anchor ? (
-            <button
-              key={a.anchor}
-              type="button"
-              className="rk-add-comment-btn"
-              style={{ '--anchor': `"${a.anchor}"` } as React.CSSProperties}
-              onClick={() => openAdding(a.anchor)}
-              title="添加评论"
-            >
-              +
-            </button>
-          ) : null,
-        )}
       </div>
 
-      {/* ── Panel toggle tab (always visible on right edge) ── */}
+      {/* ── Floating "+" button (JS-positioned, not inside innerHTML) ── */}
+      {addBtn && (
+        <button
+          type="button"
+          className="rk-add-comment-btn"
+          style={{ position: 'fixed', top: addBtn.top, left: addBtn.left }}
+          onMouseEnter={() => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }}
+          onMouseLeave={() => { hideTimerRef.current = setTimeout(() => setAddBtn(null), 300); }}
+          onClick={() => openAdding(addBtn.anchor)}
+          title="添加评论"
+        >
+          +
+        </button>
+      )}
+
+      {/* ── Panel toggle tab ── */}
       <button
         type="button"
         className="rk-panel-tab"
@@ -187,7 +182,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         )}
       </button>
 
-      {/* ── Right comment panel ── */}
+      {/* ── Comment panel ── */}
       <aside className={`rk-comment-panel${panelOpen ? ' is-open' : ''}`}>
         <div className="rk-comment-panel__header">
           <span className="rk-comment-panel__title">
@@ -199,18 +194,22 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         </div>
 
         <div className="rk-comment-panel__body">
-          {/* Inline comment input (pinned at top when adding) */}
+          {/* Inline comment input */}
           {adding && (
             <div className="rk-comment-input">
               <div className="rk-comment-input__anchor">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.6 }}>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
                 {anchorLabel.get(adding.anchor) || adding.anchor}
               </div>
               <textarea
                 className="rk-comment-input__textarea"
-                placeholder="写下评论…"
+                placeholder="写下评论… (Cmd+Enter 提交，Esc 取消)"
                 value={adding.text}
+                // biome-ignore lint/a11y/noAutofocus: intentional UX — user clicked to add comment
                 autoFocus
-                onChange={(e) => setAdding((prev) => prev && { ...prev, text: e.target.value })}
+                onChange={(e) => setAdding((p) => p && { ...p, text: e.target.value })}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitComment();
                   if (e.key === 'Escape') setAdding(null);
@@ -218,13 +217,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
                 rows={3}
               />
               <div className="rk-comment-input__actions">
-                <button
-                  type="button"
-                  className="rk-comment-input__cancel"
-                  onClick={() => setAdding(null)}
-                >
-                  取消
-                </button>
+                <button type="button" className="rk-comment-input__cancel" onClick={() => setAdding(null)}>取消</button>
                 <button
                   type="button"
                   className="rk-comment-input__submit"
@@ -237,15 +230,18 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
             </div>
           )}
 
-          {/* Comment list */}
           {openComments.length === 0 && !adding && (
-            <p className="rk-comment-panel__empty">悬停文档块，点击 + 添加评论</p>
+            <p className="rk-comment-panel__empty">
+              悬停文档块后点击 <strong>+</strong> 添加评论
+            </p>
           )}
+
           {openComments.map((c) => (
             <div
               key={c.id}
               className={`rk-comment-card${activeComment === c.id ? ' is-active' : ''}`}
               onClick={() => scrollToAnchor(c.anchor, c.id)}
+              title="点击定位到文档"
             >
               <div className="rk-comment-card__quote">
                 {anchorLabel.get(c.anchor) || c.anchor}
@@ -253,8 +249,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
               <p className="rk-comment-card__text">{c.text}</p>
               <span className="rk-comment-card__time">
                 {new Date(c.createdAt).toLocaleString('zh-CN', {
-                  month: 'numeric', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit',
+                  month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
                 })}
               </span>
             </div>
