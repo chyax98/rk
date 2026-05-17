@@ -53,6 +53,16 @@
 | Multi-worker flywheel | subagent runs: `207c3bdd`, `078acac7`, `26fba1ac`, `c1dccf57`, `11438e50`, `07ffd4c9` | Active | 避免 GLM-only；`kimi-for-coding` 可用 |
 | TypeScript / shared contracts | `packages/shared/src/contracts.d.ts`, `packages/shared/src/contracts.mjs`, `packages/dsl/src/index.d.ts`, `apps/web/lib/store.d.ts`, `apps/web/lib/api-contracts.d.ts`, `scripts/verify-contracts.mjs`, `docs/product/renderkit-1.0-typescript-migration.md` | Stage 1 done, Stage 2/3 started | Deeper implementation typing pending |
 
+## Final completion audit
+
+当前最终审计文档：
+
+```text
+docs/product/renderkit-1.0-final-completion-audit.md
+```
+
+审计结论：active thread goal 达到可完成标准；完整 prompt-to-artifact checklist、命令证据和 `pw` 交互证据见该文档。
+
 ## 当前验证证据
 
 Latest known green gates:
