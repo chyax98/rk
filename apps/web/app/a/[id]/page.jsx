@@ -1,5 +1,5 @@
 import { getArtifact } from '../../../lib/store.mjs';
-import ArtifactView from './ArtifactView.jsx';
+import ArtifactView from './ArtifactView';
 
 function blockText(block) {
   if (!block) return '';
