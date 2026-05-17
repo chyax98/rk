@@ -20,3 +20,6 @@ import './elements/rk-progress.ts';
 import './elements/rk-steps.ts';
 import './elements/rk-metric.ts';
 import './elements/rk-3d.ts';
+import './elements/rk-badge.ts';
+import './elements/rk-kanban.ts';
+import './elements/rk-form.ts';

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RenderKit — 新组件展示</title>
+  <link rel="stylesheet" href="/rk/components.css">
+  <script type="module" src="/rk/components.js"></script>
+  <style>
+    body { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem;
+           font-family: var(--rk-font-sans, system-ui, sans-serif); }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; margin: 2.5rem 0 1rem;
+         color: var(--rk-text-muted, #555); border-bottom: 1px solid var(--rk-border, #eee); padding-bottom: 0.5rem; }
+    p.desc { color: var(--rk-text-tertiary, #888); margin: 0 0 1.25rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body data-rk-theme="paper-light">
+
+  <h1>✨ 新 Web Components</h1>
+  <p>rk-badge / rk-badge-group / rk-kanban / rk-form — RenderKit 生态扩展。</p>
+
+  <!-- ── rk-badge ─────────────────────────────────────────────── -->
+  <h2>rk-badge &amp; rk-badge-group — 标签系统</h2>
+  <p class="desc">用于技术栈展示、状态标记、分类标签。</p>
+
+  <rk-badge-group>
+    <rk-badge color="blue">TypeScript</rk-badge>
+    <rk-badge color="green" icon="✓">已上线</rk-badge>
+    <rk-badge color="orange">Beta</rk-badge>
+    <rk-badge color="red" icon="⚠">Breaking Change</rk-badge>
+    <rk-badge color="purple">实验性</rk-badge>
+    <rk-badge color="gray">已废弃</rk-badge>
+    <rk-badge color="accent">核心功能</rk-badge>
+  </rk-badge-group>
+
+  <br><br>
+  <rk-badge-group>
+    <rk-badge color="blue">Next.js 16</rk-badge>
+    <rk-badge color="blue">React 19</rk-badge>
+    <rk-badge color="green">pnpm workspace</rk-badge>
+    <rk-badge color="gray">SQLite</rk-badge>
+    <rk-badge color="orange">ECharts</rk-badge>
+    <rk-badge color="purple">Mermaid</rk-badge>
+  </rk-badge-group>
+
+  <!-- ── rk-kanban ─────────────────────────────────────────────── -->
+  <h2>rk-kanban — 看板</h2>
+  <p class="desc">静态看板展示，适合项目状态、任务追踪、Sprint 规划。</p>
+
+  <rk-kanban>
+    <rk-kanban-col title="待办 Backlog">
+      <rk-kanban-card priority="high" tag="bug">
+        修复评论锚点在 SPA 跳转后失效
+      </rk-kanban-card>
+      <rk-kanban-card priority="medium" tag="feature">
+        rk-spreadsheet 数据表组件
+      </rk-kanban-card>
+      <rk-kanban-card priority="low">
+        优化 bundle 体积（当前 65KB）
+      </rk-kanban-card>
+    </rk-kanban-col>
+
+    <rk-kanban-col title="进行中" accent="blue">
+      <rk-kanban-card tag="feature" assignee="pi" due="05-20">
+        Agent Authoring Skill 完善
+      </rk-kanban-card>
+      <rk-kanban-card tag="design" assignee="pi" due="05-19">
+        beautiful-mermaid 主题集成
+      </rk-kanban-card>
+    </rk-kanban-col>
+
+    <rk-kanban-col title="审查中" accent="orange">
+      <rk-kanban-card tag="fix">
+        revisions API 端点补全
+      </rk-kanban-card>
+    </rk-kanban-col>
+
+    <rk-kanban-col title="已完成 ✓" done>
+      <rk-kanban-card tag="feat">CLI 重写（HTML-first）</rk-kanban-card>
+      <rk-kanban-card tag="feat">8 套设计主题</rk-kanban-card>
+      <rk-kanban-card tag="feat">多引擎图表（D2/Graphviz/PlantUML）</rk-kanban-card>
+      <rk-kanban-card tag="feat">端到端 push→feedback 循环</rk-kanban-card>
+    </rk-kanban-col>
+  </rk-kanban>
+
+  <!-- ── rk-form ───────────────────────────────────────────────── -->
+  <h2>rk-form — 结构化反馈表单</h2>
+  <p class="desc">Agent 生成结构化表单，人填写后结果输出到控制台 JSON，供下一轮迭代使用。</p>
+
+  <rk-form title="文档审阅意见" submit-label="提交反馈"
+    description="请对这份 RenderKit 技术文档提供你的反馈意见。">
+    <rk-field label="整体质量评分" type="rating" max="5" required />
+    <rk-field label="内容准确性" type="select" options="完全准确,基本准确,有些错误,严重错误" required />
+    <rk-field label="主要问题" type="textarea" placeholder="描述你发现的主要问题或需要改进的地方..." />
+    <rk-field label="建议优先级" type="select" options="高 — 立即修改,中 — 下版本改,低 — 可选" />
+    <rk-field label="审阅者姓名" type="text" placeholder="你的名字（可选）" />
+    <rk-field label="同意公开此反馈" type="checkbox" placeholder="允许将此反馈用于改进文档" />
+  </rk-form>
+
+</body>
+</html>
