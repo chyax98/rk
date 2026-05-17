@@ -1,8 +1,8 @@
-import { listDesignResources } from './design-assets.ts';
-import { BLOCK_ALIASES } from './contracts.ts';
+import { listDesignResources } from './design-assets';
+import { BLOCK_ALIASES } from './contracts';
 
-export * from './contracts.ts';
-export * from './design-assets.ts';
+export * from './contracts';
+export * from './design-assets';
 
 export const RK_VERSION = '1.0';
 export const DEFAULT_PORT = 3737;
@@ -12,7 +12,7 @@ export const DEFAULT_ENDPOINT = 'http://localhost:3737';
  * Recipe registry — recommended blocks, theme, and anti-patterns per surface.
  * Agents should consult this when authoring artifacts for a known surface.
  */
-export const RECIPES: Record<import('./contracts.ts').SurfaceName, import('./contracts.ts').Recipe> = {
+export const RECIPES: Record<import('./contracts').SurfaceName, import('./contracts').Recipe> = {
   'engineering-plan': {
     label: 'Engineering Plan',
     description: 'Structured technical proposal for refactors, migrations, or new features. Dense, reviewable, decision-anchored.',
@@ -142,7 +142,7 @@ export const RECIPES: Record<import('./contracts.ts').SurfaceName, import('./con
 /**
  * Get a recipe by surface name. Returns null if unknown.
  */
-export function getRecipe(surface: string): import('./contracts.ts').Recipe | null {
+export function getRecipe(surface: string): import('./contracts').Recipe | null {
   return RECIPES[surface] || null;
 }
 
@@ -155,7 +155,7 @@ export function listRecipeSurfaces(): string[] {
 
 export function getDesignRecommendation(surface: string = 'engineering-plan'): import('./contracts').DesignRecommendation | null {
   const recipe = getRecipe(surface);
-  const surfaceName = surface as import('./contracts.ts').SurfaceName;
+  const surfaceName = surface as import('./contracts').SurfaceName;
   if (!recipe) return null;
   const resources = resourcesForSurface(surface, recipe);
   return {
@@ -198,7 +198,7 @@ export function getDesignRecommendation(surface: string = 'engineering-plan'): i
   };
 }
 
-function resourcesForSurface(surface: string, recipe: import('./contracts.ts').Recipe) {
+function resourcesForSurface(surface: string, recipe: import('./contracts').Recipe) {
   const resources = listDesignResources();
   const always = new Set(['html-anything', 'md2html']);
   const bySurface: Record<string, string[]> = {

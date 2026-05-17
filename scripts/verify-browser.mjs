@@ -212,7 +212,7 @@ main().catch(err => {
   console.log(`\n========================================`);
   console.log(`Results: ${pass} passed, ${fail} failed`);
   process.exit(1);
-}).finally(() => {
+}).finally(async () => {
   run('pw', ['session', 'close', session]);
   // Cleanup temp artifacts via DELETE API
   for (const artId of createdArtifactIds) {
