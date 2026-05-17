@@ -6,12 +6,12 @@ var ICONS = {
   success: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
   tip: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
   decision: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m6.8 15-3.5 2"/><path d="m20.7 17-3.5-2"/><path d="M6 12l-2-1"/><path d="m18 11-2 1"/><circle cx="12" cy="12" r="3"/></svg>`,
-  note: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>`,
+  note: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>`
 };
 var RkCallout = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['tone', 'title'];
+    return ["tone", "title"];
   }
   connectedCallback() {
     this._raw = this.innerHTML;
@@ -21,97 +21,95 @@ var RkCallout = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const tone = this.getAttribute('tone') || 'info';
-    const title = this.getAttribute('title') || '';
-    const icon = ICONS[tone] || ICONS['info'];
-    this.innerHTML =
-      /* html */
-      `
+    const tone = this.getAttribute("tone") || "info";
+    const title = this.getAttribute("title") || "";
+    const icon = ICONS[tone] || ICONS["info"];
+    this.innerHTML = /* html */
+    `
       <div class="rk-callout rk-callout--${tone}">
         <span class="rk-callout__icon">${icon}</span>
         <div class="rk-callout__body">
-          ${title ? `<div class="rk-callout__title">${this._escape(title)}</div>` : ''}
+          ${title ? `<div class="rk-callout__title">${this._escape(title)}</div>` : ""}
           <div class="rk-callout__content">${this._raw}</div>
         </div>
       </div>
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-callout', RkCallout);
+customElements.define("rk-callout", RkCallout);
 
 // packages/components/src/elements/rk-stat.ts
 var RkStat = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['value', 'unit', 'label', 'delta', 'tone'];
+    return ["value", "unit", "label", "delta", "tone"];
   }
   connectedCallback() {
     this._raw = this.innerHTML.trim();
     this._render();
   }
   attributeChangedCallback() {
-    if (this._raw !== '' || this.hasAttribute('value')) this._render();
+    if (this._raw !== "" || this.hasAttribute("value")) this._render();
   }
   _render() {
-    const value = this.getAttribute('value') || '';
-    const unit = this.getAttribute('unit') || '';
-    const label = this.getAttribute('label') || '';
-    const delta = this.getAttribute('delta') || '';
-    const tone = this.getAttribute('tone') || '';
-    let toneClass = '';
-    if (tone === 'positive' || tone === 'success') toneClass = 'rk-stat--positive';
-    else if (tone === 'negative' || tone === 'danger') toneClass = 'rk-stat--negative';
-    else if (tone === 'neutral') toneClass = 'rk-stat--neutral';
-    let deltaHtml = '';
+    const value = this.getAttribute("value") || "";
+    const unit = this.getAttribute("unit") || "";
+    const label = this.getAttribute("label") || "";
+    const delta = this.getAttribute("delta") || "";
+    const tone = this.getAttribute("tone") || "";
+    let toneClass = "";
+    if (tone === "positive" || tone === "success") toneClass = "rk-stat--positive";
+    else if (tone === "negative" || tone === "danger") toneClass = "rk-stat--negative";
+    else if (tone === "neutral") toneClass = "rk-stat--neutral";
+    let deltaHtml = "";
     if (delta) {
       const parsed = parseFloat(delta);
-      let direction = 'neutral';
-      let arrow = '';
+      let direction = "neutral";
+      let arrow = "";
       if (!isNaN(parsed) && parsed > 0) {
-        direction = 'up';
-        arrow = '\u2191';
+        direction = "up";
+        arrow = "\u2191";
       } else if (!isNaN(parsed) && parsed < 0) {
-        direction = 'down';
-        arrow = '\u2193';
-      } else if (delta.startsWith('+') || delta.startsWith('\u2191')) {
-        direction = 'up';
-        arrow = '\u2191';
-      } else if (delta.startsWith('-') || delta.startsWith('\u2193')) {
-        direction = 'down';
-        arrow = '\u2193';
+        direction = "down";
+        arrow = "\u2193";
+      } else if (delta.startsWith("+") || delta.startsWith("\u2191")) {
+        direction = "up";
+        arrow = "\u2191";
+      } else if (delta.startsWith("-") || delta.startsWith("\u2193")) {
+        direction = "down";
+        arrow = "\u2193";
       }
-      deltaHtml = `<span class="rk-stat__delta rk-stat__delta--${direction}">${arrow} ${this._escape(delta.replace(/^[↑↓+-]/, ''))}</span>`;
+      deltaHtml = `<span class="rk-stat__delta rk-stat__delta--${direction}">${arrow} ${this._escape(delta.replace(/^[↑↓+-]/, ""))}</span>`;
     }
-    this.innerHTML =
-      /* html */
-      `
+    this.innerHTML = /* html */
+    `
       <div class="rk-stat ${toneClass}">
         <div class="rk-stat__label">${this._escape(label)}</div>
         <div>
-          <span class="rk-stat__value">${this._escape(value)}</span>${unit ? `<span class="rk-stat__unit">${this._escape(unit)}</span>` : ''}
+          <span class="rk-stat__value">${this._escape(value)}</span>${unit ? `<span class="rk-stat__unit">${this._escape(unit)}</span>` : ""}
         </div>
         ${deltaHtml}
       </div>
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-stat', RkStat);
+customElements.define("rk-stat", RkStat);
 
 // packages/components/src/elements/rk-summary.ts
 var RkSummary = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['title'];
+    return ["title"];
   }
   connectedCallback() {
     this._raw = this.innerHTML.trim();
@@ -121,10 +119,9 @@ var RkSummary = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || 'Summary';
-    this.innerHTML =
-      /* html */
-      `
+    const title = this.getAttribute("title") || "Summary";
+    this.innerHTML = /* html */
+    `
       <div class="rk-summary">
         <div class="rk-summary__title">${this._escape(title)}</div>
         <div class="rk-summary__content">${this._raw}</div>
@@ -132,59 +129,57 @@ var RkSummary = class extends HTMLElement {
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-summary', RkSummary);
+customElements.define("rk-summary", RkSummary);
 
 // packages/components/src/elements/rk-code.ts
 var RkCode = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['lang', 'title', 'frame', 'showlinenumbers', 'data-highlighted'];
+    return ["lang", "title", "frame", "showlinenumbers", "data-highlighted"];
   }
   connectedCallback() {
-    this._raw = this.textContent || '';
+    this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
     if (this._raw) this._render();
   }
   _render() {
-    const lang = this.getAttribute('lang') || '';
-    const title = this.getAttribute('title') || '';
-    const frame = this.getAttribute('frame') || 'none';
-    const showLineNumbers =
-      this.hasAttribute('showlinenumbers') || this.hasAttribute('showLineNumbers');
-    const highlighted = this.getAttribute('data-highlighted') || '';
-    let frameClass = '';
-    if (frame === 'editor') frameClass = 'rk-code--frame-editor';
-    else if (frame === 'terminal') frameClass = 'rk-code--frame-terminal';
-    let headerHtml = '';
-    const showHeader = frame === 'editor' || frame === 'terminal' || title || lang;
+    const lang = this.getAttribute("lang") || "";
+    const title = this.getAttribute("title") || "";
+    const frame = this.getAttribute("frame") || "none";
+    const showLineNumbers = this.hasAttribute("showlinenumbers") || this.hasAttribute("showLineNumbers");
+    const highlighted = this.getAttribute("data-highlighted") || "";
+    let frameClass = "";
+    if (frame === "editor") frameClass = "rk-code--frame-editor";
+    else if (frame === "terminal") frameClass = "rk-code--frame-terminal";
+    let headerHtml = "";
+    const showHeader = frame === "editor" || frame === "terminal" || title || lang;
     if (showHeader) {
-      let dotsHtml = '';
-      if (frame === 'editor' || frame === 'terminal') {
+      let dotsHtml = "";
+      if (frame === "editor" || frame === "terminal") {
         dotsHtml = `<span class="rk-code__dots"><i></i><i></i><i></i></span>`;
       }
-      let promptHtml = '';
-      if (frame === 'terminal') {
+      let promptHtml = "";
+      if (frame === "terminal") {
         promptHtml = `<span class="rk-code__title" style="color:var(--rk-muted)">$</span>`;
       }
-      headerHtml =
-        /* html */
-        `
+      headerHtml = /* html */
+      `
         <div class="rk-code__header">
           ${dotsHtml}
           ${promptHtml}
-          ${title ? `<span class="rk-code__title">${this._escape(title)}</span>` : ''}
-          ${lang ? `<span class="rk-code__lang">${this._escape(lang)}</span>` : ''}
+          ${title ? `<span class="rk-code__title">${this._escape(title)}</span>` : ""}
+          ${lang ? `<span class="rk-code__lang">${this._escape(lang)}</span>` : ""}
         </div>
       `;
     }
-    let bodyContent = '';
+    let bodyContent = "";
     if (highlighted) {
       try {
         bodyContent = atob(highlighted);
@@ -195,18 +190,15 @@ var RkCode = class extends HTMLElement {
       bodyContent = this._escapeHtml(this._raw);
     }
     if (showLineNumbers) {
-      const lines = bodyContent.split('\n');
-      if (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+      const lines = bodyContent.split("\n");
+      if (lines.length > 0 && lines[lines.length - 1].trim() === "") {
         lines.pop();
       }
-      const rows = lines
-        .map((line, i) => `<tr><td class="rk-ln">${i + 1}</td><td class="rk-lc">${line}</td></tr>`)
-        .join('');
+      const rows = lines.map((line, i) => `<tr><td class="rk-ln">${i + 1}</td><td class="rk-lc">${line}</td></tr>`).join("");
       bodyContent = `<table><tbody>${rows}</tbody></table>`;
     }
-    this.innerHTML =
-      /* html */
-      `
+    this.innerHTML = /* html */
+    `
       <div class="rk-code ${frameClass}">
         ${headerHtml}
         <div class="rk-code__body"><code>${bodyContent}</code></div>
@@ -214,41 +206,28 @@ var RkCode = class extends HTMLElement {
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
   _escapeHtml(s) {
-    return s
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 };
-customElements.define('rk-code', RkCode);
+customElements.define("rk-code", RkCode);
 
 // packages/components/src/elements/rk-table.ts
 function parsePipeTable(raw) {
-  const lines = raw
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
   const rows = [];
   for (const line of lines) {
-    if (
-      /^\|[\s\-:]+\|$/.test(line) ||
-      /^[\s\-:|]+$/.test(line.replace(/\|/g, '').trim() === '' ? '' : 'x')
-    ) {
-      const cells2 = line.split('|').map((c) => c.trim());
+    if (/^\|[\s\-:]+\|$/.test(line) || /^[\s\-:|]+$/.test(line.replace(/\|/g, "").trim() === "" ? "" : "x")) {
+      const cells2 = line.split("|").map((c) => c.trim());
       const isSep = cells2.every((c) => /^[\s\-:]*$/.test(c));
       if (isSep) continue;
     }
     if (/^\|?\s*[-:]+[\s|:-]*$/.test(line)) continue;
-    const cells = line
-      .split('|')
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
+    const cells = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
     if (cells.length > 0) {
       rows.push(cells);
     }
@@ -256,20 +235,20 @@ function parsePipeTable(raw) {
   return rows;
 }
 var RkTable = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['title', 'profile'];
+    return ["title", "profile"];
   }
   connectedCallback() {
-    this._raw = this.textContent || '';
+    this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || '';
-    const profile = this.getAttribute('profile') || '';
+    const title = this.getAttribute("title") || "";
+    const profile = this.getAttribute("profile") || "";
     const rows = parsePipeTable(this._raw);
     if (rows.length === 0) {
       this.innerHTML = `<div class="rk-table"><div class="rk-table__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">No table data</p></div>`;
@@ -277,54 +256,33 @@ var RkTable = class extends HTMLElement {
     }
     const header = rows[0];
     const body = rows.slice(1);
-    const profileClass = profile ? `rk-table--${profile}` : '';
-    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join('');
-    const bodyHtml = body
-      .map((row) => {
-        const cells = row
-          .map((cell, ci) => {
-            let content = this._escape(cell);
-            if (profile === 'status' && ci === 0) {
-              const lower = cell.toLowerCase().trim();
-              let dotClass = '';
-              if (
-                lower.includes('healthy') ||
-                lower.includes('ok') ||
-                lower.includes('green') ||
-                lower.includes('pass')
-              ) {
-                dotClass = 'healthy';
-              } else if (
-                lower.includes('degraded') ||
-                lower.includes('warn') ||
-                lower.includes('warning') ||
-                lower.includes('yellow')
-              ) {
-                dotClass = 'degraded';
-              } else if (
-                lower.includes('critical') ||
-                lower.includes('error') ||
-                lower.includes('fail') ||
-                lower.includes('red') ||
-                lower.includes('down')
-              ) {
-                dotClass = 'critical';
-              }
-              if (dotClass) {
-                content = `<span class="rk-status-dot rk-status-dot--${dotClass}"></span>${content}`;
-              }
-            }
-            return `<td>${content}</td>`;
-          })
-          .join('');
-        return `<tr>${cells}</tr>`;
-      })
-      .join('');
-    this.innerHTML =
-      /* html */
-      `
+    const profileClass = profile ? `rk-table--${profile}` : "";
+    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join("");
+    const bodyHtml = body.map((row) => {
+      const cells = row.map((cell, ci) => {
+        let content = this._escape(cell);
+        if (profile === "status" && ci === 0) {
+          const lower = cell.toLowerCase().trim();
+          let dotClass = "";
+          if (lower.includes("healthy") || lower.includes("ok") || lower.includes("green") || lower.includes("pass")) {
+            dotClass = "healthy";
+          } else if (lower.includes("degraded") || lower.includes("warn") || lower.includes("warning") || lower.includes("yellow")) {
+            dotClass = "degraded";
+          } else if (lower.includes("critical") || lower.includes("error") || lower.includes("fail") || lower.includes("red") || lower.includes("down")) {
+            dotClass = "critical";
+          }
+          if (dotClass) {
+            content = `<span class="rk-status-dot rk-status-dot--${dotClass}"></span>${content}`;
+          }
+        }
+        return `<td>${content}</td>`;
+      }).join("");
+      return `<tr>${cells}</tr>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
       <div class="rk-table ${profileClass}">
-        ${title ? `<div class="rk-table__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-table__title">${this._escape(title)}</div>` : ""}
         <div class="rk-table__wrap">
           <table>
             <thead><tr>${headerHtml}</tr></thead>
@@ -335,26 +293,20 @@ var RkTable = class extends HTMLElement {
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-table', RkTable);
+customElements.define("rk-table", RkTable);
 
 // packages/components/src/elements/rk-chart.ts
 function parsePipeTable2(raw) {
-  const lines = raw
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
   const rows = [];
   for (const line of lines) {
     if (/^\|?\s*[-:]+[\s|:-]*$/.test(line)) continue;
-    const cells = line
-      .split('|')
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
+    const cells = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
     if (cells.length > 0) {
       rows.push(cells);
     }
@@ -362,13 +314,13 @@ function parsePipeTable2(raw) {
   return rows;
 }
 var RkChart = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   _chartInstance = null;
   static get observedAttributes() {
-    return ['type', 'title', 'caption', 'xfield', 'yfield'];
+    return ["type", "title", "caption", "xfield", "yfield"];
   }
   connectedCallback() {
-    this._raw = this.textContent || '';
+    this._raw = this.textContent || "";
     this._render();
   }
   disconnectedCallback() {
@@ -381,10 +333,10 @@ var RkChart = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const type = this.getAttribute('type') || 'bar';
-    const title = this.getAttribute('title') || '';
-    const caption = this.getAttribute('caption') || '';
-    if (type === 'kpi') {
+    const type = this.getAttribute("type") || "bar";
+    const title = this.getAttribute("title") || "";
+    const caption = this.getAttribute("caption") || "";
+    if (type === "kpi") {
       this._renderKpi(title, caption);
       return;
     }
@@ -398,20 +350,17 @@ var RkChart = class extends HTMLElement {
     }
     const header = rows[0];
     const body = rows.slice(1);
-    const items = body
-      .map((row) => {
-        const value = row[0] || '';
-        const label = row[1] || header[1] || '';
-        return `<div class="rk-chart-kpi__item"><div class="rk-kpi-value">${this._escape(value)}</div><div class="rk-kpi-label">${this._escape(label)}</div></div>`;
-      })
-      .join('');
-    this.innerHTML =
-      /* html */
-      `
+    const items = body.map((row) => {
+      const value = row[0] || "";
+      const label = row[1] || header[1] || "";
+      return `<div class="rk-chart-kpi__item"><div class="rk-kpi-value">${this._escape(value)}</div><div class="rk-kpi-label">${this._escape(label)}</div></div>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
       <div class="rk-chart rk-chart-kpi">
-        ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ""}
         <div class="rk-chart-kpi__grid">${items}</div>
-        ${caption ? `<div class="rk-chart__caption">${this._escape(caption)}</div>` : ''}
+        ${caption ? `<div class="rk-chart__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
   }
@@ -421,48 +370,47 @@ var RkChart = class extends HTMLElement {
       this.innerHTML = `<div class="rk-chart"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">Insufficient data for chart</p></div>`;
       return;
     }
-    this.innerHTML =
-      /* html */
-      `
+    this.innerHTML = /* html */
+    `
       <div class="rk-chart">
-        ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ""}
         <div class="rk-chart__canvas" id="echarts-${this._uid()}"></div>
-        ${caption ? `<div class="rk-chart__caption">${this._escape(caption)}</div>` : ''}
+        ${caption ? `<div class="rk-chart__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
-    const container = this.querySelector('.rk-chart__canvas');
+    const container = this.querySelector(".rk-chart__canvas");
     if (!container) return;
     try {
-      const echarts = await import('echarts');
+      const echarts = await import("echarts");
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const header = rows[0];
       const body = rows.slice(1);
-      const xField = this.getAttribute('xfield') || header[0] || 'x';
-      const yField = this.getAttribute('yfield') || header[1] || 'y';
+      const xField = this.getAttribute("xfield") || header[0] || "x";
+      const yField = this.getAttribute("yfield") || header[1] || "y";
       const xIdx = header.indexOf(xField);
       const yIdx = header.indexOf(yField);
       const xi = xIdx >= 0 ? xIdx : 0;
       const yi = yIdx >= 0 ? yIdx : 1;
-      const xData = body.map((r) => r[xi] || '');
-      const yData = body.map((r) => parseFloat(r[yi] || '0'));
-      const seriesType = type === 'scatter' ? 'scatter' : type === 'pie' ? 'pie' : type;
+      const xData = body.map((r) => r[xi] || "");
+      const yData = body.map((r) => parseFloat(r[yi] || "0"));
+      const seriesType = type === "scatter" ? "scatter" : type === "pie" ? "pie" : type;
       const option = {
-        tooltip: { trigger: seriesType === 'pie' ? 'item' : 'axis' },
+        tooltip: { trigger: seriesType === "pie" ? "item" : "axis" }
       };
-      if (seriesType === 'pie') {
+      if (seriesType === "pie") {
         option.series = [
           {
-            type: 'pie',
+            type: "pie",
             data: body.map((r, i) => ({
               name: r[xi] || `Item ${i + 1}`,
-              value: parseFloat(r[yi] || '0'),
-            })),
-          },
+              value: parseFloat(r[yi] || "0")
+            }))
+          }
         ];
       } else {
-        option.xAxis = { type: 'category', data: xData };
-        option.yAxis = { type: 'value' };
+        option.xAxis = { type: "category", data: xData };
+        option.yAxis = { type: "value" };
         option.series = [{ type: seriesType, data: yData }];
       }
       chart.setOption(option);
@@ -476,22 +424,22 @@ var RkChart = class extends HTMLElement {
     return Math.random().toString(36).slice(2, 9);
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-chart', RkChart);
+customElements.define("rk-chart", RkChart);
 
 // packages/components/src/elements/rk-diagram.ts
 var RkDiagram = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   _observer = null;
   static get observedAttributes() {
-    return ['title', 'caption', 'engine'];
+    return ["title", "caption", "engine"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || '').trim();
+    this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -501,39 +449,38 @@ var RkDiagram = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || '';
-    const caption = this.getAttribute('caption') || '';
-    this.innerHTML =
-      /* html */
-      `
+    const title = this.getAttribute("title") || "";
+    const caption = this.getAttribute("caption") || "";
+    this.innerHTML = /* html */
+    `
       <div class="rk-diagram">
-        ${title ? `<div class="rk-diagram__title" style="margin-bottom:var(--rk-space-3);color:var(--rk-text);font:var(--rk-type-label);letter-spacing:var(--rk-tracking-wide);text-transform:uppercase">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-diagram__title" style="margin-bottom:var(--rk-space-3);color:var(--rk-text);font:var(--rk-type-label);letter-spacing:var(--rk-tracking-wide);text-transform:uppercase">${this._escape(title)}</div>` : ""}
         <div class="rk-diagram__loading">Loading diagram\u2026</div>
         <div class="rk-diagram__canvas"></div>
-        ${caption ? `<div class="rk-diagram__caption">${this._escape(caption)}</div>` : ''}
+        ${caption ? `<div class="rk-diagram__caption">${this._escape(caption)}</div>` : ""}
       </div>
     `;
     this._renderMermaid();
   }
   async _renderMermaid() {
-    const canvas = this.querySelector('.rk-diagram__canvas');
-    const loading = this.querySelector('.rk-diagram__loading');
+    const canvas = this.querySelector(".rk-diagram__canvas");
+    const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const mermaid = await import('mermaid');
+      const mermaid = await import("mermaid");
       mermaid.default.initialize({
         startOnLoad: false,
-        theme: 'default',
-        securityLevel: 'loose',
+        theme: "default",
+        securityLevel: "loose"
       });
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.default.render(id, this._raw);
       if (loading) loading.remove();
       canvas.innerHTML = svg;
-      const svgEl = canvas.querySelector('svg');
+      const svgEl = canvas.querySelector("svg");
       if (svgEl) {
-        svgEl.style.maxWidth = '100%';
-        svgEl.style.height = 'auto';
+        svgEl.style.maxWidth = "100%";
+        svgEl.style.height = "auto";
       }
     } catch (err) {
       if (loading) loading.remove();
@@ -541,18 +488,18 @@ var RkDiagram = class extends HTMLElement {
     }
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-diagram', RkDiagram);
+customElements.define("rk-diagram", RkDiagram);
 
 // packages/components/src/elements/rk-decision.ts
 var RkDecision = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['question', 'chosen', 'status'];
+    return ["question", "chosen", "status"];
   }
   connectedCallback() {
     this._raw = this.innerHTML;
@@ -562,73 +509,56 @@ var RkDecision = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const question = this.getAttribute('question') || '';
-    const chosen = this.getAttribute('chosen') || '';
-    const status = this.getAttribute('status') || 'proposed';
-    const reasons = this.querySelectorAll('rk-reason li');
-    const rationaleItems = Array.from(reasons)
-      .map((li) => `<li>${li.textContent || ''}</li>`)
-      .join('');
-    const alternatives = this.querySelectorAll('rk-alternative');
-    const altItems = Array.from(alternatives)
-      .map((alt) => `<li>${alt.textContent || ''}</li>`)
-      .join('');
-    let statusClass = 'proposed';
-    if (['approved', 'draft', 'blocked', 'resolved'].includes(status)) {
+    const question = this.getAttribute("question") || "";
+    const chosen = this.getAttribute("chosen") || "";
+    const status = this.getAttribute("status") || "proposed";
+    const reasons = this.querySelectorAll("rk-reason li");
+    const rationaleItems = Array.from(reasons).map((li) => `<li>${li.textContent || ""}</li>`).join("");
+    const alternatives = this.querySelectorAll("rk-alternative");
+    const altItems = Array.from(alternatives).map((alt) => `<li>${alt.textContent || ""}</li>`).join("");
+    let statusClass = "proposed";
+    if (["approved", "draft", "blocked", "resolved"].includes(status)) {
       statusClass = status;
     }
-    this.innerHTML =
-      /* html */
-      `
+    this.innerHTML = /* html */
+    `
       <div class="rk-decision">
         <div class="rk-decision__eyebrow">Decision</div>
-        ${question ? `<h3 class="rk-decision__question">${this._escape(question)}</h3>` : ''}
-        ${
-          chosen
-            ? `
+        ${question ? `<h3 class="rk-decision__question">${this._escape(question)}</h3>` : ""}
+        ${chosen ? `
           <div class="rk-decision__chosen">
             <span>Chosen: <strong>${this._escape(chosen)}</strong></span>
             <span class="rk-decision__status rk-decision__status--${statusClass}">${this._escape(status)}</span>
           </div>
-        `
-            : ''
-        }
-        ${
-          rationaleItems
-            ? `
+        ` : ""}
+        ${rationaleItems ? `
           <div class="rk-decision__rationale">
             <h4>Rationale</h4>
             <ul>${rationaleItems}</ul>
           </div>
-        `
-            : ''
-        }
-        ${
-          altItems
-            ? `
+        ` : ""}
+        ${altItems ? `
           <div class="rk-decision__alternatives">
             <h4>Alternatives Considered</h4>
             <ul>${altItems}</ul>
           </div>
-        `
-            : ''
-        }
+        ` : ""}
       </div>
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-decision', RkDecision);
+customElements.define("rk-decision", RkDecision);
 
 // packages/components/src/elements/rk-checklist.ts
 var RkChecklist = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['title'];
+    return ["title"];
   }
   connectedCallback() {
     this._raw = this.innerHTML;
@@ -638,59 +568,50 @@ var RkChecklist = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || '';
-    const items = this.querySelectorAll('rk-item');
-    const itemHtml = Array.from(items)
-      .map((item) => {
-        const checked = item.hasAttribute('checked');
-        const note = item.getAttribute('note') || '';
-        const text = item.textContent || '';
-        const checkedClass = checked ? ' is-checked' : '';
-        const checkMark = checked ? '\u2713' : '';
-        return (
-          /* html */
-          `
+    const title = this.getAttribute("title") || "";
+    const items = this.querySelectorAll("rk-item");
+    const itemHtml = Array.from(items).map((item) => {
+      const checked = item.hasAttribute("checked");
+      const note = item.getAttribute("note") || "";
+      const text = item.textContent || "";
+      const checkedClass = checked ? " is-checked" : "";
+      const checkMark = checked ? "\u2713" : "";
+      return (
+        /* html */
+        `
           <li class="rk-checklist__item${checkedClass}">
             <span class="rk-checklist__check">${checkMark}</span>
             <span class="rk-checklist__text">
               ${this._escape(text)}
-              ${note ? `<span class="rk-checklist__note">${this._escape(note)}</span>` : ''}
+              ${note ? `<span class="rk-checklist__note">${this._escape(note)}</span>` : ""}
             </span>
           </li>
         `
-        );
-      })
-      .join('');
-    this.innerHTML =
-      /* html */
-      `
+      );
+    }).join("");
+    this.innerHTML = /* html */
+    `
       <div class="rk-checklist">
-        ${title ? `<div class="rk-checklist__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-checklist__title">${this._escape(title)}</div>` : ""}
         <ul class="rk-checklist__list">${itemHtml}</ul>
       </div>
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-checklist', RkChecklist);
+customElements.define("rk-checklist", RkChecklist);
 
 // packages/components/src/elements/rk-comparison.ts
 function parsePipeTable3(raw) {
-  const lines = raw
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
+  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
   const rows = [];
   for (const line of lines) {
     if (/^\|?\s*[-:]+[\s|:-]*$/.test(line)) continue;
-    const cells = line
-      .split('|')
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0);
+    const cells = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
     if (cells.length > 0) {
       rows.push(cells);
     }
@@ -698,26 +619,26 @@ function parsePipeTable3(raw) {
   return rows;
 }
 var RkComparison = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['title', 'variant'];
+    return ["title", "variant"];
   }
   connectedCallback() {
-    this._raw = this.textContent || '';
+    this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || '';
-    const variant = this.getAttribute('variant') || 'proscons';
+    const title = this.getAttribute("title") || "";
+    const variant = this.getAttribute("variant") || "proscons";
     const rows = parsePipeTable3(this._raw);
     if (rows.length === 0) {
       this.innerHTML = `<div class="rk-comparison"><div class="rk-comparison__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">No comparison data</p></div>`;
       return;
     }
-    if (variant === 'matrix') {
+    if (variant === "matrix") {
       this._renderMatrix(title, rows);
     } else {
       this._renderProsCons(title, rows);
@@ -725,24 +646,23 @@ var RkComparison = class extends HTMLElement {
   }
   _renderProsCons(title, rows) {
     const header = rows[0];
-    const prosTitle = header[0] || 'Pros';
-    const consTitle = header[1] || 'Cons';
+    const prosTitle = header[0] || "Pros";
+    const consTitle = header[1] || "Cons";
     const body = rows.slice(1);
-    const pros = body.map((r) => r[0] || '').filter(Boolean);
-    const cons = body.map((r) => r[1] || '').filter(Boolean);
-    this.innerHTML =
-      /* html */
-      `
+    const pros = body.map((r) => r[0] || "").filter(Boolean);
+    const cons = body.map((r) => r[1] || "").filter(Boolean);
+    this.innerHTML = /* html */
+    `
       <div class="rk-comparison rk-comparison--proscons">
-        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
         <div class="rk-comparison__table">
           <div class="rk-comparison__column">
             <div class="rk-comparison__column-title">${this._escape(prosTitle)}</div>
-            <ul>${pros.map((p) => `<li>${this._escape(p)}</li>`).join('')}</ul>
+            <ul>${pros.map((p) => `<li>${this._escape(p)}</li>`).join("")}</ul>
           </div>
           <div class="rk-comparison__column">
             <div class="rk-comparison__column-title">${this._escape(consTitle)}</div>
-            <ul>${cons.map((c) => `<li>${this._escape(c)}</li>`).join('')}</ul>
+            <ul>${cons.map((c) => `<li>${this._escape(c)}</li>`).join("")}</ul>
           </div>
         </div>
       </div>
@@ -751,18 +671,15 @@ var RkComparison = class extends HTMLElement {
   _renderMatrix(title, rows) {
     const header = rows[0];
     const body = rows.slice(1);
-    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join('');
-    const bodyHtml = body
-      .map((row) => {
-        const cells = row.map((c) => `<td>${this._escape(c)}</td>`).join('');
-        return `<tr>${cells}</tr>`;
-      })
-      .join('');
-    this.innerHTML =
-      /* html */
-      `
+    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join("");
+    const bodyHtml = body.map((row) => {
+      const cells = row.map((c) => `<td>${this._escape(c)}</td>`).join("");
+      return `<tr>${cells}</tr>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
       <div class="rk-comparison rk-comparison--matrix">
-        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
         <div class="rk-comparison__table">
           <table>
             <thead><tr>${headerHtml}</tr></thead>
@@ -773,18 +690,18 @@ var RkComparison = class extends HTMLElement {
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-comparison', RkComparison);
+customElements.define("rk-comparison", RkComparison);
 
 // packages/components/src/elements/rk-timeline.ts
 var RkTimeline = class extends HTMLElement {
-  _raw = '';
+  _raw = "";
   static get observedAttributes() {
-    return ['title'];
+    return ["title"];
   }
   connectedCallback() {
     this._raw = this.innerHTML;
@@ -794,26 +711,20 @@ var RkTimeline = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
-    const title = this.getAttribute('title') || '';
-    const steps = this.querySelectorAll('rk-step');
-    const stepHtml = Array.from(steps)
-      .map((step, i) => {
-        const status = step.getAttribute('status') || 'next';
-        const tags = step.getAttribute('tags') || '';
-        const text = step.textContent || '';
-        let statusClass = 'next';
-        if (['done', 'active', 'next'].includes(status)) {
-          statusClass = status;
-        }
-        const tagHtml = tags
-          ? `<div class="rk-timeline__tags">${tags
-              .split(',')
-              .map((t) => `<span>${this._escape(t.trim())}</span>`)
-              .join('')}</div>`
-          : '';
-        return (
-          /* html */
-          `
+    const title = this.getAttribute("title") || "";
+    const steps = this.querySelectorAll("rk-step");
+    const stepHtml = Array.from(steps).map((step, i) => {
+      const status = step.getAttribute("status") || "next";
+      const tags = step.getAttribute("tags") || "";
+      const text = step.textContent || "";
+      let statusClass = "next";
+      if (["done", "active", "next"].includes(status)) {
+        statusClass = status;
+      }
+      const tagHtml = tags ? `<div class="rk-timeline__tags">${tags.split(",").map((t) => `<span>${this._escape(t.trim())}</span>`).join("")}</div>` : "";
+      return (
+        /* html */
+        `
           <li class="rk-timeline__step rk-timeline__step--${statusClass}">
             <span class="rk-timeline__num">${i + 1}</span>
             <div class="rk-timeline__body">
@@ -823,22 +734,409 @@ var RkTimeline = class extends HTMLElement {
             </div>
           </li>
         `
-        );
-      })
-      .join('');
-    this.innerHTML =
-      /* html */
-      `
+      );
+    }).join("");
+    this.innerHTML = /* html */
+    `
       <div class="rk-timeline">
-        ${title ? `<div class="rk-timeline__title">${this._escape(title)}</div>` : ''}
+        ${title ? `<div class="rk-timeline__title">${this._escape(title)}</div>` : ""}
         <ol class="rk-timeline__steps">${stepHtml}</ol>
       </div>
     `;
   }
   _escape(s) {
-    const d = document.createElement('div');
+    const d = document.createElement("div");
     d.textContent = s;
     return d.innerHTML;
   }
 };
-customElements.define('rk-timeline', RkTimeline);
+customElements.define("rk-timeline", RkTimeline);
+
+// packages/components/src/elements/rk-tabs.ts
+var RkTabs = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const tabs = Array.from(this.querySelectorAll("rk-tab"));
+    if (tabs.length === 0) {
+      this.innerHTML = `<div class="rk-tabs"><p style="color:var(--rk-muted)">No tabs found. Use &lt;rk-tab label="\u2026"&gt; inside.</p></div>`;
+      return;
+    }
+    const navBtns = tabs.map((tab, i) => {
+      const label = tab.getAttribute("label") || `Tab ${i + 1}`;
+      const id = tab.getAttribute("id") || `tab-${i}`;
+      const active = i === 0 ? " is-active" : "";
+      return `<button class="rk-tabs__btn${active}" data-tab="${id}" role="tab" aria-selected="${i === 0}">${this._escape(label)}</button>`;
+    }).join("");
+    const panels = tabs.map((tab, i) => {
+      const id = tab.getAttribute("id") || `tab-${i}`;
+      const active = i === 0 ? " is-active" : "";
+      return `<div class="rk-tabs__panel${active}" data-tab="${id}" role="tabpanel">${tab.innerHTML}</div>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-tabs">
+        ${title ? `<div class="rk-tabs__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-tabs__nav" role="tablist">${navBtns}</div>
+        <div class="rk-tabs__panels">${panels}</div>
+      </div>
+    `;
+    this.querySelectorAll(".rk-tabs__btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.tab;
+        this.querySelectorAll(".rk-tabs__btn").forEach((b) => {
+          b.classList.remove("is-active");
+          b.setAttribute("aria-selected", "false");
+        });
+        this.querySelectorAll(".rk-tabs__panel").forEach((p) => {
+          p.classList.remove("is-active");
+        });
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-selected", "true");
+        this.querySelector(`.rk-tabs__panel[data-tab="${targetId}"]`)?.classList.add("is-active");
+      });
+    });
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-tabs", RkTabs);
+
+// packages/components/src/elements/rk-grid.ts
+var RkGrid = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["cols", "gap"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const cols = this.getAttribute("cols") || "2";
+    const gap = this.getAttribute("gap") || "md";
+    const colCount = ["2", "3", "4"].includes(cols) ? cols : "2";
+    const cells = Array.from(this.querySelectorAll("rk-col"));
+    const content = cells.length > 0 ? cells.map((c) => `<div class="rk-grid__cell">${c.innerHTML}</div>`).join("") : this._raw;
+    this.innerHTML = /* html */
+    `
+      <div class="rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}">
+        ${content}
+      </div>
+    `;
+  }
+};
+customElements.define("rk-grid", RkGrid);
+
+// packages/components/src/elements/rk-image.ts
+var RkImage = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["src", "alt", "caption", "credit", "width"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const src = this.getAttribute("src") || "";
+    const alt = this.getAttribute("alt") || "";
+    const caption = this.getAttribute("caption") || "";
+    const credit = this.getAttribute("credit") || "";
+    const width = this.getAttribute("width") || "normal";
+    if (!src) {
+      this.innerHTML = `<div class="rk-image rk-image--${width}"><p style="color:var(--rk-muted)">rk-image requires a src attribute.</p></div>`;
+      return;
+    }
+    const figcaption = caption || credit ? `<figcaption class="rk-image__caption">
+          ${caption ? `<span>${this._escape(caption)}</span>` : ""}
+          ${credit ? `<span class="rk-image__credit">${this._escape(credit)}</span>` : ""}
+        </figcaption>` : "";
+    this.innerHTML = /* html */
+    `
+      <figure class="rk-image rk-image--${width}">
+        <div class="rk-image__wrap">
+          <img src="${this._escapeAttr(src)}" alt="${this._escapeAttr(alt)}" loading="lazy">
+        </div>
+        ${figcaption}
+      </figure>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  _escapeAttr(s) {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+};
+customElements.define("rk-image", RkImage);
+
+// packages/components/src/elements/rk-quote.ts
+var RkQuote = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["attribution", "source", "source-url"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const attribution = this.getAttribute("attribution") || "";
+    const source = this.getAttribute("source") || "";
+    const sourceUrl = this.getAttribute("source-url") || "";
+    const sourceHtml = source ? sourceUrl ? ` <cite><a href="${this._escapeAttr(sourceUrl)}" target="_blank" rel="noopener">${this._escape(source)}</a></cite>` : ` <cite>${this._escape(source)}</cite>` : "";
+    const figcaption = attribution || source ? `<figcaption class="rk-quote__attribution">
+          ${attribution ? `\u2014 ${this._escape(attribution)}` : ""}${sourceHtml}
+        </figcaption>` : "";
+    this.innerHTML = /* html */
+    `
+      <figure class="rk-quote">
+        <blockquote class="rk-quote__body">${this._raw}</blockquote>
+        ${figcaption}
+      </figure>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  _escapeAttr(s) {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+};
+customElements.define("rk-quote", RkQuote);
+
+// packages/components/src/elements/rk-collapsible.ts
+var RkCollapsible = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["summary", "open"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const summary = this.getAttribute("summary") || "Details";
+    const isOpen = this.hasAttribute("open");
+    this.innerHTML = /* html */
+    `
+      <details class="rk-collapsible"${isOpen ? " open" : ""}>
+        <summary class="rk-collapsible__summary">
+          <span class="rk-collapsible__icon">\u25B6</span>
+          <span>${this._escape(summary)}</span>
+        </summary>
+        <div class="rk-collapsible__body">${this._raw}</div>
+      </details>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-collapsible", RkCollapsible);
+
+// packages/components/src/elements/rk-highlight.ts
+var RkHighlight = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["label"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const label = this.getAttribute("label") || "\u8981\u70B9";
+    this.innerHTML = /* html */
+    `
+      <div class="rk-highlight">
+        <span class="rk-highlight__label">${this._escape(label)}</span>
+        <div class="rk-highlight__body">${this._raw}</div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-highlight", RkHighlight);
+
+// packages/components/src/elements/rk-progress.ts
+var RkProgress = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["label", "value", "max", "tone"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const label = this.getAttribute("label") || "";
+    const rawValue = parseFloat(this.getAttribute("value") || "0");
+    const max = parseFloat(this.getAttribute("max") || "100");
+    const tone = this.getAttribute("tone") || "default";
+    const pct = Math.min(100, Math.max(0, rawValue / max * 100));
+    const displayValue = Math.round(rawValue);
+    this.innerHTML = /* html */
+    `
+      <div class="rk-progress">
+        <div class="rk-progress__header">
+          ${label ? `<span class="rk-progress__label">${this._escape(label)}</span>` : ""}
+          <span class="rk-progress__value">${displayValue}%</span>
+        </div>
+        <div class="rk-progress__track">
+          <div class="rk-progress__fill rk-progress__fill--${tone}" style="width:${pct}%"></div>
+        </div>
+        ${this._raw ? `<div class="rk-progress__extra">${this._raw}</div>` : ""}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-progress", RkProgress);
+
+// packages/components/src/elements/rk-steps.ts
+var RkSteps = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["current"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const current = parseInt(this.getAttribute("current") || "1", 10);
+    const steps = Array.from(this.querySelectorAll("rk-step"));
+    if (steps.length === 0) {
+      this.innerHTML = `<div class="rk-steps"><p style="color:var(--rk-muted)">No steps found. Use &lt;rk-step&gt; inside.</p></div>`;
+      return;
+    }
+    const items = steps.map((step, i) => {
+      const n = i + 1;
+      const label = step.getAttribute("label") || step.textContent?.trim() || `Step ${n}`;
+      let status = "next";
+      if (n < current) status = "done";
+      else if (n === current) status = "active";
+      const circle = status === "done" ? "\u2713" : `${n}`;
+      const itemHtml = `
+          <div class="rk-steps__item rk-steps__item--${status}">
+            <div class="rk-steps__circle">${circle}</div>
+            <div class="rk-steps__label">${this._escape(label)}</div>
+          </div>`;
+      const connector = i < steps.length - 1 ? '<div class="rk-steps__connector"></div>' : "";
+      return itemHtml + connector;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-steps">
+        <div class="rk-steps__track">${items}</div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-steps", RkSteps);
+
+// packages/components/src/elements/rk-metric.ts
+var RkMetric = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["cols"];
+  }
+  connectedCallback() {
+    this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const rawCols = this.getAttribute("cols") || "4";
+    const cols = ["2", "3", "4"].includes(rawCols) ? rawCols : "4";
+    const items = Array.from(this.querySelectorAll("rk-metric-item"));
+    if (items.length === 0) {
+      this.innerHTML = `<div class="rk-metric"><p style="color:var(--rk-muted)">No metric items found. Use &lt;rk-metric-item label="\u2026" value="\u2026"&gt; inside.</p></div>`;
+      return;
+    }
+    const cards = items.map((item) => {
+      const label = item.getAttribute("label") || "";
+      const value = item.getAttribute("value") || "\u2014";
+      const delta = item.getAttribute("delta") || "";
+      const tone = item.getAttribute("tone") || "";
+      const deltaHtml = delta ? `<span class="rk-metric__delta${tone ? ` rk-metric__delta--${tone}` : ""}">${this._escape(delta)}</span>` : "";
+      return `
+          <div class="rk-metric__card">
+            <div class="rk-metric__value-row">
+              <span class="rk-metric__value">${this._escape(value)}</span>
+              ${deltaHtml}
+            </div>
+            <div class="rk-metric__label">${this._escape(label)}</div>
+          </div>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-metric rk-metric--cols-${cols}">
+        ${cards}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-metric", RkMetric);

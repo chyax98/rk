@@ -1,5 +1,4 @@
 /* ─── RenderKit Component Theme: CSS Custom Properties ─── */
-/* Inspired by md2html warm palette + Notion clean principles */
 
 :root {
   /* ── Spacing ── */
@@ -26,9 +25,9 @@
 
   /* ── Typography scale ── */
   --rk-font-sans:
-    'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-  --rk-font-mono: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --rk-font-serif: 'Iowan Old Style', 'Palatino Linuae', 'Book Antiqua', Georgia, serif;
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --rk-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --rk-font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 
   --rk-text-xs: 11px;
   --rk-text-sm: 13px;
@@ -57,24 +56,31 @@
   --rk-tracking-mono: 0.04em;
 
   /* ── Typography presets ── */
-  --rk-type-display: var(--rk-weight-extrabold) var(--rk-text-4xl) / var(--rk-lh-tight) var(--rk-font-sans);
+  --rk-type-display:
+    var(--rk-weight-extrabold) var(--rk-text-4xl) / var(--rk-lh-tight) var(--rk-font-sans);
   --rk-type-h1: var(--rk-weight-bold) var(--rk-text-3xl) / var(--rk-lh-tight) var(--rk-font-sans);
   --rk-type-h2: var(--rk-weight-bold) var(--rk-text-2xl) / var(--rk-lh-snug) var(--rk-font-sans);
   --rk-type-h3: var(--rk-weight-semibold) var(--rk-text-xl) / var(--rk-lh-snug) var(--rk-font-sans);
-  --rk-type-h4: var(--rk-weight-semibold) var(--rk-text-lg) / var(--rk-lh-normal) var(--rk-font-sans);
-  --rk-type-body: var(--rk-weight-normal) var(--rk-text-base) / var(--rk-lh-normal) var(--rk-font-sans);
-  --rk-type-body-sm: var(--rk-weight-normal) var(--rk-text-sm) / var(--rk-lh-normal) var(--rk-font-sans);
-  --rk-type-caption: var(--rk-weight-medium) var(--rk-text-xs) / var(--rk-lh-snug) var(--rk-font-sans);
-  --rk-type-mono: var(--rk-weight-normal) var(--rk-text-sm) / var(--rk-lh-relaxed) var(--rk-font-mono);
-  --rk-type-label: var(--rk-weight-semibold) var(--rk-text-xs) / var(--rk-lh-tight) var(--rk-font-sans);
+  --rk-type-h4:
+    var(--rk-weight-semibold) var(--rk-text-lg) / var(--rk-lh-normal) var(--rk-font-sans);
+  --rk-type-body:
+    var(--rk-weight-normal) var(--rk-text-base) / var(--rk-lh-normal) var(--rk-font-sans);
+  --rk-type-body-sm:
+    var(--rk-weight-normal) var(--rk-text-sm) / var(--rk-lh-normal) var(--rk-font-sans);
+  --rk-type-caption:
+    var(--rk-weight-medium) var(--rk-text-xs) / var(--rk-lh-snug) var(--rk-font-sans);
+  --rk-type-mono:
+    var(--rk-weight-normal) var(--rk-text-sm) / var(--rk-lh-relaxed) var(--rk-font-mono);
+  --rk-type-label:
+    var(--rk-weight-semibold) var(--rk-text-xs) / var(--rk-lh-tight) var(--rk-font-sans);
 
   /* ── Elevation (shadow) ── */
-  --rk-shadow-xs: 0 1px 2px rgba(20, 14, 8, 0.04);
-  --rk-shadow-sm: 0 1px 2px rgba(20, 14, 8, 0.04), 0 4px 12px rgba(20, 14, 8, 0.06);
-  --rk-shadow-md: 0 2px 8px rgba(20, 14, 8, 0.1), 0 6px 20px rgba(20, 14, 8, 0.06);
-  --rk-shadow-lg: 0 8px 24px rgba(20, 14, 8, 0.10);
-  --rk-shadow-xl: 0 12px 40px rgba(20, 14, 8, 0.14);
-  --rk-shadow-inset: inset 0 1px 4px rgba(20, 14, 8, 0.06);
+  --rk-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --rk-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --rk-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.06);
+  --rk-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12), 0 12px 40px rgba(0, 0, 0, 0.08);
+  --rk-shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.16), 0 24px 64px rgba(0, 0, 0, 0.1);
+  --rk-shadow-inset: inset 0 1px 4px rgba(0, 0, 0, 0.08);
 
   /* ── Motion ── */
   --rk-ease: 150ms ease;
@@ -123,115 +129,63 @@
   --rk-density-normal: 1;
   --rk-density-comfortable: 1.3;
 
-  /* ═══════════════════════════════════════════════════════════════
-     Semantic colors — warm paper-light (md2html palette)
-     ═══════════════════════════════════════════════════════════════ */
+  /* ── Semantic colors (paper-light default) ── */
+  --rk-bg: #f6f7fb;
+  --rk-surface: #ffffff;
+  --rk-surface-solid: #ffffff;
+  --rk-surface-raised: #fbfbfd;
+  --rk-surface-sunken: #eef1f6;
 
-  /* Backgrounds */
-  --rk-bg:              #FAFAF7;
-  --rk-bg-secondary:    #FFFFFF;
-  --rk-bg-tertiary:     #F5F5F0;
-  --rk-surface:         #FFFFFF;
-  --rk-surface-solid:   #FFFFFF;
-  --rk-surface-raised:  #FBFBF8;
-  --rk-surface-sunken:  #F0EFE9;
+  --rk-text: #1a1a1a;
+  --rk-text-secondary: #3d3d3d;
+  --rk-text-tertiary: #6b6b6b;
+  --rk-muted: #737373;
 
-  /* Text */
-  --rk-text:            #1A1A1A;
-  --rk-text-secondary:  #4A4A45;
-  --rk-text-tertiary:   #6B6B66;
-  --rk-muted:           #9CA3AF;
+  --rk-accent: #0267a5;
+  --rk-accent-hover: #025a8f;
+  --rk-accent-muted: rgba(2, 103, 165, 0.1);
+  --rk-accent-subtle: rgba(2, 103, 165, 0.04);
 
-  /* Accent — warm orange (md2html signature) */
-  --rk-accent:          #D97757;
-  --rk-accent-hover:    #C56843;
-  --rk-accent-muted:    rgba(217, 119, 87, 0.12);
-  --rk-accent-subtle:   rgba(217, 119, 87, 0.04);
-  --rk-accent-light:    #FBEEE6;
-  --rk-accent-border:   #F0D5C4;
+  --rk-border: #dfe3ea;
+  --rk-border-hover: #9aa7b8;
+  --rk-border-subtle: #edf0f5;
 
-  /* Borders */
-  --rk-border:          #E5E4DC;
-  --rk-border-hover:    #CDCDC4;
-  --rk-border-subtle:   #EDECE6;
-
-  /* Semantic — info */
-  --rk-tone-info-bg:     #EFF6FF;
-  --rk-tone-info-border: #2563EB;
-  --rk-info:             #2563EB;
-  --rk-info-bg:          #EFF6FF;
-  --rk-info-border:      #BFDBFE;
-
-  /* Semantic — warning */
-  --rk-tone-warning-bg:     #FFFBEB;
-  --rk-tone-warning-border: #B45309;
-  --rk-warning:             #B45309;
-  --rk-warning-bg:          #FFFBEB;
-  --rk-warning-border:      #FDE68A;
-
-  /* Semantic — danger */
-  --rk-tone-danger-bg:     #FEF2F2;
-  --rk-tone-danger-border: #B91C1C;
-  --rk-danger:             #B91C1C;
-  --rk-danger-bg:          #FEF2F2;
-  --rk-danger-border:      #FECACA;
-
-  /* Semantic — success */
-  --rk-tone-success-bg:     #ECFDF5;
-  --rk-tone-success-border: #047857;
-  --rk-success:             #047857;
-  --rk-success-bg:          #ECFDF5;
-  --rk-success-border:      #A7F3D0;
-
-  /* Semantic — tip / decision */
-  --rk-tip:                #6D28D9;
-  --rk-tip-bg:             #F5F3FF;
-  --rk-tip-border:         #DDD6FE;
-  --rk-decision:           #6D28D9;
-  --rk-decision-bg:        #F5F3FF;
-  --rk-decision-border:    #DDD6FE;
-
-  /* Semantic — note / neutral */
-  --rk-note:               #6B7280;
-  --rk-note-bg:            #F9FAFB;
-  --rk-note-border:        #E5E7EB;
-
-  /* Semantic — neutral (legacy compat) */
-  --rk-tone-neutral-bg:     rgba(100, 100, 100, 0.06);
+  --rk-tone-info-bg: rgba(2, 103, 165, 0.06);
+  --rk-tone-info-border: #0267a5;
+  --rk-tone-warning-bg: rgba(161, 98, 7, 0.06);
+  --rk-tone-warning-border: #a16207;
+  --rk-tone-danger-bg: rgba(185, 28, 28, 0.06);
+  --rk-tone-danger-border: #b91c1c;
+  --rk-tone-success-bg: rgba(21, 128, 61, 0.06);
+  --rk-tone-success-border: #15803d;
+  --rk-tone-neutral-bg: rgba(100, 100, 100, 0.06);
   --rk-tone-neutral-border: #6b6b6b;
 
-  /* Status colors */
-  --rk-status-draft-bg:     #dbeafe;
-  --rk-status-draft-text:   #1e3a5f;
-  --rk-status-proposed-bg:  #ede9fe;
-  --rk-status-proposed-text:#4c1d95;
-  --rk-status-approved-bg:  #dcfce7;
-  --rk-status-approved-text:#14532d;
-  --rk-status-blocked-bg:   #fee2e2;
+  --rk-status-draft-bg: #dbeafe;
+  --rk-status-draft-text: #1e3a5f;
+  --rk-status-proposed-bg: #ede9fe;
+  --rk-status-proposed-text: #4c1d95;
+  --rk-status-approved-bg: #dcfce7;
+  --rk-status-approved-text: #14532d;
+  --rk-status-blocked-bg: #fee2e2;
   --rk-status-blocked-text: #7f1d1d;
-  --rk-status-resolved-bg:  #f0f0ed;
-  --rk-status-resolved-text:#555;
-  --rk-status-orphaned-bg:  #fef3c7;
-  --rk-status-orphaned-text:#78350f;
+  --rk-status-resolved-bg: #f0f0ed;
+  --rk-status-resolved-text: #555;
+  --rk-status-orphaned-bg: #fef3c7;
+  --rk-status-orphaned-text: #78350f;
 
-  /* Code */
-  --rk-code-bg:     #F5F2EC;
-  --rk-code-text:   #2A2A2A;
-  --rk-code-border: #D0D7DE;
+  --rk-code-bg: #f6f8fa;
+  --rk-code-text: #24292f;
+  --rk-code-border: #d0d7de;
 
-  /* Chips & pills */
-  --rk-pill-bg:    rgba(217, 119, 87, 0.10);
-  --rk-pill-text:  #8B4C30;
-  --rk-chip-bg:    rgba(0, 0, 0, 0.04);
-  --rk-chip-text:  #4A4A4A;
-  --rk-chip-border:#D4D3D0;
+  --rk-pill-bg: rgba(2, 103, 165, 0.08);
+  --rk-pill-text: #1a3a5c;
+  --rk-chip-bg: rgba(0, 0, 0, 0.04);
+  --rk-chip-text: #4a4a4a;
+  --rk-chip-border: #d4d3d0;
 
-  /* Buttons */
-  --rk-btn-primary:     linear-gradient(135deg, #D97757, #C56843);
-  --rk-btn-primary-text:#FFFFFF;
+  --rk-shadow: var(--rk-shadow-sm);
 
-  /* Geometry */
-  --rk-radius:    12px;
-  --rk-radius-sm: 6px;
-  --rk-radius-lg: 16px;
+  --rk-btn-primary: linear-gradient(135deg, #1d4ed8, #0267a5);
+  --rk-btn-primary-text: #ffffff;
 }

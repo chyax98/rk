@@ -1,173 +1,140 @@
 'use client';
 
 import Script from 'next/script';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import type { HtmlArtifactBundle, Comment } from '../../../lib/store.ts';
 
-export interface HtmlAnchor {
-  id: string;
-  anchor: string;
-  elementTag: string;
-  position: number;
-  textPreview: string | null;
-}
+export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
+  const { meta, revision, anchors, comments } = artifact;
 
-export interface HtmlComment {
-  id: string;
-  blockId: string;
-  text: string;
-  status: string;
-  createdAt: string;
-  selector?: { exact: string } | null;
-}
-
-interface HtmlArtifactViewProps {
-  artifactId: string;
-  processedHtml: string;
-  anchors: HtmlAnchor[];
-  comments: HtmlComment[];
-}
-
-export default function HtmlArtifactView({
-  artifactId,
-  processedHtml,
-  anchors,
-  comments: initialComments,
-}: HtmlArtifactViewProps) {
+  // Active anchor for comment thread
   const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [localComments, setLocalComments] = useState<HtmlComment[]>(initialComments);
 
+  // Build anchor -> comments map
   const commentsByAnchor = useMemo(() => {
-    const map = new Map<string, HtmlComment[]>();
-    for (const c of localComments) {
-      if (c.status === 'open') {
-        const list = map.get(c.blockId) ?? [];
-        list.push(c);
-        map.set(c.blockId, list);
-      }
+    const map = new Map<string, Comment[]>();
+    for (const c of comments) {
+      const list = map.get(c.anchor) || [];
+      list.push(c);
+      map.set(c.anchor, list);
     }
     return map;
-  }, [localComments]);
+  }, [comments]);
 
-  const activeComments = activeAnchor ? (commentsByAnchor.get(activeAnchor) ?? []) : [];
+  const activeComments = activeAnchor ? (commentsByAnchor.get(activeAnchor) || []) : [];
 
-  const submitComment = useCallback(async () => {
+  const handleBubbleClick = useCallback((anchor: string) => {
+    setActiveAnchor((prev) => (prev === anchor ? null : anchor));
+  }, []);
+
+  const handleSubmitComment = useCallback(async () => {
     if (!activeAnchor || !commentText.trim()) return;
-    setSubmitting(true);
     try {
-      const res = await fetch(`/api/artifacts/${artifactId}/comments`, {
+      await fetch(`/api/artifacts/${meta.id}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blockId: activeAnchor, text: commentText.trim() }),
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          anchor: activeAnchor,
+          text: commentText.trim(),
+        }),
       });
-      const data = await res.json();
-      if (data.ok && data.comment) {
-        setLocalComments((prev) => [
-          ...prev,
-          {
-            id: data.comment.id,
-            blockId: activeAnchor,
-            text: data.comment.text,
-            status: 'open',
-            createdAt: data.comment.createdAt ?? new Date().toISOString(),
-          },
-        ]);
-        setCommentText('');
-      }
-    } finally {
-      setSubmitting(false);
+      setCommentText('');
+      // Refresh page to show new comment
+      window.location.reload();
+    } catch {
+      // Non-fatal
     }
-  }, [activeAnchor, commentText, artifactId]);
+  }, [activeAnchor, commentText, meta.id]);
 
   return (
     <div className="rk-page" data-rk-theme="paper-light">
+      {/* Inject RenderKit CSS */}
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
-      <div className="rk-html-layout">
-        {/* 主体文档 */}
-        <main className="rk-html-body">
-          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: server-processed HTML */}
-          <div dangerouslySetInnerHTML={{ __html: processedHtml }} />
-        </main>
+      <main id="rk-main" className="rk-artifact">
+        <div
+          className="rk-html-content" // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted server-processed HTML
+          dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }}
+        />
 
-        {/* 右侧评论 rail */}
-        <aside className="rk-comment-rail">
+        {/* anchor bubble rail */}
+        <div className="rk-block-rail">
           {anchors.map((a) => {
-            const count = commentsByAnchor.get(a.anchor)?.length ?? 0;
+            const anchorComments = commentsByAnchor.get(a.anchor) || [];
+            const count = anchorComments.length;
             const isActive = activeAnchor === a.anchor;
             return (
-              <button
+              <div
                 key={a.id}
-                type="button"
-                className={`rk-rail-dot${count > 0 ? ' has-comments' : ''}${isActive ? ' is-active' : ''}`}
-                title={a.textPreview ?? a.anchor}
-                onClick={() => setActiveAnchor(isActive ? null : a.anchor)}
+                className={`rk-bubble${count > 0 ? ' rk-bubble--active' : ''}${isActive ? ' rk-bubble--selected' : ''}`}
+                data-anchor={a.anchor}
+                title={a.textPreview || a.anchor}
+                onClick={() => handleBubbleClick(a.anchor)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleBubbleClick(a.anchor); }}
+                role="button"
+                tabIndex={0}
               >
                 {count > 0 ? count : '+'}
-              </button>
+              </div>
             );
           })}
-        </aside>
-      </div>
+        </div>
+      </main>
 
-      {/* 评论面板 — 简洁的固定右侧抽屉 */}
+      {/* Comment thread for active anchor */}
       {activeAnchor && (
-        <div className="rk-comment-panel">
-          <div className="rk-comment-panel__header">
-            <span className="rk-comment-panel__anchor">{activeAnchor}</span>
+        <div className="rk-comment-thread">
+          <div className="rk-comment-thread__header">
+            <span className="rk-comment-thread__title">
+              评论 · {anchors.find((a) => a.anchor === activeAnchor)?.textPreview || activeAnchor}
+            </span>
             <button
-              type="button"
-              className="rk-comment-panel__close"
+              className="rk-comment-thread__close"
               onClick={() => setActiveAnchor(null)}
+              aria-label="关闭"
             >
-              ✕
+              ×
             </button>
           </div>
 
-          <div className="rk-comment-panel__list">
+          <div className="rk-comment-thread__list">
             {activeComments.length === 0 && (
-              <p className="rk-comment-panel__empty">暂无评论</p>
+              <div className="rk-comment-thread__empty">暂无评论</div>
             )}
             {activeComments.map((c) => (
-              <div key={c.id} className="rk-comment-card-inpanel">
-                {c.selector?.exact && (
-                  <blockquote className="rk-comment-card__quote">
-                    &ldquo;{c.selector.exact}&rdquo;
-                  </blockquote>
+              <div key={c.id} className={`rk-comment-card rk-comment-card--${c.status}`}>
+                <div className="rk-comment-card__text">{c.text}</div>
+                {c.selector && (
+                  <div className="rk-comment-card__quote">&ldquo;{c.selector.exact}&rdquo;</div>
                 )}
-                <p className="rk-comment-card__text">{c.text}</p>
-                <span className="rk-comment-card__time">
-                  {new Date(c.createdAt).toLocaleString('zh-CN')}
-                </span>
+                <div className="rk-comment-card__meta">
+                  <span className="rk-comment-card__status">{c.status === 'open' ? '🟢 待处理' : c.status === 'resolved' ? '✅ 已解决' : '⚠️ 已失效'}</span>
+                  <span className="rk-comment-card__time">{new Date(c.createdAt).toLocaleString('zh-CN')}</span>
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="rk-comment-panel__input">
+          <div className="rk-comment-thread__input">
             <textarea
-              className="rk-comment-panel__textarea"
-              placeholder="写评论… (Cmd+Enter 提交)"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitComment();
-              }}
-              rows={3}
+              placeholder="写下评论…"
+              rows={2}
             />
             <button
-              type="button"
-              className="rk-comment-panel__submit"
-              onClick={submitComment}
-              disabled={submitting || !commentText.trim()}
+              onClick={handleSubmitComment}
+              disabled={!commentText.trim()}
             >
-              {submitting ? '…' : '提交'}
+              发送
             </button>
           </div>
         </div>
       )}
 
+      {/* Inject RenderKit components JS */}
       <Script src="/rk/components.js" strategy="afterInteractive" />
     </div>
   );
