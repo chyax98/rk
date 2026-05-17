@@ -1206,3 +1206,13 @@
   margin: 0;
   background: rgba(0, 0, 0, 0.3);
 }
+
+/* ── rk-form submit states ── */
+.rk-form--submitted {
+  opacity: 0.85;
+  pointer-events: none;
+}
+.rk-form__submit--done {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+}

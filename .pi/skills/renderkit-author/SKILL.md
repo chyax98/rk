@@ -12,7 +12,7 @@ description: >-
 
 更新时间：2026-05-18
 
-RenderKit 让 Agent 用 HTML + `<rk-*>` Web Components 写文档，服务端渲染后在浏览器展示，人类可以飞书式评论，Agent 读取 JSON 评论迭代优化。
+RenderKit 让 Agent 用 HTML + `<rk-*>` Web Components 写文档，服务端渲染后在浏览器展示。人类可以在文档上添加轻量评论（不影响文档阅读体验），Agent 读取 JSON 评论迭代优化。文档始终全宽展示，评论以浮层/角标形式呈现。
 
 ---
 
@@ -442,8 +442,8 @@ rk open report.html
 
 # 4. 人类在浏览器里添加评论
 #    交互方式：hover 文档块 → 右侧出现 "+" 按钮 → 点击 → 输入评论
-#    评论面板默认折叠（全宽文档），有评论时自动展开
-#    面板是真实布局推挤（非 overlay），收起时恢复全宽
+#    评论面板是固定浮层，不影响文档宽度（文档始终全宽展示）
+#    有评论的块右侧显示角标数字，悬停可查看/编辑/删除评论
 
 # 5. Agent 获取评论（JSON）
 rk feedback report.html
@@ -588,7 +588,49 @@ rk push report.html  # 自动更新同一个 artifact（revision +1）
 
 ---
 
-## 8. 服务器启动
+## 8. 评论系统
+
+文档是产品核心，评论是轻量附加功能。
+
+### 交互方式
+1. 悬停文档块 → 右侧出现浮动 `+` 按钮
+2. 点击 `+` → 评论面板从右侧滑入（**固定浮层，不影响文档宽度**）
+3. 输入评论文本 → `Cmd+Enter` 提交
+4. 有评论的块显示角标数字
+5. 点击评论卡片 → 文档滚动定位到对应块
+6. 悬停评论卡片 → 显示编辑/删除按钮
+
+### Agent 读取评论
+```bash
+rk feedback my-doc.html
+# 返回 JSON，含所有 open 评论和位置信息
+```
+
+### 评论数据结构
+每条评论包含：
+- `id`: 评论 ID
+- `anchor`: 对应文档块的锚点（`anc_0`, `anc_3` 等）
+- `text`: 评论文本
+- `status`: `open` | `resolved`
+- `createdAt`: 创建时间
+
+---
+
+## 9. 版本历史
+
+每次 `rk push` 创建新版本（revision），版本号自动递增。
+
+```bash
+rk push report.html    # revision 1
+rk push report.html    # revision 2（修改后重新推送）
+rk status report.html  # 查看当前版本号
+```
+
+版本数据存储在 SQLite 数据库中，支持历史版本回溯。
+
+---
+
+## 10. 服务器启动
 
 ```bash
 # 启动本地 RenderKit 服务器
