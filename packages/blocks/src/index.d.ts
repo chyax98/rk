@@ -68,7 +68,9 @@ export interface ChartBlockProps {
   caption?: string;
 }
 
-export type RenderKitBlockComponent<Props extends object = Record<string, unknown>> = ComponentType<Props>;
+export type BlockType = import('@renderkit/shared').BlockType;
+export type RenderKitBlock = import('@renderkit/shared').RenderKitBlock;
+export type RenderKitBlockComponent<Props extends object = Record<string, unk
 export type RenderKitRegistry = Record<string, RenderKitBlockComponent>;
 
 export const registry: RenderKitRegistry;

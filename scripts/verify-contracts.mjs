@@ -95,6 +95,7 @@ const examples = [
   'examples/capabilities/diagram-visual-language.rk.md',
   'examples/surfaces/proposal.rk.md',
   'examples/surfaces/documentation.rk.md',
+  'examples/capabilities/chart-gallery.rk.md',
 ];
 for (const file of examples) {
   const result = parseRK(read(file), file);
