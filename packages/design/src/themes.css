@@ -459,3 +459,188 @@
     "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif JP", serif;
   --rk-font-mono: ui-monospace, SFMono-Regular, Menlo, "Noto Sans Mono", monospace;
 }
+
+/* ── notion-clean ── warm minimalism, Notion-inspired */
+[data-rk-theme="notion-clean"] {
+  color-scheme: light;
+
+  --rk-bg: #ffffff;
+  --rk-surface: #f6f5f4;
+  --rk-surface-solid: #f6f5f4;
+  --rk-surface-raised: #ffffff;
+  --rk-surface-sunken: #eeeeed;
+
+  --rk-text: rgba(0, 0, 0, 0.95);
+  --rk-text-secondary: #31302e;
+  --rk-text-tertiary: #615d59;
+  --rk-muted: #a39e98;
+
+  --rk-accent: #0075de;
+  --rk-accent-hover: #005bab;
+  --rk-accent-muted: rgba(0, 117, 222, 0.1);
+  --rk-accent-subtle: rgba(0, 117, 222, 0.05);
+
+  --rk-border: rgba(0, 0, 0, 0.1);
+  --rk-border-hover: rgba(0, 0, 0, 0.2);
+  --rk-border-subtle: rgba(0, 0, 0, 0.06);
+
+  --rk-tone-info-bg: rgba(0, 117, 222, 0.06);
+  --rk-tone-info-border: #0075de;
+  --rk-tone-warning-bg: rgba(221, 91, 0, 0.08);
+  --rk-tone-warning-border: #dd5b00;
+  --rk-tone-danger-bg: rgba(220, 38, 38, 0.06);
+  --rk-tone-danger-border: #dc2626;
+  --rk-tone-success-bg: rgba(26, 174, 57, 0.08);
+  --rk-tone-success-border: #1aae39;
+  --rk-tone-neutral-bg: rgba(97, 93, 89, 0.08);
+  --rk-tone-neutral-border: #615d59;
+
+  --rk-badge-bg: #0075de;
+  --rk-badge-text: #ffffff;
+
+  --rk-code-bg: #f6f5f4;
+  --rk-code-text: rgba(0, 0, 0, 0.85);
+  --rk-code-border: rgba(0, 0, 0, 0.08);
+
+  --rk-font-sans: "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ── linear-app ── dark precision, engineering aesthetic */
+[data-rk-theme="linear-app"] {
+  color-scheme: dark;
+
+  --rk-bg: #08090a;
+  --rk-surface: #191a1b;
+  --rk-surface-solid: #191a1b;
+  --rk-surface-raised: #222326;
+  --rk-surface-sunken: #050506;
+
+  --rk-text: #f7f8f8;
+  --rk-text-secondary: #d0d6e0;
+  --rk-text-tertiary: #8a8f98;
+  --rk-muted: #62666d;
+
+  --rk-accent: #5e6ad2;
+  --rk-accent-hover: #828fff;
+  --rk-accent-muted: rgba(94, 106, 210, 0.15);
+  --rk-accent-subtle: rgba(94, 106, 210, 0.06);
+
+  --rk-border: rgba(255, 255, 255, 0.08);
+  --rk-border-hover: rgba(255, 255, 255, 0.16);
+  --rk-border-subtle: rgba(255, 255, 255, 0.05);
+
+  --rk-tone-info-bg: rgba(94, 106, 210, 0.1);
+  --rk-tone-info-border: #5e6ad2;
+  --rk-tone-warning-bg: rgba(234, 179, 8, 0.1);
+  --rk-tone-warning-border: #eab308;
+  --rk-tone-danger-bg: rgba(220, 38, 38, 0.1);
+  --rk-tone-danger-border: #dc2626;
+  --rk-tone-success-bg: rgba(39, 166, 68, 0.1);
+  --rk-tone-success-border: #27a644;
+  --rk-tone-neutral-bg: rgba(138, 143, 152, 0.1);
+  --rk-tone-neutral-border: #8a8f98;
+
+  --rk-badge-bg: #5e6ad2;
+  --rk-badge-text: #ffffff;
+
+  --rk-code-bg: #111213;
+  --rk-code-text: #d0d6e0;
+  --rk-code-border: rgba(255, 255, 255, 0.06);
+
+  --rk-font-sans: "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ── glassmorphism ── frosted glass, luminous depth */
+[data-rk-theme="glassmorphism"] {
+  color-scheme: light;
+
+  --rk-bg: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%);
+  --rk-bg-grad: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f64f59 100%);
+  --rk-surface: rgba(255, 255, 255, 0.15);
+  --rk-surface-solid: rgba(255, 255, 255, 0.25);
+  --rk-surface-raised: rgba(255, 255, 255, 0.2);
+  --rk-surface-sunken: rgba(0, 0, 0, 0.1);
+
+  --rk-text: #141414;
+  --rk-text-secondary: #2a2a2a;
+  --rk-text-tertiary: #4a4a4a;
+  --rk-muted: #6a6a6a;
+
+  --rk-accent: #1856ff;
+  --rk-accent-hover: #0040e6;
+  --rk-accent-muted: rgba(24, 86, 255, 0.15);
+  --rk-accent-subtle: rgba(24, 86, 255, 0.08);
+
+  --rk-border: rgba(255, 255, 255, 0.4);
+  --rk-border-hover: rgba(255, 255, 255, 0.6);
+  --rk-border-subtle: rgba(255, 255, 255, 0.2);
+
+  --rk-tone-info-bg: rgba(24, 86, 255, 0.12);
+  --rk-tone-info-border: #1856ff;
+  --rk-tone-warning-bg: rgba(232, 149, 88, 0.15);
+  --rk-tone-warning-border: #e89558;
+  --rk-tone-danger-bg: rgba(234, 33, 67, 0.12);
+  --rk-tone-danger-border: #ea2143;
+  --rk-tone-success-bg: rgba(7, 202, 107, 0.12);
+  --rk-tone-success-border: #07ca6b;
+  --rk-tone-neutral-bg: rgba(255, 255, 255, 0.15);
+  --rk-tone-neutral-border: rgba(255, 255, 255, 0.4);
+
+  --rk-badge-bg: #1856ff;
+  --rk-badge-text: #ffffff;
+
+  --rk-code-bg: rgba(255, 255, 255, 0.2);
+  --rk-code-text: #1a1a2e;
+  --rk-code-border: rgba(255, 255, 255, 0.3);
+
+  --rk-font-sans: "Plus Jakarta Sans", "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ── ibm-enterprise ── Carbon Design System, structured precision */
+[data-rk-theme="ibm-enterprise"] {
+  color-scheme: light;
+
+  --rk-bg: #ffffff;
+  --rk-surface: #f4f4f4;
+  --rk-surface-solid: #f4f4f4;
+  --rk-surface-raised: #ffffff;
+  --rk-surface-sunken: #e0e0e0;
+
+  --rk-text: #161616;
+  --rk-text-secondary: #525252;
+  --rk-text-tertiary: #6f6f6f;
+  --rk-muted: #8d8d8d;
+
+  --rk-accent: #0f62fe;
+  --rk-accent-hover: #0043ce;
+  --rk-accent-muted: rgba(15, 98, 254, 0.1);
+  --rk-accent-subtle: rgba(15, 98, 254, 0.05);
+
+  --rk-border: #e0e0e0;
+  --rk-border-hover: #c6c6c6;
+  --rk-border-subtle: #e8e8e8;
+
+  --rk-tone-info-bg: #edf5ff;
+  --rk-tone-info-border: #0f62fe;
+  --rk-tone-warning-bg: #fcf4d6;
+  --rk-tone-warning-border: #f1c21b;
+  --rk-tone-danger-bg: #fff1f1;
+  --rk-tone-danger-border: #da1e28;
+  --rk-tone-success-bg: #defbe6;
+  --rk-tone-success-border: #24a148;
+  --rk-tone-neutral-bg: #f4f4f4;
+  --rk-tone-neutral-border: #8d8d8d;
+
+  --rk-badge-bg: #0f62fe;
+  --rk-badge-text: #ffffff;
+
+  --rk-code-bg: #f4f4f4;
+  --rk-code-text: #161616;
+  --rk-code-border: #e0e0e0;
+
+  --rk-font-sans: "IBM Plex Sans", "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+}
