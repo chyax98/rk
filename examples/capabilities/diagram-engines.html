@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RenderKit — 图表引擎展示</title>
+  <link rel="stylesheet" href="/rk/components.css">
+  <script type="module" src="/rk/components.js"></script>
+  <style>
+    body { max-width: 860px; margin: 0 auto; padding: 2rem; font-family: var(--rk-font-sans, system-ui, sans-serif); }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.25rem; margin-top: 2.5rem; margin-bottom: 0.75rem; color: var(--rk-text-muted, #555); }
+    .engine-badge { display: inline-block; padding: 0.15em 0.5em; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem; background: var(--rk-accent-soft, #e0f2fe); color: var(--rk-accent, #0369a1); }
+  </style>
+</head>
+<body data-rk-theme="paper-light">
+
+  <h1>🗺️ 图表引擎展示</h1>
+  <p>RenderKit 支持四种图表引擎：Mermaid（客户端 CDN）、D2（客户端 WASM）、Graphviz（客户端 CDN）、PlantUML（服务端 Kroki SSR）。</p>
+
+  <h2><span class="engine-badge">Mermaid</span> 流程图</h2>
+  <rk-diagram engine="mermaid" title="用户注册流程">
+flowchart TD
+    A([开始]) --> B[填写注册表单]
+    B --> C{验证通过?}
+    C -->|是| D[创建账号]
+    C -->|否| E[显示错误]
+    E --> B
+    D --> F[发送验证邮件]
+    F --> G([完成])
+  </rk-diagram>
+
+  <h2><span class="engine-badge">D2</span> 架构图</h2>
+  <rk-diagram engine="d2" title="RenderKit 系统架构">
+Agent: {
+  shape: rectangle
+  label: "AI Agent"
+}
+CLI: {
+  shape: rectangle
+  label: "renderkit CLI"
+}
+Server: {
+  shape: rectangle
+  label: "Next.js Server"
+}
+Browser: {
+  shape: rectangle
+  label: "Chrome"
+}
+DB: {
+  shape: cylinder
+  label: "SQLite"
+}
+
+Agent -> CLI: "rk push doc.html"
+CLI -> Server: "POST /api/artifacts"
+Server -> DB: "store artifact"
+Server -> Browser: "render HTML + WC"
+Browser -> Agent: "rk feedback → comments JSON"
+  </rk-diagram>
+
+  <h2><span class="engine-badge">Graphviz</span> 依赖图</h2>
+  <rk-diagram engine="graphviz" title="包依赖关系">
+digraph RenderKit {
+  rankdir=LR;
+  node [shape=box, style=rounded, fontname="sans-serif"];
+
+  web [label="@renderkit/web", fillcolor="#dbeafe", style="rounded,filled"];
+  components [label="@renderkit/components", fillcolor="#dcfce7", style="rounded,filled"];
+  design [label="@renderkit/design", fillcolor="#fef9c3", style="rounded,filled"];
+  cli [label="@renderkit/cli", fillcolor="#fce7f3", style="rounded,filled"];
+
+  web -> components;
+  web -> design;
+  cli -> web [label="push/feedback", style=dashed];
+  components -> design [label="consumes tokens"];
+}
+  </rk-diagram>
+
+  <h2><span class="engine-badge">PlantUML</span> 时序图 <small style="font-weight:400;color:#888">（需服务端 Kroki SSR）</small></h2>
+  <rk-diagram engine="plantuml" title="Agent 工作流时序">
+@startuml
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 10
+
+actor Agent
+participant "RenderKit CLI" as CLI
+participant "Server" as SRV
+participant "Browser" as WEB
+actor Human
+
+Agent -> CLI : rk push report.html
+CLI -> SRV : POST /api/artifacts
+SRV --> CLI : { artifactId, url }
+CLI --> Agent : artifact URL
+
+Human -> WEB : 打开 URL 审阅
+Human -> WEB : 添加评论
+WEB -> SRV : POST /api/comments
+
+Agent -> CLI : rk feedback report.html
+CLI -> SRV : GET /api/comments
+SRV --> CLI : [{ text, anchor }]
+CLI --> Agent : comments JSON
+
+Agent -> Agent : 分析评论，修改 HTML
+Agent -> CLI : rk push report.html (更新)
+@enduml
+  </rk-diagram>
+
+</body>
+</html>

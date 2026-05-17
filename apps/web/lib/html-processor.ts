@@ -97,8 +97,46 @@ async function preRenderCodeBlocks(document: Document): Promise<void> {
   }
 }
 
+/** Pre-process PlantUML diagrams via Kroki SSR (best-effort, failures are silent) */
+async function processPlantUML(html: string): Promise<string> {
+  const regex = /<rk-diagram([^>]*engine=["']plantuml["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+  const matches: Array<{ full: string; attrs: string; source: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(html)) !== null) {
+    matches.push({ full: m[0], attrs: m[1], source: m[2].trim() });
+  }
+  if (matches.length === 0) return html;
+
+  const resolved = await Promise.all(
+    matches.map(async ({ full, attrs, source }) => {
+      try {
+        const res = await fetch('https://kroki.io/plantuml/svg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: source,
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) return { full, replacement: full };
+        const svg = await res.text();
+        const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
+        return { full, replacement };
+      } catch {
+        return { full, replacement: full };
+      }
+    })
+  );
+
+  let result = html;
+  for (const { full, replacement } of resolved) {
+    result = result.replace(full, replacement);
+  }
+  return result;
+}
+
 export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
-  const { document } = parseHTML(`<!doctype html><html><body>${rawHtml}</body></html>`);
+  // PlantUML SSR via Kroki (before DOM parsing)
+  const htmlWithDiagrams = await processPlantUML(rawHtml);
+  const { document } = parseHTML(`<!doctype html><html><body>${htmlWithDiagrams}</body></html>`);
 
   // Pre-render code blocks with shiki (best-effort)
   await preRenderCodeBlocks(document);
