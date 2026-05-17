@@ -137,9 +137,13 @@ class RkDiagram extends HTMLElement {
     if (!canvas || !this._raw) return;
     try {
       // Use @viz-js/viz (same as docu.md / markdown-viewer-extension)
+      // viz-standalone.js is a UMD bundle: it sets globalThis.Viz, not named ES exports
       // @ts-ignore
-      const { instance } = await import('https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js');
-      const viz = await instance();
+      await import('https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js');
+      // @ts-ignore
+      const instanceFn = (globalThis as any).Viz?.instance;
+      if (!instanceFn) throw new Error('Viz.js not loaded');
+      const viz = await instanceFn();
 
       // Dark theme support: inject graph attributes before first '{'
       const isDark = this._isDark();
