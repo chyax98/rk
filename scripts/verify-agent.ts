@@ -28,10 +28,10 @@ function assert(label, ok, detail = '') {
 }
 
 console.log('\n== Recipe CLI ==');
-const recipes = runJson('node packages/cli/bin/renderkit.mjs recipes list --json');
-assert('recipes list ok=true', recipes.ok === true);
+const recipes = runJson('node packages/cli/bin/renderkit.mjs recipes --json');
+assert('recipes ok=true', recipes.ok === true);
 assert(
-  'recipes list exposes seven surfaces',
+  'recipes exposes seven surfaces',
   recipes.surfaces?.length === 7,
   `got ${recipes.surfaces?.length}`,
 );
@@ -40,7 +40,7 @@ assert(
   recipes.surfaces?.some((r) => r.surface === 'engineering-plan'),
 );
 const engineering = runJson(
-  'node packages/cli/bin/renderkit.mjs recipes show engineering-plan --json',
+  'node packages/cli/bin/renderkit.mjs recipes --json',
 );
 assert('recipe show engineering-plan ok=true', engineering.ok === true);
 assert(
@@ -165,7 +165,7 @@ for (const alias of ['sum', 'metric', 'todo', 'compare', 'roadmap']) {
   assert(`authoring skill documents alias ${alias}`, skill.includes(`\`${alias}\``));
 }
 for (const command of [
-  'renderkit recipes list',
+  'renderkit recipes',
   'renderkit design resources',
   'renderkit design recommend',
   'renderkit surfaces',
