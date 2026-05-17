@@ -140,9 +140,21 @@ async function processPlantUML(html: string): Promise<string> {
   return result;
 }
 
+/** Strip outer <html>/<head>/<body> wrapper if agent pushed a full document */
+function extractBodyContent(html: string): string {
+  const trimmed = html.trim();
+  // Quick check — only parse if looks like a full document
+  if (!/<html/i.test(trimmed)) return html;
+  const { document } = parseHTML(`<!doctype html>${trimmed}`);
+  const body = document.body;
+  return body ? body.innerHTML : html;
+}
+
 export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
+  // Strip full HTML wrapper if agent pushed a complete document
+  const bodyContent = extractBodyContent(rawHtml);
   // PlantUML SSR via Kroki (before DOM parsing)
-  const htmlWithDiagrams = await processPlantUML(rawHtml);
+  const htmlWithDiagrams = await processPlantUML(bodyContent);
   const { document } = parseHTML(`<!doctype html><html><body>${htmlWithDiagrams}</body></html>`);
 
   // Pre-render code blocks with shiki (best-effort)

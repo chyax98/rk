@@ -12,79 +12,120 @@ interface Anchor {
   textPreview: string | null;
 }
 
+interface AddingState {
+  anchor: string;
+  text: string;
+}
+
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
   const { meta, revision, anchors, comments } = artifact;
 
   const bodyRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false); // default: closed, full-width doc
   const [localComments, setLocalComments] = useState<Comment[]>(
     comments.map((c) => ({ ...c, anchor: (c as any).blockId || c.anchor || '' })),
   );
   const [activeComment, setActiveComment] = useState<string | null>(null);
-  const [newAnchor, setNewAnchor] = useState('');
-  const [newText, setNewText] = useState('');
+  const [adding, setAdding] = useState<AddingState | null>(null); // which anchor is being commented
   const [submitting, setSubmitting] = useState(false);
+  const [hoveredAnchor, setHoveredAnchor] = useState<string | null>(null);
 
-  // Only show meaningful anchors (rk-* and h1/h2/h3)
+  // Only meaningful anchors
   const visibleAnchors = useMemo(
     () =>
       anchors.filter(
-        (a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3'].includes(a.elementTag),
+        (a) => a.elementTag.startsWith('rk-') || ['h1', 'h2', 'h3', 'h4', 'p', 'section'].includes(a.elementTag),
       ),
     [anchors],
   );
 
-  // Open comments sorted by anchor position in document
-  const openComments = useMemo(() => {
-    const anchorPos = new Map(visibleAnchors.map((a) => [a.anchor, a.position]));
-    return localComments
-      .filter((c) => c.status === 'open')
-      .sort((a, b) => (anchorPos.get(a.anchor) ?? 999) - (anchorPos.get(b.anchor) ?? 999));
-  }, [localComments, visibleAnchors]);
-
-  // Anchor label map (text preview)
+  // anchor → label map
   const anchorLabel = useMemo(() => {
     const m = new Map<string, string>();
     for (const a of visibleAnchors) m.set(a.anchor, a.textPreview?.slice(0, 60) || a.anchor);
     return m;
   }, [visibleAnchors]);
 
-  // Mark document anchors that have comments
+  // anchor → position map
+  const anchorPos = useMemo(
+    () => new Map(visibleAnchors.map((a) => [a.anchor, a.position])),
+    [visibleAnchors],
+  );
+
+  // Open comments sorted by document position
+  const openComments = useMemo(
+    () =>
+      localComments
+        .filter((c) => c.status === 'open')
+        .sort((a, b) => (anchorPos.get(a.anchor) ?? 999) - (anchorPos.get(b.anchor) ?? 999)),
+    [localComments, anchorPos],
+  );
+
+  // Auto-open panel when there are comments
   useEffect(() => {
-    if (!bodyRef.current) return;
-    const anchorsWithComments = new Set(openComments.map((c) => c.anchor));
+    if (openComments.length > 0) setPanelOpen(true);
+  }, [openComments.length]);
+
+  // Attach hover listeners to anchor elements
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+
+    const onMouseEnter = (e: Event) => {
+      const target = (e.target as HTMLElement).closest('[data-rk-anchor]') as HTMLElement | null;
+      if (target) setHoveredAnchor(target.dataset.rkAnchor || null);
+    };
+    const onMouseLeave = (e: Event) => {
+      const related = (e as MouseEvent).relatedTarget as HTMLElement | null;
+      if (!related?.closest('[data-rk-anchor]')) setHoveredAnchor(null);
+    };
+
+    el.addEventListener('mouseover', onMouseEnter);
+    el.addEventListener('mouseout', onMouseLeave);
+    return () => {
+      el.removeEventListener('mouseover', onMouseEnter);
+      el.removeEventListener('mouseout', onMouseLeave);
+    };
+  }, []);
+
+  // Highlight anchor elements that have comments
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const withComments = new Set(openComments.map((c) => c.anchor));
     for (const a of visibleAnchors) {
-      const el = bodyRef.current.querySelector(`[data-rk-anchor="${a.anchor}"]`);
-      if (!el) continue;
-      if (anchorsWithComments.has(a.anchor)) {
-        el.classList.add('rk-has-comment');
-      } else {
-        el.classList.remove('rk-has-comment');
-      }
+      const target = el.querySelector(`[data-rk-anchor="${a.anchor}"]`);
+      if (!target) continue;
+      target.classList.toggle('rk-has-comment', withComments.has(a.anchor));
     }
   }, [openComments, visibleAnchors]);
 
-  // Click comment card → scroll to anchor in document
+  // Click panel comment → scroll to block
   const scrollToAnchor = useCallback((anchor: string, commentId: string) => {
     setActiveComment(commentId);
     if (!bodyRef.current) return;
-    const el = bodyRef.current.querySelector(`[data-rk-anchor="${anchor}"]`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('rk-comment-flash');
-    setTimeout(() => el.classList.remove('rk-comment-flash'), 1200);
+    const target = bodyRef.current.querySelector(`[data-rk-anchor="${anchor}"]`);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.add('rk-comment-flash');
+    setTimeout(() => target.classList.remove('rk-comment-flash'), 1400);
   }, []);
 
-  // Submit new comment
+  // Open inline comment box for an anchor
+  const openAdding = useCallback((anchor: string) => {
+    setAdding({ anchor, text: '' });
+    setPanelOpen(true);
+  }, []);
+
+  // Submit comment
   const submitComment = useCallback(async () => {
-    if (!newAnchor || !newText.trim()) return;
+    if (!adding || !adding.text.trim()) return;
     setSubmitting(true);
     try {
       const res = await fetch(`/api/artifacts/${meta.id}/comments`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ blockId: newAnchor, text: newText.trim() }),
+        body: JSON.stringify({ blockId: adding.anchor, text: adding.text.trim() }),
       });
       const data = await res.json();
       if (data.ok && data.comment) {
@@ -93,115 +134,132 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           ...prev,
           {
             id: c.id,
-            anchor: c.blockId || newAnchor,
+            anchor: c.blockId || adding.anchor,
             text: c.text,
             status: c.status || 'open',
             createdAt: c.createdAt,
           },
         ]);
-        setNewText('');
+        setAdding(null);
       }
     } finally {
       setSubmitting(false);
     }
-  }, [newAnchor, newText, meta.id]);
+  }, [adding, meta.id]);
 
   return (
-    <div className={`rk-page rk-layout${panelOpen ? ' panel-open' : ' panel-closed'}`} data-rk-theme="paper-light">
+    <div className={`rk-layout${panelOpen ? ' panel-open' : ''}`}>
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
-      {/* Main document area */}
-      <div ref={bodyRef} className="rk-html-body">
+      {/* ── Main document ── */}
+      <div ref={bodyRef} className="rk-html-body" data-rk-theme={revision.processedHtml?.includes('data-rk-theme') ? undefined : 'paper-light'}>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: server-processed HTML */}
         <div dangerouslySetInnerHTML={{ __html: revision.processedHtml || '' }} />
+
+        {/* "+ add comment" buttons — appear on hover */}
+        {visibleAnchors.map((a) =>
+          hoveredAnchor === a.anchor ? (
+            <button
+              key={a.anchor}
+              type="button"
+              className="rk-add-comment-btn"
+              style={{ '--anchor': `"${a.anchor}"` } as React.CSSProperties}
+              onClick={() => openAdding(a.anchor)}
+              title="添加评论"
+            >
+              +
+            </button>
+          ) : null,
+        )}
       </div>
 
-      {/* Right comment panel — Feishu style */}
-      <aside className={`rk-comment-panel${panelOpen ? ' is-open' : ' is-closed'}`}>
+      {/* ── Panel toggle tab (always visible on right edge) ── */}
+      <button
+        type="button"
+        className="rk-panel-tab"
+        onClick={() => setPanelOpen((v) => !v)}
+        title={panelOpen ? '收起评论' : '展开评论'}
+      >
+        {panelOpen ? '›' : '‹'}
+        {!panelOpen && openComments.length > 0 && (
+          <span className="rk-panel-tab__count">{openComments.length}</span>
+        )}
+      </button>
+
+      {/* ── Right comment panel ── */}
+      <aside className={`rk-comment-panel${panelOpen ? ' is-open' : ''}`}>
         <div className="rk-comment-panel__header">
           <span className="rk-comment-panel__title">
             评论
             {openComments.length > 0 && (
-              <span className="rk-comment-panel__count">{openComments.length}</span>
+              <span className="rk-comment-panel__badge">{openComments.length}</span>
             )}
           </span>
-          <button
-            type="button"
-            className="rk-comment-panel__toggle"
-            onClick={() => setPanelOpen((v) => !v)}
-            title={panelOpen ? '收起' : '展开评论'}
-          >
-            {panelOpen ? '»' : '«'}
-          </button>
         </div>
 
-        {panelOpen && (
-          <>
-            <div className="rk-comment-panel__list" ref={panelRef}>
-              {openComments.length === 0 && (
-                <p className="rk-comment-panel__empty">暂无评论</p>
-              )}
-              {openComments.map((c) => (
-                <div
-                  key={c.id}
-                  className={`rk-comment-card${activeComment === c.id ? ' is-active' : ''}`}
-                  onClick={() => scrollToAnchor(c.anchor, c.id)}
-                >
-                  {/* Anchor quote — yellow bg like Feishu */}
-                  <div className="rk-comment-card__anchor">
-                    <span className="rk-comment-card__anchor-text">
-                      {anchorLabel.get(c.anchor) || c.anchor}
-                    </span>
-                  </div>
-                  <p className="rk-comment-card__text">{c.text}</p>
-                  <span className="rk-comment-card__time">
-                    {new Date(c.createdAt).toLocaleString('zh-CN', {
-                      month: 'numeric',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* New comment area */}
-            <div className="rk-comment-panel__new">
-              <select
-                className="rk-comment-panel__anchor-select"
-                value={newAnchor}
-                onChange={(e) => setNewAnchor(e.target.value)}
-              >
-                <option value="">选择位置…</option>
-                {visibleAnchors.map((a) => (
-                  <option key={a.id} value={a.anchor}>
-                    {a.textPreview?.slice(0, 40) || a.anchor}
-                  </option>
-                ))}
-              </select>
+        <div className="rk-comment-panel__body">
+          {/* Inline comment input (pinned at top when adding) */}
+          {adding && (
+            <div className="rk-comment-input">
+              <div className="rk-comment-input__anchor">
+                {anchorLabel.get(adding.anchor) || adding.anchor}
+              </div>
               <textarea
-                className="rk-comment-panel__textarea"
-                placeholder="写下评论… (Cmd+Enter 提交)"
-                value={newText}
-                onChange={(e) => setNewText(e.target.value)}
+                className="rk-comment-input__textarea"
+                placeholder="写下评论…"
+                value={adding.text}
+                autoFocus
+                onChange={(e) => setAdding((prev) => prev && { ...prev, text: e.target.value })}
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') submitComment();
+                  if (e.key === 'Escape') setAdding(null);
                 }}
                 rows={3}
               />
-              <button
-                type="button"
-                className="rk-comment-panel__submit"
-                onClick={submitComment}
-                disabled={submitting || !newText.trim() || !newAnchor}
-              >
-                {submitting ? '…' : '发送'}
-              </button>
+              <div className="rk-comment-input__actions">
+                <button
+                  type="button"
+                  className="rk-comment-input__cancel"
+                  onClick={() => setAdding(null)}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="rk-comment-input__submit"
+                  disabled={submitting || !adding.text.trim()}
+                  onClick={submitComment}
+                >
+                  {submitting ? '…' : '发送'}
+                </button>
+              </div>
             </div>
-          </>
-        )}
+          )}
+
+          {/* Comment list */}
+          {openComments.length === 0 && !adding && (
+            <p className="rk-comment-panel__empty">悬停文档块，点击 + 添加评论</p>
+          )}
+          {openComments.map((c) => (
+            <div
+              key={c.id}
+              className={`rk-comment-card${activeComment === c.id ? ' is-active' : ''}`}
+              onClick={() => scrollToAnchor(c.anchor, c.id)}
+            >
+              <div className="rk-comment-card__quote">
+                {anchorLabel.get(c.anchor) || c.anchor}
+              </div>
+              <p className="rk-comment-card__text">{c.text}</p>
+              <span className="rk-comment-card__time">
+                {new Date(c.createdAt).toLocaleString('zh-CN', {
+                  month: 'numeric', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit',
+                })}
+              </span>
+            </div>
+          ))}
+        </div>
       </aside>
 
       <Script src="/rk/components.js" strategy="afterInteractive" />
