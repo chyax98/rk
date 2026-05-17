@@ -3,7 +3,7 @@
   "name": "00-bootstrap-guidelines",
   "title": "Bootstrap Guidelines",
   "description": "Fill in project development guidelines for AI agents",
-  "status": "in_progress",
+  "status": "done",
   "dev_type": "docs",
   "scope": null,
   "package": null,
@@ -30,5 +30,6 @@
     ".trellis/spec/shared/"
   ],
   "notes": "First-time setup task created by trellis init (frontend project)",
-  "meta": {}
+  "meta": {},
+  "updated_at": "2026-05-17T10:30:00Z"
 }
