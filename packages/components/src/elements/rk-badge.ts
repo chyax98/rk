@@ -10,17 +10,22 @@
 // color: blue | green | red | orange | purple | gray | accent (default)
 
 class RkBadge extends HTMLElement {
+  _raw = '';
+
   static get observedAttributes() {
     return ['color', 'icon'];
   }
 
-  connectedCallback(): void { this._render(); }
-  attributeChangedCallback(): void { this._render(); }
+  connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent?.trim() || '';
+    this._render();
+  }
+  attributeChangedCallback(): void { if (this._raw) this._render(); }
 
   _render(): void {
     const color = this.getAttribute('color') || 'accent';
     const icon = this.getAttribute('icon') || '';
-    const text = this.textContent?.trim() || '';
+    const text = this._raw;
 
     const colorMap: Record<string, { bg: string; text: string; border: string }> = {
       blue:   { bg: 'var(--rk-tone-info-bg, #eff6ff)',     text: 'var(--rk-tone-info-border, #2563eb)',    border: 'var(--rk-tone-info-border, #2563eb)' },
