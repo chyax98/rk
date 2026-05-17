@@ -1,21 +1,27 @@
-# Progress
+# RenderKit Progress
 
-## Status
-In Progress — Grid + comment fix done, docs update pending
+## 当前状态：HTML-first 重构完成
 
-## Done
-- [x] HTML-only rewrite (DSL/blocks/shared deleted)
-- [x] 21 Web Components (rk-callout/stat/summary/code/table/chart/diagram/decision/checklist/comparison/timeline/tabs/grid/image/quote/collapsible/highlight/progress/steps/metric/rk-3d)
-- [x] rk-3d Three.js interactive component (cube/sphere/torus/orbit, CDN)
-- [x] ECharts bar/line/pie/kpi (CDN import)
-- [x] rk-grid nested WC double-render FIXED (DOM-move instead of innerHTML serialization)
-- [x] Comment bubble positioning FIXED (absolute position tracking element Y via getBoundingClientRect)
-- [x] Comment panel (fixed right drawer, Cmd+Enter submit)
-- [x] CLI parseRK removed, HTML-only push path
-- [x] Bundle 45.5KB, 21 components registered
+**分支**: develop (worktree: /Users/xd/Worker/tools/RenderKit-dev)  
+**Baseline tag**: baseline-html-wc-v1 @ master  
+**Server**: http://localhost:3737
 
-## Remaining
-- [ ] Update docs (ARCHITECTURE.md, README.md, docs/*)
-- [ ] TextQuoteSelector integration for text selection within HTML artifacts
-- [ ] Dark mode CSS variables override
-- [ ] Production build optimization (components.js minification)
+## 已完成
+
+- [x] TypeScript 全面迁移（packages/shared/dsl/blocks/cli/scripts）
+- [x] HTML-first 架构（Agent 写 HTML + WC，无 DSL 编译）
+- [x] 21 个 Web Components（Light DOM，45KB bundle）
+- [x] Server：linkedom anchor 注入 + Shiki 代码高亮
+- [x] DB：anchors 表，HTML 存储路径
+- [x] CLI：push/feedback/patch/append/anchors/components
+- [x] 评论系统：右侧气泡 rail + 固定面板
+- [x] rk-grid DOM-move 修复（无双重渲染）
+- [x] 气泡 Y 坐标跟随 block 定位
+- [x] 文档清理（删除 DSL 时代文档）
+- [x] Git worktree 规范（develop 分支隔离开发）
+
+## 待完成
+
+- [ ] E2E Agent 闭环测试（push → 评论 → feedback → 修改）
+- [ ] rk-3d / rk-chart CDN 加载验证（需真实浏览器含网络访问）
+- [ ] examples/ HTML 格式示例完善

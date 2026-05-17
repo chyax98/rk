@@ -323,3 +323,24 @@ Body: { anchor: string; fragment: string; resolveComments?: string[] }
 | Shiki server-side | ✅ 用 | 已在现有 `/api/render/code` 验证，预渲染存 base64 attr |
 | linkedom HTML 解析 | ✅ 用 | 轻量，DOM API 兼容，anchor 注入简单 |
 | shadow DOM | ❌ 不用 | Selection API 看不到 shadow DOM 内容 |
+
+## 实施结果（2025-05）
+
+### 已验证
+- ✅ Light DOM + Selection API 可跨组件选中文字
+- ✅ CSS custom properties 主题覆盖正常工作
+- ✅ data-rk-anchor 注入正常，评论定位准确
+- ✅ rk-grid DOM-move 方案解决双重渲染
+- ✅ 气泡 getBoundingClientRect + scrollY 跟随 block 位置
+- ✅ CDN 动态 import（Three.js/ECharts/Mermaid）按需加载
+
+### Bundle 数据
+- components.js: 45.5KB（ESM，esbuild bundle）
+- components.css: 核心样式
+- theme.css: CSS custom properties
+
+### 21 个组件清单
+rk-3d, rk-callout, rk-chart, rk-checklist, rk-code, rk-collapsible,
+rk-comparison, rk-decision, rk-diagram, rk-grid, rk-highlight,
+rk-image, rk-metric, rk-progress, rk-quote, rk-stat, rk-steps,
+rk-summary, rk-table, rk-tabs, rk-timeline

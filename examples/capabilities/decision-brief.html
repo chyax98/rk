@@ -1,0 +1,18 @@
+<h1>技术选型决策</h1>
+
+<rk-highlight label="结论">选择 SQLite + better-sqlite3，6周内上线，零运维成本。</rk-highlight>
+
+<rk-decision question="数据库选型" chosen="SQLite" status="decided">
+  <rk-reason>
+    <li>零配置，无需 Docker</li>
+    <li>单文件备份，运维极简</li>
+    <li>Node.js 生态成熟（better-sqlite3）</li>
+  </rk-reason>
+  <rk-alternative>PostgreSQL — 过度复杂，当前规模不需要</rk-alternative>
+</rk-decision>
+
+<rk-comparison variant="table" title="方案对比">
+  <rk-col label="维度">配置复杂度|部署依赖|查询性能|适用规模</rk-col>
+  <rk-col label="SQLite" tone="positive">极低|无|高（本地IO）|单机 &lt;100GB</rk-col>
+  <rk-col label="PostgreSQL" tone="neutral">中|Docker/Cloud|高|分布式多用户</rk-col>
+</rk-comparison>
