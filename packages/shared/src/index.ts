@@ -1,5 +1,5 @@
-import { listDesignResources } from './design-assets.ts';
 import { BLOCK_ALIASES } from './contracts.ts';
+import { listDesignResources } from './design-assets.ts';
 
 export * from './contracts.ts';
 export * from './design-assets.ts';
@@ -15,9 +15,24 @@ export const DEFAULT_ENDPOINT = 'http://localhost:3737';
 export const RECIPES: Record<import('./contracts').SurfaceName, import('./contracts').Recipe> = {
   'engineering-plan': {
     label: 'Engineering Plan',
-    description: 'Structured technical proposal for refactors, migrations, or new features. Dense, reviewable, decision-anchored.',
+    description:
+      'Structured technical proposal for refactors, migrations, or new features. Dense, reviewable, decision-anchored.',
     recommendedTheme: 'paper-light',
-    recommendedBlocks: ['summary', 'stat', 'checklist', 'callout', 'decision-card', 'code', 'diagram', 'image', 'table', 'tabs', 'grid', 'comparison', 'timeline'],
+    recommendedBlocks: [
+      'summary',
+      'stat',
+      'checklist',
+      'callout',
+      'decision-card',
+      'code',
+      'diagram',
+      'image',
+      'table',
+      'tabs',
+      'grid',
+      'comparison',
+      'timeline',
+    ],
     structure: [
       'Front-matter with title, theme, surface.',
       'Executive summary block.',
@@ -35,7 +50,8 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
   },
   'decision-brief': {
     label: 'Decision Brief',
-    description: 'Focused decision document: one question, one chosen path, rationale, and alternatives. Minimal prose.',
+    description:
+      'Focused decision document: one question, one chosen path, rationale, and alternatives. Minimal prose.',
     recommendedTheme: 'paper-light',
     recommendedBlocks: ['summary', 'decision-card', 'callout', 'comparison'],
     structure: [
@@ -67,9 +83,10 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
       'Mixing finding callouts with narrative paragraphs — keep findings in callouts.',
     ],
   },
-  'runbook': {
+  runbook: {
     label: 'Runbook',
-    description: 'Operational procedure: step-by-step instructions, prerequisites, rollback, and escalation.',
+    description:
+      'Operational procedure: step-by-step instructions, prerequisites, rollback, and escalation.',
     recommendedTheme: 'amber-terminal',
     recommendedBlocks: ['summary', 'code', 'callout', 'diagram', 'checklist'],
     structure: [
@@ -87,7 +104,8 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
   },
   'data-report-lite': {
     label: 'Data Report Lite',
-    description: 'Lightweight data summary: key metrics, trends, anomalies. No full BI, just the signal.',
+    description:
+      'Lightweight data summary: key metrics, trends, anomalies. No full BI, just the signal.',
     recommendedTheme: 'paper-light',
     recommendedBlocks: ['summary', 'stat', 'table', 'diagram', 'code'],
     structure: [
@@ -101,9 +119,10 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
       'Over-decorating with callouts — keep it lean.',
     ],
   },
-  'proposal': {
+  proposal: {
     label: 'Proposal',
-    description: 'Readable balanced proposal for product or implementation direction. Less dense than engineering-plan, stronger than a plain memo.',
+    description:
+      'Readable balanced proposal for product or implementation direction. Less dense than engineering-plan, stronger than a plain memo.',
     recommendedTheme: 'paper-light',
     recommendedBlocks: ['summary', 'decision-card', 'comparison', 'timeline', 'callout', 'table'],
     structure: [
@@ -119,9 +138,10 @@ export const RECIPES: Record<import('./contracts').SurfaceName, import('./contra
       'Turning it into a slide deck — use future deck surface only when explicitly requested.',
     ],
   },
-  'documentation': {
+  documentation: {
     label: 'Documentation',
-    description: 'Blog/Notion-style explanatory document: prose-forward, relaxed rhythm, light review affordances.',
+    description:
+      'Blog/Notion-style explanatory document: prose-forward, relaxed rhythm, light review affordances.',
     recommendedTheme: 'editorial-kami',
     recommendedBlocks: ['summary', 'quote', 'image', 'diagram', 'table', 'tabs', 'callout'],
     structure: [
@@ -153,7 +173,9 @@ export function listRecipeSurfaces(): string[] {
   return Object.keys(RECIPES);
 }
 
-export function getDesignRecommendation(surface: string = 'engineering-plan'): import('./contracts').DesignRecommendation | null {
+export function getDesignRecommendation(
+  surface: string = 'engineering-plan',
+): import('./contracts').DesignRecommendation | null {
   const recipe = getRecipe(surface);
   const surfaceName = surface as import('./contracts').SurfaceName;
   if (!recipe) return null;
@@ -170,12 +192,12 @@ export function getDesignRecommendation(surface: string = 'engineering-plan'): i
       theme: recipe.recommendedTheme,
       surface: surfaceName,
     },
-    suggestedBlockOrder: recipe.recommendedBlocks.map(blockType => ({
+    suggestedBlockOrder: recipe.recommendedBlocks.map((blockType) => ({
       blockType,
       alias: aliasForBlock(blockType),
       purpose: blockPurposeHint(blockType, surface),
     })),
-    designResources: resources.map(resource => ({
+    designResources: resources.map((resource) => ({
       id: resource.id,
       priority: resource.priority,
       primaryValue: resource.primaryValue,
@@ -205,18 +227,20 @@ function resourcesForSurface(surface: string, recipe: import('./contracts').Reci
     'engineering-plan': ['fireworks-tech-graph', 'ui-ux-pro-max-skill', 'thesvg'],
     'decision-brief': ['ui-ux-pro-max-skill'],
     'review-report': ['md2html', 'ui-ux-pro-max-skill'],
-    'runbook': ['fireworks-tech-graph', 'md2html', 'thesvg'],
+    runbook: ['fireworks-tech-graph', 'md2html', 'thesvg'],
     'data-report-lite': ['ui-ux-pro-max-skill', 'fireworks-tech-graph', 'thesvg'],
-    'proposal': ['ui-ux-pro-max-skill', 'md2html'],
-    'documentation': ['md2html', 'html-anything', 'fireworks-tech-graph', 'thesvg'],
+    proposal: ['ui-ux-pro-max-skill', 'md2html'],
+    documentation: ['md2html', 'html-anything', 'fireworks-tech-graph', 'thesvg'],
   };
   const wanted = new Set([...(bySurface[surface] || []), ...always]);
   if (recipe?.recommendedBlocks?.includes('diagram')) wanted.add('thesvg');
-  return resources.filter(resource => wanted.has(resource.id));
+  return resources.filter((resource) => wanted.has(resource.id));
 }
 
 function aliasForBlock(blockType: string): string | undefined {
-  const entries = Object.entries(BLOCK_ALIASES).filter(([, value]) => value.name === blockType).map(([alias]) => alias);
+  const entries = Object.entries(BLOCK_ALIASES)
+    .filter(([, value]) => value.name === blockType)
+    .map(([alias]) => alias);
   if (!entries.length) return undefined;
   if (blockType === 'callout') return entries.join('/');
   return entries[0];
@@ -239,7 +263,10 @@ function blockPurposeHint(blockType: string, surface: string): string {
     timeline: 'Show rollout, migration, or review sequence.',
     quote: 'Create a blog-style pull quote or principle that anchors the narrative.',
   };
-  if (surface === 'documentation' && blockType === 'quote') return 'Use a pull quote to create blog-style rhythm and emphasis.';
-  if (surface === 'proposal' && blockType === 'decision-card') return 'Make the recommendation concrete and reviewable.';
+  if (surface === 'documentation' && blockType === 'quote')
+    return 'Use a pull quote to create blog-style rhythm and emphasis.';
+  if (surface === 'proposal' && blockType === 'decision-card')
+    return 'Make the recommendation concrete and reviewable.';
   return hints[blockType] || 'Recommended block for this surface.';
 }
+// test

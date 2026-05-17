@@ -8,20 +8,27 @@
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node --experimental-strip-types packages/cli/src/index.ts",
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
-    "verify": "node --experimental-strip-types scripts/verify.ts",
-    "verify:smoke": "node --experimental-strip-types scripts/verify-smoke.ts",
-    "verify:sqlite": "node --experimental-strip-types scripts/verify-sqlite.ts",
-    "verify:browser": "node --experimental-strip-types scripts/verify-browser.ts",
     "verify:contracts": "node --experimental-strip-types scripts/verify-contracts.ts",
-    "verify:agent": "node --experimental-strip-types scripts/verify-agent.ts",
-    "lint": "pnpm -r exec tsc --noEmit 2>&1 | head -40",
-    "ci": "pnpm verify:contracts"
+    "lint": "node --experimental-strip-types node_modules/.bin/eslint 'packages/**/*.{ts,tsx}' 'apps/web/app/**/*.{ts,tsx}' --max-warnings 80",
+    "format": "npx @biomejs/biome format --write .",
+    "biome:check": "npx @biomejs/biome check .",
+    "ci:local": "pnpm biome:check && pnpm lint && pnpm verify:contracts",
+    "ci": "pnpm verify:contracts",
+    "prepare": "lefthook install"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@eslint/js": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "lefthook": "^2.1.6"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3",
-      "sharp"
+      "sharp",
+      "lefthook"
     ]
   }
 }
