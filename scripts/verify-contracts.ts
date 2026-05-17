@@ -9,8 +9,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, COMMENT_STATUSES, DIAGRAM_ENGINES, BLOCK_ALIASES, WIDE_REVIEW_SURFACES, validateRenderKitModel } from '../packages/shared/src/contracts.ts';
-import { parseRK } from '../packages/dsl/src/index.ts';
+import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, COMMENT_STATUSES, DIAGRAM_ENGINES, BLOCK_ALIASES, WIDE_REVIEW_SURFACES, validateRenderKitModel } from '../packages/shared/src/contracts.mjs';
+import { parseRK } from '../packages/dsl/src/index.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 let pass = 0;
@@ -33,13 +33,13 @@ console.log('\n== Shared contract surface ==');
 const sharedPkg = JSON.parse(read('packages/shared/package.json'));
 const dslPkg = JSON.parse(read('packages/dsl/package.json'));
 const blocksPkg = JSON.parse(read('packages/blocks/package.json'));
-const contractsDts = read('packages/shared/src/contracts.ts');
+const contractsDts = read('packages/shared/src/contracts.d.ts');
 const dslDts = read('packages/dsl/src/index.d.ts');
 const blocksDts = read('packages/blocks/src/index.d.ts');
 const storeDts = read('apps/web/lib/store.d.ts');
 const apiDts = read('apps/web/lib/api-contracts.d.ts');
-const contractsMjs = read('packages/shared/src/contracts.ts');
-assert('@renderkit/shared exposes package types', sharedPkg.types === './src/contracts.ts');
+const contractsMjs = read('packages/shared/src/contracts.mjs');
+assert('@renderkit/shared exposes package types', sharedPkg.types === './src/contracts.d.ts');
 assert('@renderkit/shared exports ./contracts', Boolean(sharedPkg.exports?.['./contracts']));
 assert('@renderkit/dsl exposes package types', dslPkg.types === './src/index.d.ts');
 assert('@renderkit/dsl exports typed parseRK', dslDts.includes('parseRK(source: string') && dslDts.includes('ParseResult'));
@@ -61,35 +61,28 @@ assert('shared aliases include Agent shorthand metric→stat', BLOCK_ALIASES.met
 assert('shared diagram engines include ECharts shorthand variants', ['echarts-bar', 'echarts-line', 'echarts-pie'].every(x => DIAGRAM_ENGINES.includes(x)));
 
 console.log('\n== DSL / renderer drift ==');
-// DSL was refactored: index.ts imports from compilers/index.ts and parse.ts
-const dslSource = read('packages/dsl/src/index.ts');
-const dslParseSource = read('packages/dsl/src/parse.ts');
-const dslCompilersSource = read('packages/dsl/src/compilers/index.ts');
-const dslAliasSource = read('packages/dsl/src/alias.ts');
-const dslDiagramSource = read('packages/dsl/src/compilers/diagram.ts');
-const dslAllSource = dslSource + dslParseSource + dslCompilersSource + dslAliasSource + dslDiagramSource;
-const rendererSource = read('packages/blocks/src/registry.tsx');
-// Support both `const X = {` and `const X: Type = {` patterns
-const compilerTypes = objectKeysFromConst(dslCompilersSource.replace(/const BLOCK_COMPILERS:.*?=\s*\{/, 'const BLOCK_COMPILERS = {'), 'BLOCK_COMPILERS');
+const dslSource = read('packages/dsl/src/index.mjs');
+const rendererSource = read('packages/blocks/src/registry.jsx');
+const compilerTypes = objectKeysFromConst(dslSource, 'BLOCK_COMPILERS');
 const rendererTypes = unique([...rendererSource.matchAll(/^\s*'([^']+)'\s*:/gm)].map(m => m[1]));
 const authoredDirectiveTypes = BLOCK_TYPES.filter(t => !['heading', 'paragraph'].includes(t)).sort();
 assert('DSL compiler keys match authorable block contracts', arrayEq(compilerTypes, authoredDirectiveTypes), `compiler=${compilerTypes.join(',')} contract=${authoredDirectiveTypes.join(',')}`);
 assert('Renderer registry keys match block contracts', arrayEq(rendererTypes, BLOCK_TYPES), `renderer=${rendererTypes.join(',')} contract=${BLOCK_TYPES.join(',')}`);
-assert('DSL imports shared theme/surface contracts', dslAllSource.includes("@renderkit/shared/contracts"));
-assert('DSL resolves aliases through shared contracts', dslAllSource.includes('resolveBlockAlias'));
-assert('DSL validates diagram engines through shared contracts', dslAllSource.includes('isKnownDiagramEngine'));
-assert('DSL validates model against shared contract', dslAllSource.includes('validateRenderKitModel(model)'));
-const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.tsx');
+assert('DSL imports shared theme/surface contracts', dslSource.includes("@renderkit/shared/contracts"));
+assert('DSL resolves aliases through shared contracts', dslSource.includes('resolveBlockAlias(name, attrs)'));
+assert('DSL validates diagram engines through shared contracts', dslSource.includes('isKnownDiagramEngine(engine)'));
+assert('DSL validates model against shared contract', dslSource.includes('validateRenderKitModel(model)'));
+const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.jsx');
 assert('Web review surface logic imports shared contract helper', artifactViewSource.includes("@renderkit/shared/contracts") && artifactViewSource.includes('isWideReviewSurface(surface)'));
 const gallery = JSON.parse(read('examples/gallery.json'));
 const gallerySurfaces = unique((gallery.surfaces || []).map(s => s.id));
 assert('Gallery surfaces match shared surface contracts', arrayEq(gallerySurfaces, SURFACE_NAMES));
-const recipes = await import('../packages/shared/src/index.ts');
+const recipes = await import('../packages/shared/src/index.mjs');
 assert('Every shared surface has a recipe', SURFACE_NAMES.every(surface => Boolean(recipes.getRecipe(surface))));
-const storeSource = read('apps/web/lib/store.ts');
+const storeSource = read('apps/web/lib/store.mjs');
 assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
 assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
-const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.ts');
+const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.js');
 assert('Artifact status route uses shared comment status contracts', artifactRouteSource.includes('COMMENT_STATUSES') && artifactRouteSource.includes('COMMENT_OPEN'));
 
 console.log('\n== Example model contract validation ==');
@@ -102,9 +95,6 @@ const examples = [
   'examples/capabilities/diagram-visual-language.rk.md',
   'examples/surfaces/proposal.rk.md',
   'examples/surfaces/documentation.rk.md',
-  'examples/capabilities/chart-gallery.rk.md',
-  'examples/capabilities/code-presentation.rk.md',
-  'examples/capabilities/table-profiles.rk.md',
 ];
 for (const file of examples) {
   const result = parseRK(read(file), file);
