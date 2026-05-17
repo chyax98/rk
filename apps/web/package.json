@@ -9,10 +9,8 @@
     "build": "next build"
   },
   "dependencies": {
-    "@renderkit/blocks": "workspace:*",
     "@renderkit/design": "workspace:*",
-    "@renderkit/dsl": "workspace:*",
-    "@renderkit/shared": "workspace:*",
+    "linkedom": "^0.18.0",
     "@terrastruct/d2": "^0.1.33",
     "better-sqlite3": "^12.10.0",
     "echarts": "latest",

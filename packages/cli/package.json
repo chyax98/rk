@@ -11,8 +11,6 @@
     "build": "node -e \"console.log('cli: no build yet')\""
   },
   "dependencies": {
-    "@renderkit/dsl": "workspace:*",
-    "@renderkit/shared": "workspace:*",
     "commander": "latest"
   }
 }
