@@ -62,7 +62,7 @@ assert('shared diagram engines include ECharts shorthand variants', ['echarts-ba
 
 console.log('\n== DSL / renderer drift ==');
 const dslSource = read('packages/dsl/src/index.mjs');
-const rendererSource = read('packages/blocks/src/registry.jsx');
+const rendererSource = read('packages/blocks/src/registry.tsx');
 const compilerTypes = objectKeysFromConst(dslSource, 'BLOCK_COMPILERS');
 const rendererTypes = unique([...rendererSource.matchAll(/^\s*'([^']+)'\s*:/gm)].map(m => m[1]));
 const authoredDirectiveTypes = BLOCK_TYPES.filter(t => !['heading', 'paragraph'].includes(t)).sort();
