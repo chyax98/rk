@@ -6,9 +6,9 @@ import fs from 'node:fs';
 const dataDir = path.join(os.homedir(), '.renderkit', 'data');
 const dbPath = path.join(dataDir, 'renderkit.db');
 
-let _db = null;
+let _db: Database.Database | null = null;
 
-export function getDb() {
+export function getDb(): Database.Database {
   if (_db) return _db;
   fs.mkdirSync(dataDir, { recursive: true });
   _db = new Database(dbPath);
@@ -18,7 +18,7 @@ export function getDb() {
   return _db;
 }
 
-function migrate(db) {
+function migrate(db: Database.Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS artifacts (
       id            TEXT PRIMARY KEY,

@@ -139,26 +139,28 @@ export function parseRK(
   }
 
   let effectiveTheme: string = DEFAULT_THEME;
-  let effectiveSurface: string | undefined = frontmatter.surface || undefined;
+  let effectiveSurface: string | undefined = (frontmatter.surface as string | undefined) || undefined;
 
-  if (frontmatter.theme) {
-    if (VALID_THEMES.has(frontmatter.theme)) {
-      effectiveTheme = frontmatter.theme;
+  const themeValue = frontmatter.theme as string | undefined;
+  if (themeValue) {
+    if (VALID_THEMES.has(themeValue as any)) {
+      effectiveTheme = themeValue;
     } else {
-      warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${frontmatter.theme}", falling back to "${DEFAULT_THEME}"`, file));
+      warnings.push(diag('RK_THEME_UNKNOWN', `Unknown theme "${themeValue}", falling back to "${DEFAULT_THEME}"`, file));
     }
   }
-  if (effectiveSurface && !VALID_SURFACES.has(effectiveSurface)) {
-    warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
+  const surfaceValue = frontmatter.surface as string | undefined;
+  if (surfaceValue && !VALID_SURFACES.has(surfaceValue as any)) {
+    warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${surfaceValue}", using as-is but may not render as expected`, file));
   }
 
   const model: import('@renderkit/shared').RenderKitModel = {
-    rk: '1.0',
+    rk: '1.0' as const,
     title: (frontmatter.title as string | undefined) || firstHeading(blocks) || 'Untitled Artifact',
     template: frontmatter.template as string | undefined,
-    theme: effectiveTheme as import('@renderkit/shared').ThemeName,
-    surface: effectiveSurface as import('@renderkit/shared').SurfaceName | undefined,
-    blocks,
+    theme: effectiveTheme as any,
+    surface: surfaceValue as any,
+    blocks: blocks as any,
   };
 
   const contractIssues = validateRenderKitModel(model);

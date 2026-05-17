@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { parseRK } from '@renderkit/dsl';
 import { COMMENT_STATUSES, validateTextQuoteSelector } from '@renderkit/shared/contracts';
-import { getDb } from './db.mjs';
+import { getDb } from './db';
 
 const COMMENT_OPEN = COMMENT_STATUSES[0];
 const COMMENT_RESOLVED = COMMENT_STATUSES[1];
@@ -10,15 +10,14 @@ const HUMAN_EDITABLE_COMMENT_STATUSES = new Set([COMMENT_OPEN, COMMENT_RESOLVED]
 
 /* ── helpers ────────────────────────────────────────────── */
 
-function sha(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
+function sha(s: string) { return crypto.createHash('sha256').update(s).digest('hex'); }
 function now() { return new Date().toISOString(); }
 
-function flattenBlocks(blocks) {
-  const out = [];
+function flattenBlocks(blocks: any[]): any[] {
+  const out: any[] = [];
   for (const block of blocks || []) {
     out.push(block);
     if (Array.isArray(block.props?.children)) out.push(...flattenBlocks(block.props.children));
-    // tabs: each tab has a blocks array
     if (Array.isArray(block.props?.tabs)) {
       for (const tab of block.props.tabs) {
         if (Array.isArray(tab.blocks)) out.push(...flattenBlocks(tab.blocks));
@@ -28,12 +27,11 @@ function flattenBlocks(blocks) {
   return out;
 }
 
-function findBlockById(blocks, id) {
+function findBlockById(blocks: any[], id: string): any | null {
   for (const block of blocks || []) {
     if (block.id === id) return block;
     const child = findBlockById(block.props?.children || [], id);
     if (child) return child;
-    // tabs: each tab has a blocks array
     if (Array.isArray(block.props?.tabs)) {
       for (const tab of block.props.tabs) {
         const found = findBlockById(tab.blocks || [], id);
@@ -44,7 +42,7 @@ function findBlockById(blocks, id) {
   return null;
 }
 
-function normalizeSelector(selector) {
+function normalizeSelector(selector: any): any | null {
   if (!selector || typeof selector !== 'object') return null;
   const selectorIssues = validateTextQuoteSelector({ ...selector, type: selector.type || 'TextQuoteSelector' });
   if (selectorIssues.length > 0 && selectorIssues.some(issue => issue.path === '$.exact')) return null;
@@ -58,18 +56,18 @@ function normalizeSelector(selector) {
   };
 }
 
-function brief(b) { return b ? { id: b.id, type: b.type } : null; }
+function brief(b: any) { return b ? { id: b.id, type: b.type } : null; }
 
-function diffBlocks(a, b) {
-  const am = new Map(flattenBlocks(a.blocks).map(x => [x.id, x]));
-  const bm = new Map(flattenBlocks(b.blocks).map(x => [x.id, x]));
+function diffBlocks(a: any, b: any) {
+  const am = new Map(flattenBlocks(a.blocks).map((x: any) => [x.id, x]));
+  const bm = new Map(flattenBlocks(b.blocks).map((x: any) => [x.id, x]));
   const addedBlocks = [...bm.keys()].filter(k => !am.has(k));
   const removedBlocks = [...am.keys()].filter(k => !bm.has(k));
   const modifiedBlocks = [...bm.keys()].filter(k => am.has(k) && sha(JSON.stringify(am.get(k).props)) !== sha(JSON.stringify(bm.get(k).props)));
   return { addedBlocks, removedBlocks, modifiedBlocks };
 }
 
-function rowToArtifact(r) {
+function rowToArtifact(r: any) {
   return {
     id: r.id,
     title: r.title,
@@ -79,7 +77,7 @@ function rowToArtifact(r) {
   };
 }
 
-function rowToRevision(r) {
+function rowToRevision(r: any) {
   return {
     id: r.id,
     artifactId: r.artifact_id,
@@ -92,8 +90,8 @@ function rowToRevision(r) {
   };
 }
 
-function rowToComment(r) {
-  const c = {
+function rowToComment(r: any) {
+  const c: any = {
     id: r.id,
     artifactId: r.artifact_id,
     blockId: r.block_id,
@@ -114,7 +112,7 @@ function rowToComment(r) {
 /* ── public API (signatures preserved) ──────────────────── */
 
 export async function ensureStore() {
-  getDb(); // triggers migration
+  getDb();
 }
 
 export async function listArtifacts() {
@@ -123,7 +121,7 @@ export async function listArtifacts() {
   return rows.map(rowToArtifact);
 }
 
-export async function createArtifact(source, title) {
+export async function createArtifact(source: string, title?: string) {
   const db = getDb();
   const parsed = parseRK(source);
   if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: parsed.warnings };
@@ -140,7 +138,7 @@ export async function createArtifact(source, title) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const flatIds = flattenBlocks(parsed.model.blocks).map(b => b.id);
+  const flatIds = flattenBlocks(parsed.model.blocks).map((b: any) => b.id);
   const revId = `${id}_rev_1`;
 
   const txn = db.transaction(() => {
@@ -152,7 +150,7 @@ export async function createArtifact(source, title) {
   return { ok: true, artifact, revision: 1, model: parsed.model, warnings: parsed.warnings };
 }
 
-export async function addRevision(id, source, resolvedCommentIds = []) {
+export async function addRevision(id: string, source: string, resolvedCommentIds: string[] = []) {
   const db = getDb();
   const artRow = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
   if (!artRow) return { ok: false, status: 404, errors: [{ code: 'RK_ARTIFACT_NOT_FOUND', message: `Artifact not found: ${id}` }] };
@@ -165,24 +163,21 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
   const next = artRow.current_revision + 1;
   const diff = diffBlocks(currentModel, parsed.model);
 
-  const flatIds = flattenBlocks(parsed.model.blocks).map(b => b.id);
+  const flatIds = flattenBlocks(parsed.model.blocks).map((b: any) => b.id);
   const newIds = new Set(flatIds);
 
-  // update comments
   const commentRows = db.prepare('SELECT * FROM comments WHERE artifact_id = ?').all(id);
   const updateCmt = db.prepare(`UPDATE comments SET status = ?, resolved_at_revision = ?, resolved_by = ?, resolved_at = ? WHERE id = ?`);
   const orphanCmt = db.prepare(`UPDATE comments SET status = ? WHERE id = ?`);
 
-  let orphanedIds = [];
+  let orphanedIds: string[] = [];
 
   const txn = db.transaction(() => {
-    // write revision
     db.prepare(`
       INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, block_ids, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(`${id}_rev_${next}`, id, next, source, sha(source), JSON.stringify(parsed.model), JSON.stringify(flatIds), now());
 
-    // resolve / orphan comments
     orphanedIds = [];
     for (const c of commentRows) {
       if (resolvedCommentIds.includes(c.id)) {
@@ -193,7 +188,6 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
       }
     }
 
-    // update artifact
     db.prepare(`UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?`)
       .run(next, parsed.model.title, now(), id);
   });
@@ -209,13 +203,13 @@ export async function addRevision(id, source, resolvedCommentIds = []) {
   };
 }
 
-export async function getArtifactMeta(id) {
+export async function getArtifactMeta(id: string) {
   const db = getDb();
   const row = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
   return row ? rowToArtifact(row) : null;
 }
 
-export async function getArtifact(id, rev = null) {
+export async function getArtifact(id: string, rev: number | null = null) {
   const meta = await getArtifactMeta(id);
   if (!meta) return null;
   const revision = await getRevision(id, rev || meta.currentRevision);
@@ -223,19 +217,19 @@ export async function getArtifact(id, rev = null) {
   return { meta, revision, comments };
 }
 
-export async function getRevision(id, rev) {
+export async function getRevision(id: string, rev: number) {
   const db = getDb();
   const row = db.prepare('SELECT * FROM revisions WHERE artifact_id = ? AND number = ?').get(id, rev);
   return row ? rowToRevision(row) : null;
 }
 
-export async function getComments(id) {
+export async function getComments(id: string) {
   const db = getDb();
   const rows = db.prepare('SELECT * FROM comments WHERE artifact_id = ?').all(id);
   return rows.map(rowToComment);
 }
 
-export async function addComment(id, blockId, text, selector = null) {
+export async function addComment(id: string, blockId: string, text: string, selector: any = null) {
   const artifact = await getArtifact(id);
   if (!artifact) return { ok: false, status: 404, error: 'not found' };
   const block = findBlockById(artifact.revision.model.blocks, blockId);
@@ -262,7 +256,7 @@ export async function addComment(id, blockId, text, selector = null) {
   return { ok: true, comment: c };
 }
 
-export async function updateCommentStatus(id, commentId, status) {
+export async function updateCommentStatus(id: string, commentId: string, status: string) {
   if (!HUMAN_EDITABLE_COMMENT_STATUSES.has(status)) return { ok: false, status: 400, error: 'invalid status' };
   const artifact = await getArtifact(id);
   if (!artifact) return { ok: false, status: 404, error: 'not found' };
@@ -283,7 +277,7 @@ export async function updateCommentStatus(id, commentId, status) {
   return { ok: true, comment: rowToComment(updated) };
 }
 
-export async function deleteArtifact(id) {
+export async function deleteArtifact(id: string) {
   const db = getDb();
   const row = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
   if (!row) return false;
@@ -293,17 +287,17 @@ export async function deleteArtifact(id) {
   return true;
 }
 
-export async function getFeedback(id) {
+export async function getFeedback(id: string) {
   const artifact = await getArtifact(id);
   if (!artifact) return null;
   const blocks = flattenBlocks(artifact.revision.model.blocks);
-  const comments = artifact.comments.filter(c => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED);
+  const comments = artifact.comments.filter((c: any) => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED);
   return {
     artifactId: id,
     currentRevision: artifact.meta.currentRevision,
     url: `/a/${id}`,
-    openComments: comments.map(c => {
-      const idx = blocks.findIndex(b => b.id === c.blockId);
+    openComments: comments.map((c: any) => {
+      const idx = blocks.findIndex((b: any) => b.id === c.blockId);
       const block = idx >= 0 ? blocks[idx] : null;
       return {
         id: c.id,

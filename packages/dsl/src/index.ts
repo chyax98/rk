@@ -71,7 +71,7 @@ function parseRK(
     return { ok: false, model: null, errors: [diag('RK_PARSE_ERROR', msg, file)], warnings };
   }
 
-  const blocks: Array<Record<string, unknown>> = [];
+  const blocks: any[] = [];
   const ids = new Map<string, unknown>();
   const explicitDirectiveIds = collectDirectiveIds(tree);
   const generatedDirectiveIds = new Set<string>();
@@ -150,10 +150,11 @@ function parseRK(
 
   // Duplicate ID check
   for (const block of blocks) {
-    if (ids.has(block.id)) {
-      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${block.id}`, file, block.sourceRange as import('@renderkit/shared').SourceRange | undefined));
+    const bid = block.id as string;
+    if (ids.has(bid)) {
+      errors.push(diag('RK_DUPLICATE_BLOCK_ID', `Duplicate block id: ${bid}`, file, block.sourceRange as SourceRange));
     } else {
-      ids.set(block.id, block);
+      ids.set(bid, block);
     }
   }
 
@@ -169,13 +170,13 @@ function parseRK(
     warnings.push(diag('RK_SURFACE_UNKNOWN', `Unknown surface "${effectiveSurface}", using as-is but may not render as expected`, file));
   }
 
-  const model = {
-    rk: '1.0',
-    title: frontmatter.title || firstHeading(blocks) || 'Untitled Artifact',
-    template: frontmatter.template,
-    theme: effectiveTheme || DEFAULT_THEME,
-    surface: effectiveSurface,
-    blocks,
+  const model: RenderKitModel = {
+    rk: '1.0' as const,
+    title: (frontmatter.title as string | undefined) || firstHeading(blocks) || 'Untitled Artifact',
+    template: frontmatter.template as string | undefined,
+    theme: (effectiveTheme || DEFAULT_THEME) as any,
+    surface: effectiveSurface as any,
+    blocks: blocks as any,
   };
 
   const contractIssues = validateRenderKitModel(model);

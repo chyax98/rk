@@ -1,4 +1,4 @@
-import { listArtifacts } from '../lib/store.mjs';
+import { listArtifacts } from '../lib/store.ts';
 
 interface ArtifactSummary {
   id: string;

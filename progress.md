@@ -36,3 +36,16 @@ Wave 3: TypeScript strict 收紧 + .mjs 全删完成
 - catch 子句全部改为 `catch (e: unknown)` + `e instanceof Error` 守卫
 - `Record<string, any>` 全部改为 `Record<string, unknown>`
 - chart.ts 底部 import 移到顶部，消除循环引用风险
+
+## Wave 4 — Web .jsx → .tsx 迁移（2024-05-17）
+
+### 完成项
+- [x] `apps/web/app/layout.jsx` → `layout.tsx`（+ Metadata 类型，children: React.ReactNode）
+- [x] `apps/web/app/page.jsx` → `page.tsx`（+ ArtifactSummary 类型，中文空态文案）
+- [x] `apps/web/app/gallery/page.jsx` → `gallery/page.tsx`（+ GalleryData/GallerySurface 类型）
+- [x] `apps/web/tsconfig.json` strict: false → true
+
+### 文件变更
+- 创建：`layout.tsx`, `page.tsx`, `gallery/page.tsx`
+- 删除：`layout.jsx`, `page.jsx`, `gallery/page.jsx`（已不存在，前 worker 已删）
+- 修改：`tsconfig.json`（strict: true）

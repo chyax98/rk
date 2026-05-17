@@ -1,4 +1,4 @@
-import { getArtifact } from '../../../lib/store.mjs';
+import { getArtifact } from '../../../lib/store.ts';
 import ArtifactView from './ArtifactView';
 
 function blockText(block: any): string {
