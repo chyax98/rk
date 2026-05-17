@@ -1,184 +1,167 @@
-# RenderKit Alpha 决策记录
+# RenderKit Technical Decisions
 
-状态：已确认  
-日期：2026-05-16
-
----
-
-## 1. 发布形态
-
-### 决策
-
-Alpha 阶段不发布 npm 包，不做全局安装，不考虑外部用户分发。
-
-当前只做本地源码工具：
-
-```bash
-cd ~/Worker/tools/RenderKit
-pnpm dev
-node packages/cli/bin/renderkit.mjs push examples/plan.rk.md --open
-```
-
-### 理由
-
-- 当前目标是自用验证和本地工作流，不是发包。
-- 不需要现在解决 npm package、workspace dependency、Next app bundling、跨机器安装问题。
-- 先把本地能力做稳，再考虑未来是否单包发布。
-
-### 后续可能
-
-未来如果确实要发包，再评估单包 `renderkit`：CLI + server bundled。
+决策日志 — 记录关键技术选择的依据与取舍。每条决策包含：背景、选项对比、最终选择、来源。
 
 ---
 
-## 2. Server Start
+## ADR-01: HTML-first 而非 DSL
 
-### 决策
+**背景**: 早期 RenderKit 使用 `.rk.md` DSL，需要编译步骤，Agent 不熟悉。
 
-Alpha 阶段 `renderkit server start` 可以直接启动本地源码里的 Next.js server。
+**选项**:
+- A: 保留 DSL，Agent 学习 DSL 语法
+- B: HTML-first，Agent 直接写 HTML + `<rk-*>` WC
 
-当前可接受实现：
+**决定**: B — HTML-first
 
-```bash
-pnpm --filter @renderkit/web dev
-```
-
-或者 CLI 包装：
-
-```bash
-renderkit server start
-```
-
-### 说明
-
-“通过一个包直接启动 Next.js 服务”理论上可以，但比当前目标复杂：
-
-- 需要把 Next app build 产物和 server entry 一起打包。
-- 需要处理 `next start` / standalone output / static assets 路径。
-- 需要确认全局安装后的运行目录、数据目录、端口、资源路径。
-
-Alpha 不解决这个问题。先保证源码 checkout 下能启动。
+**理由**:
+- LLM 对 HTML 的掌握度远高于私有 DSL
+- 无编译步骤，减少工具链复杂度
+- Agent 可以利用完整的 HTML 能力（内联 CSS、脚本）
+- 参考: markdown-viewer-extension 也是直接在 Markdown 中嵌入自定义块
 
 ---
 
-## 3. 数据目录
+## ADR-02: Light DOM（无 Shadow DOM）
 
-### 决策
+**背景**: Web Components 有 Shadow DOM 选项，但 Shadow DOM 跨越 Selection API 边界。
 
-数据放用户全局目录：
+**决定**: 全部使用 Light DOM（无 shadow DOM）
 
-```text
-~/.renderkit/data
-```
-
-不做项目目录 `.renderkit-data`。
-不做复杂 env 配置。
-
-### 理由
-
-- RenderKit 是本地自用工具，不是每个项目独立部署。
-- 全局数据目录便于 server 和 CLI 一致访问。
-- 避免 cwd 导致 `.data` 分散在不同目录。
-
-### 后续改造
-
-当前代码仍用 `process.cwd()/.data`，需要改成：
-
-```text
-/Users/xd/.renderkit/data
-```
-
-实现上应使用 `os.homedir()` 计算。
+**理由**:
+- Selection API 无法穿越 Shadow DOM 边界
+- Feishu 式评论系统需要 Selection API 读取锚点文本
+- CSS 变量（`--rk-*` token）可以穿透 Light DOM，主题系统正常工作
 
 ---
 
-## 4. 评论范围
+## ADR-03: 飞书式评论面板
 
-### 决策
+**背景**: 需要支持人类对 Agent 生成内容的评论。
 
-Alpha 阶段可以允许任意 block 评论。
+**选项**:
+- A: 每个 anchor 一个气泡弹窗（Google Docs 风格）
+- B: 右侧统一评论面板（Feishu 风格）
 
-包括：
+**决定**: B — 右侧面板，所有评论按文档位置排序
 
-- heading
-- paragraph
-- callout
-- decision-card
-- diagram
+**理由**:
+- 气泡弹窗遮挡内容
+- 一次看到所有评论，方便 Agent 整体阅读
+- Feishu 文档的评论体验更适合长文档审阅
 
-### 风险
+---
 
-heading/paragraph 当前 id 是自动生成：
+## ADR-04: 图表引擎策略（客户端优先 + Kroki SSR 兜底）
 
-```text
-heading-1
-paragraph-1
+**背景**: 需要支持 Mermaid、D2、Graphviz、PlantUML。
+
+**实验结果** (2026-05-18):
+- Mermaid@11 CDN: ✅ 工作
+- @terrastruct/d2 WASM CDN: ⚠️ API 不确定，可能不工作
+- @hpcc-js/wasm-graphviz CDN: ❌ UMD 导出问题，CDN URL 变更
+- **@viz-js/viz lib/viz-standalone.js**: ✅ 工作（globalThis.Viz 访问方式）
+- Kroki SSR (kroki.io): ✅ 工作（PlantUML + Graphviz）
+
+**最终策略**:
+| 引擎 | 方式 | 依据 |
+|---|---|---|
+| Mermaid | CDN 客户端 | 原有，成熟 |
+| D2 | CDN WASM 客户端 | 有 WASM 包 |
+| Graphviz | Kroki SSR（server 推送时预渲染）| 来自 docu.md 调研 |
+| PlantUML | Kroki SSR | 无 WASM，需 Java |
+
+**关键 Bug 修复（必须记录）**:
+- `_render()` 替换 `this.innerHTML` 前必须先保存 `.rk-diagram__prerendered` 内容，否则 Kroki SSR 结果丢失
+- Graphviz viz-standalone.js 是 UMD，需用 `globalThis.Viz.instance()` 而非 named import
+
+**来源**: 研究 docu.md (markdown-viewer-extension) 源码 — `src/renderers/dot-renderer.ts`
+
+---
+
+## ADR-05: Graphviz 库选择
+
+**选项**:
+- A: @hpcc-js/wasm-graphviz（CDN 路径变更频繁）
+- B: **@viz-js/viz**（来自 docu.md 实践）
+- C: Kroki.io SSR
+
+**决定**: C（Kroki SSR，在 html-processor.ts 预渲染），客户端 fallback 用 @viz-js/viz
+
+**来源**: docu.md `DotRenderer` 用 `@viz-js/viz`，经过 local 实验验证
+
+---
+
+## ADR-06: ECharts 数据格式
+
+**背景**: rk-chart 原本只支持 Markdown pipe table 格式。
+
+**决定**: 优先支持 JSON array，pipe table 作为 fallback
+
+**理由**:
+- JSON 更自然，Agent 写 JSON 比 pipe table 更简单
+- JSON 支持多个数值字段 → 自动多系列图表
+- Agent 常见输出格式就是 JSON
+
+**ECharts Y 轴格式**: 大数字自动转换为 K/M 单位（98000 → 98K）
+
+---
+
+## ADR-07: 设计系统主题来源
+
+**决定**: 从 open-design/design-systems/ 移植真实品牌 token，不手写颜色
+
+**8 套主题来源**:
+- paper-light: md2html 阅读优先规范
+- dark-pro: internal
+- notion-clean: open-design/design-systems/notion/tokens.css
+- linear-app: open-design/design-systems/linear-app/tokens.css
+- glassmorphism: open-design/design-systems/glassmorphism/DESIGN.md
+- ibm-enterprise: open-design/design-systems/ibm/DESIGN.md (Carbon Design System)
+- amber-terminal: internal
+- editorial-kami: internal
+
+---
+
+## ADR-08: HTML 自闭合标签规则（Critical Bug）
+
+**发现**: HTML5 解析器对自定义元素（Custom Elements）**不支持自闭合**标签。
+
+```html
+<!-- ❌ 错误: <rk-field /> 后续元素变成子元素 -->
+<rk-form>
+  <rk-field label="评分" type="rating" />
+  <rk-field label="反馈" type="textarea" />  ← 被解析为上一个的子元素!
+</rk-form>
+
+<!-- ✅ 正确 -->
+<rk-form>
+  <rk-field label="评分" type="rating"></rk-field>
+  <rk-field label="反馈" type="textarea"></rk-field>
+</rk-form>
 ```
 
-如果源文件插入内容，id 可能漂移，评论锚点可能不稳定。
-
-### 暂定接受
-
-Alpha 阶段接受该风险，先验证评论反馈闭环。
-
-后续如果锚点漂移明显，再收紧规则：只允许显式 id directive block 评论。
+**决定**: 所有 Agent authoring skill 示例使用显式闭合标签，并在 SKILL.md 头部警告。
 
 ---
 
-## 5. Unknown Block 策略
+## ADR-09: Feishu 评论 API 架构
 
-### 决策
+**数据模型**:
+- 评论存储 `anchor` 字段 = `anc_*` ID（由 html-processor 在 push 时生成）
+- 每次 push 新 revision 时对比 anchor 变化，删除的 anchor 对应评论标为 orphaned
+- `rk feedback` 命令只返回 `open` 和 `orphaned` 状态的评论
 
-新 `.rk.md` 文档中出现 unknown block：validate 失败。
-
-理由：
-
-- Agent 需要明确知道哪里写错。
-- 不应默默渲染出奇怪页面。
-- Alpha 阶段 block catalog 有限，严格失败更利于修正。
-
-### 历史兼容
-
-未来如果已有历史 artifact 中出现旧 block，而新 renderer 不认识，可以用 `UnknownBlock` fallback。
-
-即：
-
-```text
-新输入：validate fail
-历史数据：render fallback
+**反馈 JSON 给 Agent**:
+```json
+{
+  "ok": true,
+  "artifactId": "...",
+  "openCount": 2,
+  "comments": [
+    { "id": "cmt_xxx", "anchor": "anc_section-2", "text": "..." }
+  ]
+}
 ```
 
----
-
-## 6. 当前 Alpha 优先级
-
-1. 本地源码模式跑稳。
-2. CLI + server + feedback 闭环稳。
-3. 数据目录迁移到 `~/.renderkit/data`。
-4. Web UI 接入 design token。
-5. 增加少量 block。
-6. 暂不考虑发包、部署、MCP、Docker。
-
----
-
-## HTML-first 重构决策（2025-05）
-
-### ADR-10: 废弃 DSL，改用 HTML-first 架构
-- **决策**：Agent 直接写 HTML + `<rk-*>` Web Components，删除 packages/dsl、packages/blocks、packages/shared
-- **原因**：DSL 增加了 agent 的认知负担，HTML 是 LLM 更熟悉的格式；Web Components 可直接在浏览器渲染
-- **影响**：packages/dsl 和 packages/blocks 目录保留但为空壳
-
-### ADR-11: Light DOM（无 shadow DOM）
-- **决策**：所有 21 个 Web Components 使用 Light DOM
-- **原因**：Selection API 无法跨 shadow DOM 边界，会破坏 TextQuoteSelector 评论定位
-- **状态**：已验证
-
-### ADR-12: CDN 动态加载重型依赖
-- **决策**：Three.js、ECharts、Mermaid 通过 CDN 动态 import，不打入 bundle
-- **原因**：三者合计 >3MB，按需加载可将 bundle 控制在 50KB 以内
-- **状态**：已实施（components.js = 45KB）
-
-### ADR-13: Git Worktree 开发规范
-- **决策**：所有 feature 开发在 RenderKit-dev worktree（develop 分支），不直接改 master
-- **原因**：subagent 多次意外 git reset 污染主分支
-- **状态**：已实施，baseline tag = baseline-html-wc-v1
+Agent 根据 anchor 定位文档位置，修改对应内容，再次 push。

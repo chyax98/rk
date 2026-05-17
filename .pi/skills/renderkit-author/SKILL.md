@@ -109,15 +109,27 @@ console.log(x);
 ### rk-chart — ECharts 图表
 
 ```html
-<rk-chart type="bar" title="月度用户增长">
+<!-- JSON 数组格式（推荐）：自动识别字段 -->
+<rk-chart type="line" title="月度活跃用户">
 [
-  { "month": "1月", "users": 1200 },
-  { "month": "2月", "users": 1580 },
-  { "month": "3月", "users": 2100 }
+  { "month": "1月", "mau": 98000, "dau": 12000 },
+  { "month": "2月", "mau": 112000, "dau": 15000 },
+  { "month": "3月", "mau": 128400, "dau": 18200 }
 ]
 </rk-chart>
-<!-- type: bar | line | pie | area | scatter -->
-<!-- xfield/yfield 可选，自动推断 -->
+<!-- 多列 JSON 自动生成多系列图表 -->
+
+<!-- Markdown 管道表格格式（备选） -->
+<rk-chart type="bar" title="月度用户">
+| 月份 | 用户 |
+|------|-----|
+| 1月 | 1200 |
+| 2月 | 1580 |
+</rk-chart>
+
+<!-- type: bar | line | area | pie | scatter -->
+<!-- 大数字 Y 轴自动格式化为 K/M 单位 -->
+<!-- xfield/yfield 可选，自动推断第一列为 X、其余数字列为 Y系列 -->
 ```
 
 ### rk-diagram — 图表（多引擎）
@@ -137,11 +149,15 @@ server -> database: query
 client -> server: HTTP
 </rk-diagram>
 
-<!-- Graphviz/DOT (客户端 CDN) -->
+<!-- Graphviz/DOT (服务端 Kroki SSR，需 server 运行) -->
+<!-- 吸收自 docu.md 模式：@viz-js/viz 引擎，支持暗色主题自动适配 -->
 <rk-diagram engine="graphviz" title="依赖图">
 digraph G {
   rankdir=LR;
-  A -> B -> C;
+  node [shape=box, style=rounded];
+  CLI -> Server [label="push"];
+  Server -> DB [label="store"];
+  Agent -> CLI [label="feedback"];
 }
 </rk-diagram>
 
