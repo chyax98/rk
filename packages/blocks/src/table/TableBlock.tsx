@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import { TableBlockProps, TableProfile } from './types';
 import MatrixTable from './profiles/MatrixTable';
 import StatusTable from './profiles/StatusTable';
@@ -5,7 +6,7 @@ import KeyValueTable from './profiles/KeyValueTable';
 import CardsTable from './profiles/CardsTable';
 import CompactTable from './profiles/CompactTable';
 
-const PROFILE_MAP: Record<TableProfile, React.ComponentType<TableBlockProps>> = {
+const PROFILE_MAP: Record<TableProfile, ComponentType<TableBlockProps>> = {
   'matrix': MatrixTable,
   'status': StatusTable,
   'key-value': KeyValueTable,

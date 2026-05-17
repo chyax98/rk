@@ -6,14 +6,14 @@
   "scripts": {
     "dev": "pnpm --filter @renderkit/web dev",
     "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
-    "renderkit": "node packages/cli/bin/renderkit.mjs",
+    "renderkit": "node --experimental-strip-types packages/cli/src/index.ts",
     "push:example": "pnpm renderkit push examples/plan.rk.md --open",
-    "verify": "node scripts/verify.mjs",
-    "verify:smoke": "node scripts/verify-smoke.mjs",
-    "verify:sqlite": "node scripts/verify-sqlite.mjs",
-    "verify:browser": "node scripts/verify-browser.mjs",
-    "verify:contracts": "node scripts/verify-contracts.mjs",
-    "verify:agent": "node scripts/verify-agent.mjs"
+    "verify": "node --experimental-strip-types scripts/verify.ts",
+    "verify:smoke": "node --experimental-strip-types scripts/verify-smoke.ts",
+    "verify:sqlite": "node --experimental-strip-types scripts/verify-sqlite.ts",
+    "verify:browser": "node --experimental-strip-types scripts/verify-browser.ts",
+    "verify:contracts": "node --experimental-strip-types scripts/verify-contracts.ts",
+    "verify:agent": "node --experimental-strip-types scripts/verify-agent.ts"
   },
   "devDependencies": {},
   "pnpm": {

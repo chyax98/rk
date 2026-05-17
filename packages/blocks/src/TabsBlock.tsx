@@ -39,7 +39,7 @@ export default function TabsBlock({ title, tabs = [] }: TabsBlockProps) {
         ))}
       </div>
       <div className="rk-tabs-panel" id={`rk-tab-panel-${active?.id}`} role="tabpanel" aria-labelledby={`rk-tab-${active?.id}`}>
-        {(active?.blocks || []).map((block: any) => <RenderBlock key={block.id} block={block} />)}
+        {(active?.blocks || []).map((b) => <RenderBlock key={b.id} block={b} />)}
       </div>
     </section>
   );

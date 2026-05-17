@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
+
 interface CodeFrameProps {
   filename?: string;
   language?: string;
   frame?: 'editor' | 'terminal' | 'none';
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function CodeFrame({ filename, language, frame = 'none', children }: CodeFrameProps) {

@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react';
 import HeadingBlock from './HeadingBlock';
 import ParagraphBlock from './ParagraphBlock';
 import SummaryBlock from './SummaryBlock';
@@ -20,7 +21,7 @@ import ChartBlock from './ChartBlock';
  * Block type → component registry.
  * Consumers may extend at runtime: import { registry } from '@renderkit/blocks'; registry['my-type'] = MyComp;
  */
-export const registry: Record<string, React.ComponentType<any>> = {
+export const registry: Record<string, ComponentType<any>> = {
   'heading': HeadingBlock,
   'paragraph': ParagraphBlock,
   'summary': SummaryBlock,

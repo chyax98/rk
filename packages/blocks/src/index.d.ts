@@ -12,8 +12,8 @@ export interface BlockFrameProps {
   reviewMode?: boolean;
   onSelect?: () => void;
   onComment?: () => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
-  onOpenMenu?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: MouseEvent) => void;
+  onOpenMenu?: (e: MouseEvent) => void;
 }
 
 export interface RenderBlockProps {
@@ -70,7 +70,7 @@ export interface ChartBlockProps {
 
 export type BlockType = import('@renderkit/shared').BlockType;
 export type RenderKitBlock = import('@renderkit/shared').RenderKitBlock;
-export type RenderKitBlockComponent<Props extends object = Record<string, unk
+export type RenderKitBlockComponent<Props extends object = Record<string, unknown>>
 export type RenderKitRegistry = Record<string, RenderKitBlockComponent>;
 
 export const registry: RenderKitRegistry;

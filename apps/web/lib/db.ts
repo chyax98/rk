@@ -18,7 +18,7 @@ export function getDb(): Database.Database {
   return _db;
 }
 
-function migrate(db: Database.Database) {
+function migrate(db: Database.Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS artifacts (
       id            TEXT PRIMARY KEY,
@@ -62,6 +62,6 @@ function migrate(db: Database.Database) {
   `);
 }
 
-export function closeDb() {
+export function closeDb(): void {
   if (_db) { _db.close(); _db = null; }
 }

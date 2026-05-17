@@ -189,12 +189,12 @@ assert("timeline items have varied statuses", tlStatuses.size >= 2, `got ${[...t
 
 // ── Section 7: Shared contracts ──
 console.log("\n== Shared contracts ==");
-const contractsCase = run("node scripts/verify-contracts.mjs");
+const contractsCase = run("node --experimental-strip-types scripts/verify-contracts.ts");
 assert("shared contracts drift gate passes", contractsCase.code === 0, contractsCase.stdout || contractsCase.stderr);
 
 // ── Section 8: Agent-facing CLI ──
 console.log("\n== Agent-facing CLI ==");
-const agentCase = run("node scripts/verify-agent.mjs");
+const agentCase = run("node --experimental-strip-types scripts/verify-agent.ts");
 assert("agent-facing recipe/design CLI passes", agentCase.code === 0, agentCase.stdout || agentCase.stderr);
 
 // ── Section 9: Web metadata ──

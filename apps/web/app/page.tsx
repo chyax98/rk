@@ -1,3 +1,4 @@
+import React from 'react';
 import { listArtifacts } from '../lib/store';
 
 interface ArtifactSummary {
@@ -6,7 +7,7 @@ interface ArtifactSummary {
   currentRevision: number;
 }
 
-export default async function Home(): Promise<JSX.Element> {
+export default async function Home(): Promise<React.ReactElement> {
   const artifacts: ArtifactSummary[] = await listArtifacts();
   return (
     <main className="rk-home">

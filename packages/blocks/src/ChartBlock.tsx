@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ECharts } from 'echarts';
 
 type ChartType = 'bar' | 'line' | 'pie' | 'scatter' | 'kpi';
 type ChartTemplate = 'default' | 'minimal' | 'report';
@@ -45,7 +46,7 @@ function EChartsChart({ chartType, template = 'default', title, xField, yField, 
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    let chart: any = null;
+    let chart: ECharts | null = null;
     let alive = true;
 
     async function run() {

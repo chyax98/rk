@@ -8,8 +8,8 @@ interface BlockFrameProps {
   };
   onSelect?: () => void;
   onComment?: () => void;
-  onContextMenu?: (e: React.MouseEvent) => void;
-  onOpenMenu?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: import('react').MouseEvent) => void;
+  onOpenMenu?: (e: import('react').MouseEvent) => void;
   selected?: boolean;
   commentCount?: number;
   commentStatus?: string | null;

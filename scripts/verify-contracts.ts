@@ -9,8 +9,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, COMMENT_STATUSES, DIAGRAM_ENGINES, BLOCK_ALIASES, WIDE_REVIEW_SURFACES, validateRenderKitModel } from '../packages/shared/src/contracts.mjs';
-import { parseRK } from '../packages/dsl/src/index.mjs';
+import { BLOCK_TYPES, THEME_NAMES, SURFACE_NAMES, COMMENT_STATUSES, DIAGRAM_ENGINES, BLOCK_ALIASES, WIDE_REVIEW_SURFACES, validateRenderKitModel } from '../packages/shared/src/contracts.ts';
+import { parseRK } from '../packages/dsl/src/index.ts';
 
 const root = resolve(import.meta.dirname, '..');
 let pass = 0;
@@ -61,7 +61,7 @@ assert('shared aliases include Agent shorthand metric→stat', BLOCK_ALIASES.met
 assert('shared diagram engines include ECharts shorthand variants', ['echarts-bar', 'echarts-line', 'echarts-pie'].every(x => DIAGRAM_ENGINES.includes(x)));
 
 console.log('\n== DSL / renderer drift ==');
-const dslSource = read('packages/dsl/src/index.mjs');
+const dslSource = read('packages/dsl/src/index.ts');
 const rendererSource = read('packages/blocks/src/registry.tsx');
 const compilerTypes = objectKeysFromConst(dslSource, 'BLOCK_COMPILERS');
 const rendererTypes = unique([...rendererSource.matchAll(/^\s*'([^']+)'\s*:/gm)].map(m => m[1]));
@@ -77,9 +77,9 @@ assert('Web review surface logic imports shared contract helper', artifactViewSo
 const gallery = JSON.parse(read('examples/gallery.json'));
 const gallerySurfaces = unique((gallery.surfaces || []).map(s => s.id));
 assert('Gallery surfaces match shared surface contracts', arrayEq(gallerySurfaces, SURFACE_NAMES));
-const recipes = await import('../packages/shared/src/index.mjs');
+const recipes = await import('../packages/shared/src/index.ts');
 assert('Every shared surface has a recipe', SURFACE_NAMES.every(surface => Boolean(recipes.getRecipe(surface))));
-const storeSource = read('apps/web/lib/store.mjs');
+const storeSource = read('apps/web/lib/store.ts');
 assert('Store comment lifecycle imports shared status contracts', storeSource.includes('COMMENT_STATUSES') && storeSource.includes("@renderkit/shared/contracts"));
 assert('Store selector normalization uses shared selector contract', storeSource.includes('validateTextQuoteSelector'));
 const artifactRouteSource = read('apps/web/app/api/artifacts/[id]/route.js');

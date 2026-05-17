@@ -1,8 +1,9 @@
+import type { ComponentType } from 'react';
 import { CodeBlockProps, CodeRenderer } from './types';
 import CodeShikiBlock from './CodeShikiBlock';
 import CodeHljsBlock from './CodeHljsBlock';
 
-const RENDERER_MAP: Record<CodeRenderer, React.ComponentType<CodeBlockProps>> = {
+const RENDERER_MAP: Record<CodeRenderer, ComponentType<CodeBlockProps>> = {
   'shiki': CodeShikiBlock,
   'hljs': CodeHljsBlock,
 };

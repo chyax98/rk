@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * pnpm verify:sqlite — deterministic SQLite hardening tests.
- * Exercises store.mjs directly. No server/browser required.
+ * Exercises store.ts directly. No server/browser required.
  *
  * Covers:
  *   - Multiple artifacts
@@ -30,7 +30,7 @@ function assert(label, ok, detail = "") {
 
 // ── Setup ──
 console.log("\n== Setup ==");
-const store = await import("../apps/web/lib/store.mjs");
+const store = await import("../apps/web/lib/store.ts");
 await store.ensureStore();
 assert("store initialized", true);
 
@@ -385,7 +385,7 @@ assert("getFeedback nonexistent returns null", badFeedback === null);
 
 // ── Cleanup ──
 console.log("\n== Cleanup ==");
-const dbModule = await import("../apps/web/lib/db.mjs");
+const dbModule = await import("../apps/web/lib/db.ts");
 const db = dbModule.getDb();
 const delArt = db.prepare("DELETE FROM artifacts WHERE id = ?");
 const delRev = db.prepare("DELETE FROM revisions WHERE artifact_id = ?");

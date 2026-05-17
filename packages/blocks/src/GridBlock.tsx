@@ -1,4 +1,5 @@
 import RenderBlock from './RenderBlock';
+import type { CSSProperties } from 'react';
 
 interface ChildBlock {
   id: string;
@@ -17,7 +18,7 @@ interface GridBlockProps {
 export default function GridBlock({ columns = 2, gap = 'normal', title, children = [] }: GridBlockProps) {
   const cols = Math.min(Math.max(Number(columns) || 2, 1), 6);
   return (
-    <div className="rk-grid-block" data-gap={gap} style={{ '--rk-grid-cols': cols } as React.CSSProperties}>
+      <div className="rk-grid-block" data-gap={gap} style={{ '--rk-grid-cols': cols } as CSSProperties}>
       {title && <div className="rk-grid-title">{title}</div>}
       <div className="rk-grid-cells">
         {children.map((block) => (

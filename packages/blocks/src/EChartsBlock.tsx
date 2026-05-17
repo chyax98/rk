@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ECharts } from 'echarts';
 
 interface EChartsBlockProps {
   code: string;
@@ -11,7 +12,7 @@ export default function EChartsBlock({ code, caption, variant = 'auto' }: EChart
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    let chart: any | null = null;
+    let chart: ECharts | null = null;
     let alive = true;
     async function run() {
       try {
