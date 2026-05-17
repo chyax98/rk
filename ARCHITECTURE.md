@@ -1,100 +1,71 @@
 # RenderKit Architecture
 
-> HTML-first artifact renderer. Agent writes HTML, server injects anchors, browser renders Web Components.
+> HTML-first artifact renderer. Agent 写 HTML + `<rk-*>` WC → Server 注入 anchor → 浏览器渲染 → 人评论 → Agent 迭代。
 
 ## 系统总览
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Agent / Human                        │
-│  writes artifact.html with <rk-*> components           │
-└──────────────────┬──────────────────────────────────────┘
-                   │ renderkit push artifact.html
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                CLI (packages/cli)                       │
-│  POST /api/artifacts { html, file }                    │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│              Server (apps/web)                          │
-│  1. linkedom 解析 HTML                                  │
-│  2. 注入 data-rk-anchor（每个顶层元素）                  │
-│  3. Shiki 预渲染 <rk-code>                              │
-│  4. 存入 SQLite（artifacts + revisions + anchors）      │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│              Browser (HtmlArtifactView)                 │
-│  1. dangerouslySetInnerHTML 渲染 processedHtml          │
-│  2. <script> 注册 21 个 Web Components                  │
-│  3. 右侧气泡 rail（绝对定位跟随 block）                  │
-│  4. 点击气泡 → CommentPanel（固定右侧面板）              │
-└─────────────────────────────────────────────────────────┘
+Agent
+  ↓  写 HTML + <rk-*> 组件
+  rk push artifact.html
+  ↓
+CLI (packages/cli)
+  POST /api/artifacts { html }
+  ↓
+Server (apps/web — Next.js)
+  html-processor.ts:
+    • Shiki 代码高亮（SSR）
+    • Kroki SSR（PlantUML / Graphviz → inline SVG）
+    • linkedom anchor 注入（评论定位点）
+  存入 SQLite（better-sqlite3）
+  ↓
+Browser
+  加载 /rk/components.js（69KB ESM，24 个 WC）
+  加载 /rk/components.css
+  data-rk-theme="xxx" 触发设计系统主题
+  Mermaid / D2 CDN 客户端渲染
+  ↓
+Human
+  飞书式评论面板（右侧，按 anchor 位置排序）
+  点击评论卡片 → 滚动到对应段落
+  ↓
+  rk feedback artifact.html → JSON 评论给 Agent
+  ↓
+Agent 根据评论修改 HTML，再次 rk push（循环）
 ```
 
 ## 包结构
 
-```
-RenderKit/
-├── apps/web/                    # Next.js 应用
-│   ├── app/
-│   │   ├── a/[id]/              # Artifact 查看页
-│   │   │   ├── page.tsx         # Server Component，读 DB
-│   │   │   └── HtmlArtifactView.tsx  # Client Component，评论交互
-│   │   └── api/artifacts/       # REST API
-│   ├── lib/
-│   │   ├── db.ts                # SQLite schema + migration
-│   │   ├── store.ts             # pushHTML, getHtmlArtifact, addComment
-│   │   └── html-processor.ts   # linkedom anchor 注入 + Shiki 预渲染
-│   └── public/rk/              # Web Components bundle
-│       ├── components.js        # 21 个 WC（esbuild ESM bundle）
-│       ├── components.css       # BEM 样式
-│       └── theme.css            # CSS custom properties
-├── packages/
-│   ├── cli/                     # renderkit CLI
-│   │   └── bin/renderkit.mjs   # push/feedback/patch/append/components
-│   └── components/              # Web Components 源码
-│       └── src/elements/        # 21 个 .ts 文件
-└── docs/architecture/
-    └── html-wc-plan.md         # HTML+WC 改造方案（已验证）
-```
-
-## DB Schema
-
-```sql
-artifacts   -- id, title, format='html', current_revision
-revisions   -- id, artifact_id, number, html_source, processed_html
-anchors     -- id, revision_id, artifact_id, anchor, element_tag, position
-comments    -- id, artifact_id, block_id(=anchor), text, status, selector
-```
-
-## Web Components 设计原则
-
-1. **Light DOM**（无 shadow DOM）— Selection API 兼容，评论可精准定位
-2. **connectedCallback 一次性**（`_rendered` flag）— 避免重复渲染
-3. **DOM Move 替代 innerHTML 序列化**（rk-grid）— 避免子 WC 重复升级
-4. **CSS custom properties**（`var(--rk-*)`）— Agent 可用 `<style>` 覆盖主题
-5. **CDN 动态 import**（echarts、mermaid、three.js）— 减小 bundle，按需加载
-
-## 评论系统
-
-- **anchor 注入**：Server 给每个顶层元素注入 `data-rk-anchor`
-- **气泡定位**：`getBoundingClientRect() + scrollY` 动态跟随元素
-- **面板**：固定右侧 320px 抽屉，Cmd+Enter 提交
-- **存储**：`comments.block_id` 存 anchor 值
-- **孤儿检测**：新 revision push 时 diff anchor 列表，消失的 anchor 对应评论标为 orphaned
-
-## CLI 命令
-
-| 命令 | 说明 |
+| 包 | 职责 |
 |---|---|
-| `push <file.html> [--open]` | 推送/更新 artifact |
-| `feedback <file.html> [--json]` | 拉取评论 |
-| `patch <file.html> --anchor <id> --fragment <f.html>` | 增量更新 section |
-| `append <file.html> --fragment <f.html>` | 追加 section |
-| `anchors <file.html> [--json]` | 列出所有 anchor |
-| `components [--json]` | 列出可用组件 |
-| `server [--port]` | 启动本地 server |
+| `packages/cli` | CLI 工具（push/feedback/open/status/serve）|
+| `packages/components` | 24 个 `<rk-*>` Web Components（Light DOM）|
+| `packages/design` | CSS token 系统 + 8 套主题 |
+| `apps/web` | Next.js 服务端（API + 评论面板 UI）|
+
+## Web Components（24 个）
+
+**内容组件**: rk-callout, rk-code, rk-quote, rk-highlight, rk-summary, rk-collapsible
+
+**数据可视化**: rk-metric, rk-stat, rk-chart（ECharts）, rk-progress
+
+**图表**: rk-diagram（Mermaid/D2/Graphviz/PlantUML）
+
+**布局**: rk-grid, rk-tabs, rk-table
+
+**交互**: rk-checklist, rk-steps, rk-timeline, rk-decision, rk-comparison
+
+**媒体**: rk-image, rk-3d（Three.js）
+
+**新增**: rk-badge, rk-badge-group, rk-kanban, rk-form
+
+## 关键设计决策
+
+见 `docs/decisions.md`（ADR-01~09）。
+
+## 开发约定
+
+- 所有新功能在 `develop` 分支（worktree: `../RenderKit-dev`）开发
+- 用 `LEFTHOOK=0 git commit` 跳过 pre-commit hook
+- bundle 重建：`npx esbuild packages/components/src/bundle.ts --bundle --format=esm --outfile=apps/web/public/rk/components.js --resolve-extensions=.ts,.tsx,.js --loader:.ts=ts --platform=browser`
+- 所有 import 路径加 `.ts` 后缀（Node strip-types 要求）
