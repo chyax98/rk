@@ -646,3 +646,121 @@ pnpm dev
 - HTML 处理（Shiki 代码高亮 + Kroki 图表 SSR + anchor 注入）
 - 评论 API
 - Artifact 存储（SQLite）
+
+---
+
+## 11. 组件选择指南
+
+### 何时用 rk-stat vs rk-metric
+
+- **rk-stat**：单行展示一个核心数字，适合页面顶部或 section 开头的单一 KPI
+- **rk-metric**：2-4 个指标并排对比，适合仪表盘式的多维度展示
+
+```html
+<!-- 单一关键指标 → rk-stat -->
+<rk-stat value="99.9%" unit="SLA" label="本月可用性" delta="+0.1%"></rk-stat>
+
+<!-- 多维度对比 → rk-metric -->
+<rk-metric cols="4">
+  <rk-metric-item label="DAU" value="12.4K" delta="+8%"></rk-metric-item>
+  <rk-metric-item label="收入" value="¥48万" delta="+12%"></rk-metric-item>
+  <rk-metric-item label="转化" value="3.2%" delta="-0.1%" tone="warning"></rk-metric-item>
+  <rk-metric-item label="NPS" value="72" delta="+5"></rk-metric-item>
+</rk-metric>
+```
+
+### 何时用 rk-callout vs rk-highlight
+
+- **rk-callout**：独立块级元素，整段提示信息（警告、注意、最佳实践）
+- **rk-highlight**：行内元素，突出文档正文中的关键词或短语
+
+```html
+<!-- 整段提示 → rk-callout -->
+<rk-callout type="warning" title="版本要求">
+  Node.js 24+ 必须使用 --experimental-strip-types 标志。
+</rk-callout>
+
+<!-- 行内高亮 → rk-highlight -->
+<p>系统将在 2026 年 6 月 30 日<rk-highlight label="重要">停止支持 v1 API</rk-highlight>，请尽快迁移。</p>
+```
+
+### 何时用 rk-timeline vs rk-steps
+
+- **rk-timeline**：历史事件、里程碑，有日期标记（过去→未来）
+- **rk-steps**：流程步骤，有 current 标记当前进度（线性流程）
+
+```html
+<!-- 项目历史 → rk-timeline -->
+<rk-timeline title="项目里程碑">
+  <rk-step date="2026-01" status="done">立项审批</rk-step>
+  <rk-step date="2026-03" status="done">Alpha 发布</rk-step>
+  <rk-step date="2026-05" status="active">Beta 测试</rk-step>
+</rk-timeline>
+
+<!-- 部署流程 → rk-steps -->
+<rk-steps title="部署步骤" current="3">
+  <rk-step>构建镜像</rk-step>
+  <rk-step>推送到 Registry</rk-step>
+  <rk-step>灰度发布 10%</rk-step>
+  <rk-step>全量上线</rk-step>
+</rk-steps>
+```
+
+### 图表引擎选择矩阵
+
+| 场景 | 推荐引擎 | 原因 |
+|------|---------|------|
+| 流程图/决策树 | Mermaid | 语法简单，支持客户端渲染 |
+| 时序图 | Mermaid 或 PlantUML | Mermaid 简单场景，PlantUML 复杂交互 |
+| 架构图/系统图 | D2 | 声明式语法最适合架构关系 |
+| 依赖图/关系图 | Graphviz | 自动布局算法优秀 |
+| UML 类图 | PlantUML | 最完整的 UML 语法支持 |
+| 甘特图 | Mermaid | 内置甘特图语法 |
+| ER 图 | Mermaid 或 PlantUML | 都有 erDiagram 支持 |
+| 思维导图 | Mermaid | 内置 mindmap 语法 |
+
+---
+
+## 12. 常见错误与排障
+
+### 错误 1：自闭合标签导致布局错乱
+
+**症状**：第二个 `<rk-field>` 或 `<rk-metric-item>` 嵌套到了前一个里面。
+**原因**：HTML5 规范不允许 Custom Elements 自闭合。
+**修复**：所有 `<rk-*>` 都必须写 `</rk-xxx>` 关闭标签。
+
+```html
+✗ <rk-field label="评分" type="rating" />
+✓ <rk-field label="评分" type="rating"></rk-field>
+```
+
+### 错误 2：图表 Y 轴数字显示不友好
+
+**症状**：Y 轴显示 98000、150000 等大数字，轴标签重叠。
+**解决**：rk-chart 内置 K/M 格式化，确保数据是纯数字（不要加千位逗号）：
+
+```html
+✗ { "users": "98,000" }  ← 字符串，不触发格式化
+✓ { "users": 98000 }      ← 数字，自动显示 98K
+```
+
+### 错误 3：Mermaid 图表不显示
+
+**可能原因**：
+1. Mermaid 语法错误 — 打开浏览器 Console 查看 Mermaid 报错
+2. CDN 加载失败 — 检查网络连接
+3. 自闭合标签 — 确认 `</rk-diagram>` 显式关闭
+
+### 错误 4：主题不生效
+
+**检查项**：
+1. `<body data-rk-theme="paper-light">` 写在 `<body>` 标签上
+2. 主题名拼写正确（参考 §2 主题列表）
+3. 不要在 body 上写 `style` 覆盖主题变量
+
+### 错误 5：rk push 后页面空白
+
+**可能原因**：
+1. HTML 没有包含 `<script type="module" src="/rk/components.js">`
+2. HTML 没有包含 `<link rel="stylesheet" href="/rk/components.css">`
+3. 服务器未启动 — 先 `rk serve` 或 `pnpm dev`

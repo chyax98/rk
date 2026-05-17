@@ -3,6 +3,8 @@ import { diffAnchors } from './anchor-diff.ts';
 import { getDb } from './db.ts';
 import { type ProcessedAnchor, processHTML } from './html-processor.ts';
 
+// All tables use CREATE TABLE IF NOT EXISTS (see db.ts): artifacts, revisions, comments, anchors, form_submissions
+
 const COMMENT_OPEN = 'open';
 const COMMENT_RESOLVED = 'resolved';
 const COMMENT_ORPHANED = 'orphaned';

@@ -94,7 +94,9 @@ const program = new Command();
 program
   .name('rk')
   .description('RenderKit CLI — push HTML artifacts and get feedback')
-  .version('0.1.0');
+  .version('0.1.0')
+  .helpOption('-h, --help', '显示帮助信息')
+  .addHelpText('after', '\n更多文档: https://github.com/chyax98/rk');
 
 // rk push <file.html>
 program
