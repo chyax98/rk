@@ -575,8 +575,10 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const { instance } = await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js");
-      const viz = await instance();
+      await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js");
+      const instanceFn = globalThis.Viz?.instance;
+      if (!instanceFn) throw new Error("Viz.js not loaded");
+      const viz = await instanceFn();
       const isDark = this._isDark();
       let dotCode = this._raw;
       if (isDark) {
