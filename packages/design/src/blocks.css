@@ -1187,3 +1187,241 @@
 @media (max-width: 760px) {
   .rk-comparison-grid { grid-template-columns: 1fr !important; }
 }
+
+/* ── Table profiles ───────────────────────────────────────────────────── */
+
+/* Status table: leftmost col badge */
+.rk-table-status .rk-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rk-space-2);
+  padding: var(--rk-space-1) var(--rk-space-3);
+  border-radius: var(--rk-radius-full);
+  font-size: var(--rk-text-xs);
+  font-weight: var(--rk-weight-semibold);
+  white-space: nowrap;
+}
+.rk-table-status .rk-status-badge[data-tone="critical"] {
+  background: #fef2f2; color: #991b1b;
+}
+.rk-table-status .rk-status-badge[data-tone="warning"] {
+  background: #fffbeb; color: #92400e;
+}
+.rk-table-status .rk-status-badge[data-tone="success"] {
+  background: #f0fdf4; color: #166534;
+}
+.rk-table-status .rk-status-badge[data-tone="neutral"] {
+  background: var(--rk-surface-raised); color: var(--rk-text-secondary);
+}
+
+/* Key-value table: 2-col definition list */
+.rk-table-key-value .rk-kv-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  overflow: hidden;
+  background: var(--rk-surface-solid);
+}
+.rk-table-key-value .rk-kv-row {
+  display: contents;
+}
+.rk-table-key-value .rk-kv-key {
+  font-weight: var(--rk-weight-semibold);
+  color: var(--rk-text-secondary);
+  padding: var(--rk-space-3) var(--rk-space-4);
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+  font-size: var(--rk-text-sm);
+  white-space: nowrap;
+}
+.rk-table-key-value .rk-kv-value {
+  padding: var(--rk-space-3) var(--rk-space-4);
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-left: var(--rk-border-width) solid var(--rk-border-subtle);
+  font-size: var(--rk-text-sm);
+  word-break: break-word;
+}
+.rk-table-key-value .rk-kv-row:last-child .rk-kv-key,
+.rk-table-key-value .rk-kv-row:last-child .rk-kv-value {
+  border-bottom: 0;
+}
+
+/* Cards table: each row a card */
+.rk-table-cards .rk-cards-grid {
+  display: grid;
+  gap: var(--rk-space-4);
+}
+.rk-table-cards .rk-card-item {
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  padding: var(--rk-space-4);
+  background: var(--rk-surface-solid);
+  display: grid;
+  gap: var(--rk-space-2);
+}
+.rk-table-cards .rk-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rk-table-cards .rk-card-label {
+  font-size: var(--rk-text-xs);
+  color: var(--rk-text-secondary);
+  font-weight: var(--rk-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--rk-tracking-wide);
+}
+.rk-table-cards .rk-card-value {
+  font-size: var(--rk-text-sm);
+  color: var(--rk-text);
+}
+
+/* Compact table: small font, tight */
+.rk-table-compact table {
+  font-size: var(--rk-text-xs);
+}
+.rk-table-compact th,
+.rk-table-compact td {
+  padding: var(--rk-space-1) var(--rk-space-2);
+}
+
+/* ── Code frame (editor/terminal chrome) ─────────────────────────────── */
+
+.rk-code-frame {
+  border-radius: var(--rk-radius-lg);
+  overflow: hidden;
+  border: var(--rk-border-width) solid var(--rk-border);
+}
+.rk-code-frame-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--rk-space-3);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  background: var(--rk-surface-raised);
+  border-bottom: var(--rk-border-width) solid var(--rk-border);
+}
+.rk-code-frame-dots {
+  display: flex;
+  gap: 6px;
+}
+.rk-code-frame-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.rk-code-frame-editor .rk-code-frame-dots i:nth-child(1) { background: #ff5f57; }
+.rk-code-frame-editor .rk-code-frame-dots i:nth-child(2) { background: #febc2e; }
+.rk-code-frame-editor .rk-code-frame-dots i:nth-child(3) { background: #28c840; }
+.rk-code-frame-terminal .rk-code-frame-dots i:nth-child(1) { background: #28c840; }
+.rk-code-frame-terminal .rk-code-frame-dots i:nth-child(2) { background: #febc2e; }
+.rk-code-frame-terminal .rk-code-frame-dots i:nth-child(3) { background: #ff5f57; }
+.rk-code-frame-tab {
+  font-size: var(--rk-text-xs);
+  color: var(--rk-text-secondary);
+  font-family: var(--rk-mono);
+}
+.rk-code-frame-body pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* Code line numbers */
+.rk-code-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--rk-text-sm);
+  font-family: var(--rk-mono);
+}
+.rk-code-table tr {
+  border: none;
+}
+.rk-code-table .rk-code-line-number {
+  width: 1%;
+  text-align: right;
+  padding: 0 var(--rk-space-3) 0 var(--rk-space-4);
+  color: var(--rk-text-secondary);
+  opacity: 0.4;
+  font-size: var(--rk-text-xs);
+  user-select: none;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.rk-code-table .rk-code-line-content {
+  padding: 0 var(--rk-space-4);
+  white-space: pre;
+}
+.rk-code-highlight-line {
+  background: rgba(255, 223, 93, 0.12);
+}
+.rk-code-highlight-line .rk-code-line-number {
+  opacity: 0.8;
+}
+
+/* Shiki output */
+.rk-code-shiki pre.shiki {
+  margin: 0;
+  padding: var(--rk-space-4);
+  overflow-x: auto;
+  background: var(--rk-code-bg) !important;
+}
+
+/* ── Chart block ──────────────────────────────────────────────────────── */
+
+.rk-chart {
+  margin: 0;
+}
+.rk-chart-title {
+  margin-bottom: var(--rk-space-3);
+  color: var(--rk-text);
+  font: var(--rk-type-label);
+  letter-spacing: var(--rk-tracking-wide);
+  text-transform: uppercase;
+}
+.rk-chart-canvas {
+  width: 100%;
+  min-height: 280px;
+}
+.rk-chart-caption {
+  margin-top: var(--rk-space-2);
+  color: var(--rk-muted);
+  font-size: var(--rk-text-sm);
+}
+.rk-chart-error {
+  padding: var(--rk-space-3);
+  color: #991b1b;
+  font-size: var(--rk-text-sm);
+}
+
+/* KPI card */
+.rk-chart-kpi .rk-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--rk-space-4);
+}
+.rk-chart-kpi .rk-kpi-tile {
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  padding: var(--rk-space-5);
+  text-align: center;
+  background: var(--rk-surface-solid);
+}
+.rk-chart-kpi .rk-kpi-value {
+  font-size: 2rem;
+  font-weight: var(--rk-weight-bold);
+  color: var(--rk-text);
+  line-height: 1.1;
+}
+.rk-chart-kpi .rk-kpi-label {
+  margin-top: var(--rk-space-1);
+  font-size: var(--rk-text-sm);
+  color: var(--rk-text-secondary);
+}
+
+/* ECharts chart inherits existing diagram styles */
+.rk-chart-echarts .rk-chart-canvas {
+  min-height: 300px;
+}

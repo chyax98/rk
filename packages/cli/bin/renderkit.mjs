@@ -34,7 +34,7 @@ program.command('push <file>').option('--open', 'open browser').option('--json',
   }
   if (!res.ok || !json.ok) { output(json, opts.json); process.exit(1); }
   const artifactId = json.artifactId;
-  await writeLock(file, { artifactId, url: json.url, lastRevision: json.revision, endpoint });
+await writeLock(file, { artifactId, url: json.url, lastRevision: json.revision, endpoint, sourceFile: file });
 
   const result = { ok: true, artifactId, revision: json.revision, url: json.url, diff: json.diff, resolved: json.resolved || [] };
   output(result, opts.json);

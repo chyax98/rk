@@ -20,6 +20,7 @@ export const BLOCK_TYPES = Object.freeze([
   'quote',
   'comparison',
   'timeline',
+  'chart',
 ] as const);
 export type BlockType = typeof BLOCK_TYPES[number];
 
@@ -143,6 +144,10 @@ export const ERROR_CODES = Object.freeze({
   RK_COMPARISON_BODY_REQUIRED: 'RK_COMPARISON_BODY_REQUIRED',
   RK_TIMELINE_BODY_REQUIRED: 'RK_TIMELINE_BODY_REQUIRED',
   RK_TABS_CHILD_REQUIRED: 'RK_TABS_CHILD_REQUIRED',
+  RK_TABLE_TOO_MANY_COLUMNS: 'RK_TABLE_TOO_MANY_COLUMNS',
+  RK_RENDERER_UNKNOWN: 'RK_RENDERER_UNKNOWN',
+  RK_PROFILE_UNKNOWN: 'RK_PROFILE_UNKNOWN',
+  RK_CHART_BODY_REQUIRED: 'RK_CHART_BODY_REQUIRED',
 });
 
 // ─── Type definitions (from former .d.ts) ───
@@ -324,7 +329,7 @@ export function normalizeBlockWidth(value: string | undefined): BlockWidth {
 }
 export function isWideReviewSurface(surface: string): boolean { return WIDE_REVIEW_SURFACE_SET.has(surface); }
 export function resolveBlockAlias(name: string, attrs: Record<string, string> = {}): { name: string; attrs: Record<string, string> } {
-  const alias = BLOCK_ALIASES[name as keyof typeof BLOCK_ALIASES];
+  const alias = (BLOCK_ALIASES as Record<string, { name: string; attrs?: Record<string, string> }>)[name];
   if (!alias) return { name, attrs };
   return { name: alias.name, attrs: { ...(alias.attrs || {}), ...attrs } };
 }
@@ -336,7 +341,7 @@ export function validateRenderKitModel(model: unknown): ContractIssue[] {
   const m = model as Record<string, unknown>;
   if (m.rk !== RK_SCHEMA_VERSION) issues.push(issue('$.rk', `expected ${RK_SCHEMA_VERSION}`));
   if (!nonEmptyString(m.title)) issues.push(issue('$.title', 'title must be a non-empty string'));
-  if (!isKnownThemeName(m.theme as string)) issues.push(issue('$.theme', `unknown theme ${JSON.stringify(m.theme)}`));
+  if (typeof m.theme !== 'string' || !isKnownThemeName(m.theme)) issues.push(issue('$.theme', `unknown theme ${JSON.stringify(m.theme)}`));
   if (m.surface != null && typeof m.surface !== 'string') issues.push(issue('$.surface', 'surface must be a string when present'));
   if (!Array.isArray(m.blocks)) issues.push(issue('$.blocks', 'blocks must be an array'));
   else (m.blocks as unknown[]).forEach((block, index) => validateBlock(block, `$.blocks[${index}]`, issues));
@@ -350,7 +355,7 @@ export function validateBlock(block: unknown, path = '$', issues: ContractIssue[
   }
   const b = block as Record<string, unknown>;
   if (!nonEmptyString(b.id)) issues.push(issue(`${path}.id`, 'block id must be a non-empty string'));
-  if (!isKnownBlockType(b.type as string)) issues.push(issue(`${path}.type`, `unknown block type ${JSON.stringify(b.type)}`));
+  if (typeof b.type !== 'string' || !isKnownBlockType(b.type)) issues.push(issue(`${path}.type`, `unknown block type ${JSON.stringify(b.type)}`));
   if (!isObject(b.props)) issues.push(issue(`${path}.props`, 'props must be an object'));
   if (!isSourceRange(b.sourceRange)) issues.push(issue(`${path}.sourceRange`, 'sourceRange must include startLine/endLine numbers'));
   if (typeof b.sourceExcerpt !== 'string') issues.push(issue(`${path}.sourceExcerpt`, 'sourceExcerpt must be a string'));
@@ -366,10 +371,11 @@ export function validateBlock(block: unknown, path = '$', issues: ContractIssue[
     if (!Array.isArray(tabs)) issues.push(issue(`${path}.props.tabs`, 'tabs must be an array'));
     else (tabs as Record<string, unknown>[]).forEach((tab, tabIndex) => {
       const tabPath = `${path}.props.tabs[${tabIndex}]`;
+      const t = tab as Record<string, unknown>;
       if (!isObject(tab)) issues.push(issue(tabPath, 'tab must be an object'));
-      if (!nonEmptyString((tab as Record<string, unknown>)?.label as string)) issues.push(issue(`${tabPath}.label`, 'tab label must be a non-empty string'));
-      if (!Array.isArray((tab as Record<string, unknown>)?.blocks)) issues.push(issue(`${tabPath}.blocks`, 'tab blocks must be an array'));
-      else ((tab as Record<string, unknown>).blocks as unknown[]).forEach((child, blockIndex) => validateBlock(child, `${tabPath}.blocks[${blockIndex}]`, issues));
+      if (!nonEmptyString(t.label)) issues.push(issue(`${tabPath}.label`, 'tab label must be a non-empty string'));
+      if (!Array.isArray(t.blocks)) issues.push(issue(`${tabPath}.blocks`, 'tab blocks must be an array'));
+      else (t.blocks as unknown[]).forEach((child, blockIndex) => validateBlock(child, `${tabPath}.blocks[${blockIndex}]`, issues));
     });
   }
 
@@ -382,7 +388,7 @@ export function validateTextQuoteSelector(selector: unknown): ContractIssue[] {
   if (!isObject(selector)) return [issue('$', 'selector must be an object')];
   const s = selector as Record<string, unknown>;
   if (s.type !== 'TextQuoteSelector') issues.push(issue('$.type', 'selector type must be TextQuoteSelector'));
-  if (!nonEmptyString(s.exact as string)) issues.push(issue('$.exact', 'selector exact must be a non-empty string'));
+  if (!nonEmptyString(s.exact)) issues.push(issue('$.exact', 'selector exact must be a non-empty string'));
   for (const field of ['prefix', 'suffix'] as const) {
     if (s[field] != null && typeof s[field] !== 'string') issues.push(issue(`$.${field}`, `${field} must be a string when present`));
   }
@@ -391,8 +397,11 @@ export function validateTextQuoteSelector(selector: unknown): ContractIssue[] {
 
 // ─── Internal helpers ───
 function isObject(value: unknown): value is Record<string, unknown> { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
-function nonEmptyString(value: string | undefined): boolean { return typeof value === 'string' && value.trim().length > 0; }
+function nonEmptyString(value: unknown): value is string { return typeof value === 'string' && value.trim().length > 0; }
 function isSourceRange(value: unknown): value is SourceRange {
-  return isObject(value) && Number.isFinite((value as SourceRange).startLine) && Number.isFinite((value as SourceRange).endLine);
+  if (!isObject(value)) return false;
+  const obj = value as Record<string, unknown>;
+  return typeof obj.startLine === 'number' && Number.isFinite(obj.startLine) &&
+         typeof obj.endLine === 'number' && Number.isFinite(obj.endLine);
 }
 function issue(path: string, message: string): ContractIssue { return { path, message }; }

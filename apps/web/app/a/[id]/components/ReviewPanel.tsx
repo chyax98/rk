@@ -33,7 +33,7 @@ interface ReviewPanelProps {
   copyToClipboard: (s: string) => void;
   quoteAnchor: QuoteAnchor | null;
   setSelected: (id: string | null) => void;
-  setDrawerMode: (m: string) => void;
+  setDrawerMode: (m: DrawerMode) => void;
   setCommentStatus: (id: string, status: string) => void;
   commentFilter: string;
   setCommentFilter: (s: string) => void;

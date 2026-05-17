@@ -25,6 +25,7 @@ const BLOCK_COMPILERS = {
   'quote': (node, attrs, ctx) => compileQuote(node, attrs, ctx.source, ctx.errors, ctx.file),
   'comparison': (node, attrs, ctx) => compileComparison(node, attrs, ctx.source, ctx.errors, ctx.file),
   'timeline': (node, attrs, ctx) => compileTimeline(node, attrs, ctx.source, ctx.errors, ctx.file),
+  'chart': (node, attrs, ctx) => compileChart(node, attrs, ctx.source, ctx.errors, ctx.file),
 };
 const KNOWN = new Set([...Object.keys(BLOCK_COMPILERS), 'tab']);
 const VALID_THEMES = new Set(THEME_NAMES);
@@ -262,7 +263,19 @@ function compileCode(node, attrs, source, errors, file) {
   return {
     id: attrs.id,
     type: 'code',
-    props: { language: attrs.language || code?.lang || '', title: attrs.title || '', code: code?.value || '', width: normalizeWidth(attrs.width || attrs.span) },
+    props: {
+      language: attrs.language || code?.lang || '',
+      title: attrs.title || '',
+      code: code?.value || '',
+      width: normalizeWidth(attrs.width || attrs.span),
+      filename: attrs.filename || '',
+      frame: attrs.frame || 'none',
+      showLineNumbers: attrs.showLineNumbers === 'true',
+      highlight: attrs.highlight || '',
+      diff: attrs.diff === 'true',
+      copyMode: attrs.copyMode || 'code',
+      renderer: attrs.renderer || 'shiki',
+    },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
   };
@@ -329,6 +342,13 @@ function compileTable(node, attrs, source, errors, file) {
   if (!parsed.headers.length || !parsed.rows.length) {
     errors.push(diag('RK_TABLE_BODY_REQUIRED', 'table directive requires a GitHub-flavored Markdown table body', file, pos(node)));
   }
+  const TABLE_PROFILES = ['matrix', 'status', 'key-value', 'cards', 'compact'];
+  const TABLE_RENDERERS = ['default', 'tanstack'];
+  let profile = attrs.profile || 'matrix';
+  let forced = false;
+  if (parsed.headers.length > 6) { profile = 'cards'; forced = true; }
+  if (!TABLE_PROFILES.includes(profile)) profile = 'matrix';
+  const renderer = TABLE_RENDERERS.includes(attrs.renderer || '') ? attrs.renderer : 'default';
   return {
     id: attrs.id,
     type: 'table',
@@ -338,7 +358,9 @@ function compileTable(node, attrs, source, errors, file) {
       width: normalizeWidth(attrs.width || attrs.span || 'wide'),
       columns: parsed.headers,
       rows: parsed.rows,
-      align: parsed.align
+      align: parsed.align,
+      profile,
+      renderer,
     },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
@@ -440,6 +462,39 @@ function compileTimeline(node, attrs, source, errors, file) {
     props: { title: attrs.title || '', items, width: normalizeWidth(attrs.width || attrs.span || 'wide') },
     sourceRange: pos(node),
     sourceExcerpt: excerpt(source, node.position)
+  };
+}
+
+function compileChart(node, attrs, source, errors, file) {
+  const columns = [];
+  const rows = [];
+  for (const child of node.children || []) {
+    if (child.type === 'table') {
+      const [head, ...bodyRows] = child.children || [];
+      if (head) columns.push(...(head.children || []).map(c => plainText(c)));
+      for (const row of bodyRows) rows.push((row.children || []).map(c => plainText(c)));
+    }
+  }
+  if (columns.length === 0) {
+    const body = rawDirectiveBody(source, node) || directiveBodyText(node);
+    const parsed = parsePipeTable(body);
+    if (parsed.headers.length > 0) { columns.push(...parsed.headers); rows.push(...parsed.rows); }
+  }
+  if (columns.length === 0 && rows.length === 0) {
+    errors.push(diag('RK_CHART_BODY_REQUIRED', 'chart directive requires a markdown table body', file, pos(node)));
+  }
+  return {
+    id: attrs.id, type: 'chart',
+    props: {
+      chartType: attrs.type || 'bar',
+      template: attrs.template || 'default',
+      title: attrs.title || '',
+      xField: attrs.xField || '', yField: attrs.yField || '',
+      columns, rows,
+      caption: attrs.caption || '',
+      width: normalizeWidth(attrs.width || attrs.span || 'wide'),
+    },
+    sourceRange: pos(node), sourceExcerpt: excerpt(source, node.position)
   };
 }
 

@@ -72,7 +72,7 @@ assert('DSL imports shared theme/surface contracts', dslSource.includes("@render
 assert('DSL resolves aliases through shared contracts', dslSource.includes('resolveBlockAlias(name, attrs)'));
 assert('DSL validates diagram engines through shared contracts', dslSource.includes('isKnownDiagramEngine(engine)'));
 assert('DSL validates model against shared contract', dslSource.includes('validateRenderKitModel(model)'));
-const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.jsx');
+const artifactViewSource = read('apps/web/app/a/[id]/ArtifactView.tsx');
 assert('Web review surface logic imports shared contract helper', artifactViewSource.includes("@renderkit/shared/contracts") && artifactViewSource.includes('isWideReviewSurface(surface)'));
 const gallery = JSON.parse(read('examples/gallery.json'));
 const gallerySurfaces = unique((gallery.surfaces || []).map(s => s.id));

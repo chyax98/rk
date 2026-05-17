@@ -1,7 +1,7 @@
 import { getArtifact } from '../../../lib/store.mjs';
 import ArtifactView from './ArtifactView';
 
-function blockText(block) {
+function blockText(block: any): string {
   if (!block) return '';
   const props = block.props || {};
   if (block.type === 'paragraph') return props.text || '';
@@ -12,12 +12,12 @@ function blockText(block) {
   return props.title || props.caption || '';
 }
 
-function artifactDescription(model) {
+function artifactDescription(model: any): string {
   const text = (model?.blocks || []).map(blockText).find(Boolean) || 'Rendered RenderKit artifact with reading-first review comments.';
   return text.replace(/\s+/g, ' ').slice(0, 180);
 }
 
-export async function generateMetadata({ params, searchParams }) {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ rev?: string }> }) {
   const { id } = await params;
   const sp = await searchParams;
   const rev = sp?.rev ? Number(sp.rev) : null;
@@ -31,23 +31,12 @@ export async function generateMetadata({ params, searchParams }) {
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'article',
-      url,
-      images: [{ url: '/renderkit-og.svg', width: 1200, height: 630, alt: `${title} rendered in RenderKit` }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: ['/renderkit-og.svg'],
-    },
+    openGraph: { title, description, type: 'article', url, images: [{ url: '/renderkit-og.svg', width: 1200, height: 630, alt: `${title} rendered in RenderKit` }] },
+    twitter: { card: 'summary_large_image' as const, title, description, images: ['/renderkit-og.svg'] },
   };
 }
 
-export default async function ArtifactPage({ params, searchParams }) {
+export default async function ArtifactPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ rev?: string }> }) {
   const { id } = await params;
   const sp = await searchParams;
   const rev = sp?.rev ? Number(sp.rev) : null;

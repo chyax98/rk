@@ -7,15 +7,15 @@
   "exports": {
     ".": {
       "types": "./src/contracts.ts",
-      "import": "./src/index.ts"
+      "import": "./src/index.mjs"
     },
     "./contracts": {
       "types": "./src/contracts.ts",
-      "import": "./src/contracts.ts"
+      "import": "./src/contracts.mjs"
     },
     "./design-assets": {
       "types": "./src/design-assets.ts",
-      "import": "./src/design-assets.ts"
+      "import": "./src/design-assets.mjs"
     }
   }
 }

@@ -283,6 +283,16 @@ export async function updateCommentStatus(id, commentId, status) {
   return { ok: true, comment: rowToComment(updated) };
 }
 
+export async function deleteArtifact(id) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
+  if (!row) return false;
+  db.prepare('DELETE FROM comments WHERE artifact_id = ?').run(id);
+  db.prepare('DELETE FROM revisions WHERE artifact_id = ?').run(id);
+  db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
+  return true;
+}
+
 export async function getFeedback(id) {
   const artifact = await getArtifact(id);
   if (!artifact) return null;

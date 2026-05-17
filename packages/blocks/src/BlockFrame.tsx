@@ -1,10 +1,21 @@
 import RenderBlock from './RenderBlock';
 
-/**
- * BlockFrame wraps a renderable block with review affordances.
- * It never mutates body content: selection, context menu and comments only
- * create review signals for the authoring agent/CLI loop.
- */
+interface BlockFrameProps {
+  block: {
+    id: string;
+    type: string;
+    props?: Record<string, unknown>;
+  };
+  onSelect?: () => void;
+  onComment?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  onOpenMenu?: (e: React.MouseEvent) => void;
+  selected?: boolean;
+  commentCount?: number;
+  commentStatus?: string | null;
+  reviewMode?: boolean;
+}
+
 export default function BlockFrame({
   block,
   onSelect,
@@ -15,7 +26,7 @@ export default function BlockFrame({
   commentCount = 0,
   commentStatus = null,
   reviewMode = false,
-}) {
+}: BlockFrameProps) {
   const cls = `rk-block rk-block-${block.type}${selected ? ' rk-selected' : ''}`;
   const width = block.props?.width || 'full';
   return (
@@ -24,10 +35,10 @@ export default function BlockFrame({
       className={cls}
       data-block-id={block.id}
       data-block-type={block.type}
-      data-rk-width={width}
+      data-rk-width={String(width)}
       {...(selected ? { 'data-rk-selected': '' } : {})}
       {...(commentCount > 0 ? { 'data-rk-has-comments': '', 'data-comment-count': commentCount, 'data-rk-comment-status': commentStatus || '' } : {})}
-      {...(block.props?.tone ? { 'data-tone': block.props.tone } : {})}
+      {...(block.props?.tone ? { 'data-tone': String(block.props.tone) } : {})}
       tabIndex={reviewMode ? 0 : undefined}
       onClick={reviewMode ? onSelect : undefined}
       onMouseDown={(e) => { if (reviewMode && e.button === 2 && onContextMenu) onContextMenu(e); }}

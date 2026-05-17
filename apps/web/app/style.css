@@ -663,7 +663,59 @@ button, textarea { font: inherit; }
   }
   a { text-decoration: underline; }
   .rk-floating-tools button:focus-visible,
-  .rk-comment-filters button:focus-visible {
+  .rk-comment-filters button:focus-visible,
+  .rk-panel-tabs button:focus-visible {
     outline-width: 3px;
   }
+}
+
+/* ── Review panel tabs ───────────────────────────── */
+.rk-panel-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+  margin-bottom: var(--rk-space-3);
+}
+.rk-panel-tabs button {
+  flex: 1;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--rk-text-secondary);
+  padding: var(--rk-space-2) var(--rk-space-3);
+  cursor: pointer;
+  font-size: var(--rk-text-sm);
+  font-weight: var(--rk-weight-medium);
+  text-align: center;
+  border-radius: 0;
+  transition: color .15s, border-color .15s;
+}
+.rk-panel-tabs button:hover {
+  color: var(--rk-text);
+  background: var(--rk-accent-subtle);
+}
+.rk-panel-tabs button.is-active {
+  color: var(--rk-text);
+  border-bottom-color: var(--rk-accent);
+  font-weight: var(--rk-weight-semibold);
+}
+.rk-panel-tabs .rk-filter-count {
+  font-size: 10px;
+  opacity: .7;
+  margin-left: 4px;
+}
+.rk-panel-content {
+  min-height: 60px;
+}
+
+/* ── Outline: heading-first with secondary blocks ─── */
+.rk-outline-divider {
+  height: 1px;
+  background: var(--rk-border-subtle);
+  margin: var(--rk-space-2) 0;
+}
+.rk-outline-list button.rk-outline-secondary {
+  font-size: var(--rk-text-xs);
+  color: var(--rk-text-tertiary);
+  padding: var(--rk-space-1) var(--rk-space-2);
 }

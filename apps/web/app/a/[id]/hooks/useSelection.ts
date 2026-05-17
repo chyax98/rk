@@ -41,7 +41,7 @@ export function useSelection() {
       postRange.setEnd(el, el.childNodes.length);
       suffix = postRange.toString().slice(0, 80);
     } catch {
-      const blockText = el.innerText || '';
+      const blockText = (el as HTMLElement).innerText || '';
       const start = blockText.indexOf(exact);
       prefix = start > 0 ? blockText.slice(Math.max(0, start - 80), start) : '';
       suffix = start >= 0 ? blockText.slice(start + exact.length, start + exact.length + 80) : '';

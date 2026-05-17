@@ -128,6 +128,7 @@ async function postJson(path, body, method = 'POST') {
   return json;
 }
 async function main() {
+  const createdArtifactIds = [];
   mkdirSync(evidenceDir, { recursive: true });
 
   logSection('pw CLI availability');
@@ -143,6 +144,7 @@ async function main() {
   const pushed = await pushArtifact(productFixture, 'push product-system artifact');
   assert('push returns artifact url', Boolean(pushed?.url && pushed?.artifactId), JSON.stringify(pushed));
   const artifactId = pushed.artifactId;
+  createdArtifactIds.push(artifactId);
   const openComment = await postJson(`/api/artifacts/${artifactId}/comments`, {
     blockId: 'exec-summary',
     text: '浏览器回归：摘要需要更明确结论',
@@ -185,6 +187,7 @@ async function main() {
   const diagramFixture = tempExample('examples/capabilities/diagram-visual-language.rk.md', 'diagram-visual-language.rk.md');
   const diagramPushed = await pushArtifact(diagramFixture, 'push diagram visual language artifact');
   assert('diagram artifact url returned', Boolean(diagramPushed?.url), JSON.stringify(diagramPushed));
+  if (diagramPushed?.artifactId) createdArtifactIds.push(diagramPushed.artifactId);
   pw(['session', 'recreate', session, '--open', diagramPushed.url], 'open diagram artifact', { timeout: 90_000 });
   pw(['wait', '-s', session, '--selector', '.rk-diagram-svg svg'], 'wait for inline svg diagram');
   const svgCount = countFromGet(pw(['get', '-s', session, '--selector', '.rk-diagram-svg svg', '--fact', 'count'], 'read svg diagram count').stdout);
@@ -211,6 +214,10 @@ main().catch(err => {
   process.exit(1);
 }).finally(() => {
   run('pw', ['session', 'close', session]);
+  // Cleanup temp artifacts via DELETE API
+  for (const artId of createdArtifactIds) {
+    try { await fetch(`${endpoint}/api/artifacts/${artId}`, { method: 'DELETE' }); } catch {}
+  }
   if (tempDir) rmSync(tempDir, { recursive: true, force: true });
   if (serverProcess && serverProcess.exitCode === null) {
     try { process.kill(-serverProcess.pid, 'SIGTERM'); } catch { serverProcess.kill('SIGTERM'); }

@@ -12,7 +12,7 @@ export const DEFAULT_ENDPOINT = 'http://localhost:3737';
  * Recipe registry — recommended blocks, theme, and anti-patterns per surface.
  * Agents should consult this when authoring artifacts for a known surface.
  */
-export const RECIPES: Record<string, import('./contracts.ts').Recipe> = {
+export const RECIPES: Record<import('./contracts.ts').SurfaceName, import('./contracts.ts').Recipe> = {
   'engineering-plan': {
     label: 'Engineering Plan',
     description: 'Structured technical proposal for refactors, migrations, or new features. Dense, reviewable, decision-anchored.',
@@ -153,12 +153,13 @@ export function listRecipeSurfaces(): string[] {
   return Object.keys(RECIPES);
 }
 
-export function getDesignRecommendation(surface = 'engineering-plan'): import('./contracts.ts').DesignRecommendation | null {
+export function getDesignRecommendation(surface: string = 'engineering-plan'): import('./contracts').DesignRecommendation | null {
   const recipe = getRecipe(surface);
+  const surfaceName = surface as import('./contracts.ts').SurfaceName;
   if (!recipe) return null;
   const resources = resourcesForSurface(surface, recipe);
   return {
-    surface,
+    surface: surfaceName,
     recipe,
     theme: recipe.recommendedTheme,
     blocks: recipe.recommendedBlocks,
@@ -167,7 +168,7 @@ export function getDesignRecommendation(surface = 'engineering-plan'): import('.
     suggestedFrontmatter: {
       title: '<填写标题>',
       theme: recipe.recommendedTheme,
-      surface,
+      surface: surfaceName,
     },
     suggestedBlockOrder: recipe.recommendedBlocks.map(blockType => ({
       blockType,
