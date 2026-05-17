@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
 
 interface AddingState { anchor: string; text: string }
-interface BtnState { anchor: string; top: number; left: number }
+// BtnState removed — button is now ref-driven to avoid React re-renders that break WC charts
 interface RevisionSummary { revisionNumber: number; createdAt: number; title: string }
 
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
@@ -21,7 +21,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
   const [activeComment, setActiveComment] = useState<string | null>(null);
   const [adding, setAdding] = useState<AddingState | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [addBtn, setAddBtn] = useState<BtnState | null>(null);
+  // Use ref instead of state — state updates cause re-renders that trigger ResizeObserver in WC (ECharts/Mermaid)
+  const addBtnRef = useRef<HTMLButtonElement>(null);
+  const addBtnAnchorRef = useRef<string>('');
   const [hoveredComment, setHoveredComment] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
@@ -112,17 +114,20 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
       if (viewingRev !== meta.currentRevision) return;
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       const target = (e.target as HTMLElement).closest('[data-rk-anchor]') as HTMLElement | null;
-      if (!target) return;
+      if (!target || !addBtnRef.current) return;
       const rect = target.getBoundingClientRect();
-      setAddBtn({
-        anchor: target.dataset.rkAnchor || '',
-        top: rect.top + rect.height / 2 - 12,
-        left: rect.right + 10,
-      });
+      addBtnAnchorRef.current = target.dataset.rkAnchor || '';
+      // 直接操作 DOM，不经过 React state — 避免 re-render 触发 WC ResizeObserver
+      const btn = addBtnRef.current;
+      btn.style.top = `${rect.top + rect.height / 2 - 12}px`;
+      btn.style.left = `${rect.right + 10}px`;
+      btn.style.display = 'flex';
     };
 
     const hide = () => {
-      hideTimerRef.current = setTimeout(() => setAddBtn(null), 300);
+      hideTimerRef.current = setTimeout(() => {
+        if (addBtnRef.current) addBtnRef.current.style.display = 'none';
+      }, 300);
     };
 
     el.addEventListener('mouseover', show);
@@ -173,7 +178,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     setAdding({ anchor, text: '' });
     setEditingId(null);
     setDeletingId(null);
-    setAddBtn(null);
+    if (addBtnRef.current) addBtnRef.current.style.display = 'none';
     setPanelOpen(true);
   }, []);
 
@@ -281,7 +286,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
       if (data.ok) {
         setRevHtml(data.processedHtml);
         setViewingRev(rev);
-        setAddBtn(null);
+        if (addBtnRef.current) addBtnRef.current.style.display = 'none';
         setAdding(null);
       }
     },
@@ -298,24 +303,24 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         <div dangerouslySetInnerHTML={{ __html: displayedHtml }} />
       </div>
 
-      {addBtn && viewingRev === meta.currentRevision && (
-        <button
-          type="button"
-          className="rk-add-comment-btn"
-          style={{ top: addBtn.top, left: addBtn.left }}
-          onMouseEnter={() => {
-            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-          }}
-          onMouseLeave={() => {
-            hideTimerRef.current = setTimeout(() => setAddBtn(null), 300);
-          }}
-          onClick={() => openAdding(addBtn.anchor)}
-          title="添加评论"
-          aria-label="添加评论"
-        >
-          +
-        </button>
-      )}
+      {/* 浮动 + 按钮—不经过 React state，直接 ref 操作 DOM — 避免 re-render 触发 WC ResizeObserver 导致图表閉烁 */}
+      <button
+        ref={addBtnRef}
+        type="button"
+        className="rk-add-comment-btn"
+        style={{ display: 'none', position: 'fixed' }}
+        onMouseEnter={() => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }}
+        onMouseLeave={() => {
+          hideTimerRef.current = setTimeout(() => {
+            if (addBtnRef.current) addBtnRef.current.style.display = 'none';
+          }, 300);
+        }}
+        onClick={() => openAdding(addBtnAnchorRef.current)}
+        title="添加评论"
+        aria-label="添加评论"
+      >
+        +
+      </button>
 
       <button
         type="button"
