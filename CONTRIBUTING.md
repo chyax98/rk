@@ -7,83 +7,65 @@
 node --version   # >= 24.0.0
 pnpm --version   # >= 9.0.0
 
-pnpm install
-pnpm dev         # 启动 Next.js dev server（端口 3737）
+# 安装依赖（在主 worktree 或 dev worktree）
+pnpm install --ignore-scripts
+```
+
+## 工作流
+
+```bash
+# 所有开发在 develop branch（dev worktree）
+cd /Users/xd/Worker/tools/RenderKit-dev
+
+# 启动 server（另一个终端）
+pnpm dev  # 或 rk serve
+
+# 开发 → commit → push → master merge
+LEFTHOOK=0 git add -A
+LEFTHOOK=0 git commit -m "feat: ..."
+git push origin develop
+
+# 合并到 master
+cd /Users/xd/Worker/tools/RenderKit
+git merge origin/develop --no-ff -m "merge: ..."
+git push origin master
+```
+
+## 重建 Bundle
+
+24 个 WC 的 bundle（改动 `packages/components/` 后需重建）：
+
+```bash
+npx esbuild packages/components/src/bundle.ts \
+  --bundle --format=esm \
+  --outfile=apps/web/public/rk/components.js \
+  --resolve-extensions=.ts,.tsx,.js \
+  --loader:.ts=ts \
+  --platform=browser
 ```
 
 ## 添加新 Web Component
 
-1. 在 `packages/components/src/elements/` 新建 `rk-mycomponent.ts`
-2. 实现 `class RkMyComponent extends HTMLElement`，遵循以下模式：
+1. 创建 `packages/components/src/elements/rk-xxx.ts`
+2. 在 `packages/components/src/bundle.ts` 中 `import './elements/rk-xxx.ts'`
+3. 重建 bundle
+4. 在 `.pi/skills/renderkit-author/SKILL.md` 中添加用法文档
 
-```ts
-class RkMyComponent extends HTMLElement {
-  private _rendered = false;
+**关键约定**：
+- Light DOM（无 shadow DOM）
+- 用 `_raw` 缓存 `textContent`（在 `connectedCallback` 首次读取，`this.innerHTML = ...` 之前）
+- CSS 用 `var(--rk-*)` 语义 token，不硬编码颜色
+- 子元素用显式关闭标签（Custom Elements 不支持自闭合）
 
-  static get observedAttributes() {
-    return ['title', 'tone'];
-  }
+## 调试
 
-  connectedCallback(): void {
-    if (this._rendered) return;
-    this._rendered = true;
-    this._render();
-  }
+```bash
+# 健康检查
+curl http://localhost:3737/api/health
 
-  attributeChangedCallback(): void {
-    if (this._rendered) this._render();
-  }
+# 测试推送
+rk push examples/hello.html --open
 
-  _render(): void {
-    const title = this.getAttribute('title') || '';
-    this.innerHTML = `<div class="rk-mycomponent">${title}</div>`;
-  }
-}
-
-customElements.define('rk-mycomponent', RkMyComponent);
-export { RkMyComponent };
-```
-
-3. 在 `packages/components/src/elements/index.ts` 加 `export * from './rk-mycomponent.ts'`
-4. 在 `packages/components/src/css/components.css` 加 BEM 样式（class 前缀 `.rk-mycomponent`）
-5. 在 `packages/components/src/bundle.ts` 加 import
-6. 重新 build：`cd packages/components && pnpm build`
-7. 验证：在 showcase HTML 中使用新组件，`renderkit push showcase.html --open`
-
-## 修改 CSS Theme
-
-主题变量在 `packages/components/src/css/theme.css`：
-
-```css
-:root {
-  --rk-bg: #FAFAF7;         /* 页面背景 */
-  --rk-fg: #1F2937;         /* 正文颜色 */
-  --rk-accent: #D97757;     /* 主强调色（橙） */
-  --rk-border: #E5E7EB;     /* 边框 */
-  /* ... */
-}
-```
-
-组件样式在 `packages/components/src/css/components.css`，使用 BEM 命名（`.rk-callout__title`）。
-
-## 文件结构约定
-
-- 所有 import 路径必须带 `.ts` / `.tsx` 扩展名（Node strip-types 要求）
-- `packages/` 内部相对 import：`from './helpers.ts'`（有扩展名）
-- 跨包 import：`from '@renderkit/shared/contracts'`（package exports 解析）
-
-## CSS 约定
-
-- 所有样式变量通过 `--rk-*` CSS custom properties
-- 组件 class 前缀 `.rk-`
-- 不引入 Tailwind / antd / material-ui
-
-## Git 约定
-
-```
-feat:     新功能
-fix:      bug 修复
-refactor: 重构（无功能变化）
-docs:     文档更新
-chore:    构建/工具链变化
+# 获取评论
+rk feedback examples/hello.html
 ```
