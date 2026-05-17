@@ -1,30 +1,30 @@
-import { pushHTML } from '../../../../lib/store';
+import { listArtifacts, pushHTML } from '../../../lib/store';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json() as Record<string, string>;
     const html = body.html || body.source || '';
-    const file = body.title || body.file;
+    const file = body.file || body.title;
     const result = await pushHTML(html, file);
     return Response.json({
       ok: true,
       artifactId: result.artifactId,
       revision: result.revision,
-      path: result.url,
       url: absolute(req, result.url),
+      format: 'html',
     });
   } catch (e: unknown) {
-    return Response.json(
-      { ok: false, error: { code: 'RK_HTML_PROCESS_ERROR', message: String(e) } },
-      { status: 500 },
-    );
+    return Response.json({ ok: false, error: String(e) }, { status: 500 });
   }
 }
 
 export async function GET() {
-  const { listArtifacts } = await import('../../../../lib/store.ts');
-  const artifacts = await listArtifacts();
-  return Response.json({ ok: true, artifacts });
+  try {
+    const artifacts = await listArtifacts();
+    return Response.json({ ok: true, artifacts });
+  } catch (e: unknown) {
+    return Response.json({ ok: false, error: String(e) }, { status: 500 });
+  }
 }
 
 function absolute(req: Request, path: string) {

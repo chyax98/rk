@@ -42,7 +42,7 @@ class RkDiagram extends HTMLElement {
     if (!canvas || !this._raw) return;
 
     try {
-      const mermaid = await import('mermaid');
+      const mermaid = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
       mermaid.default.initialize({
         startOnLoad: false,
         theme: 'default',

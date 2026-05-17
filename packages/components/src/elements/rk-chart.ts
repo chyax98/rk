@@ -104,7 +104,7 @@ class RkChart extends HTMLElement {
     if (!container) return;
 
     try {
-      const echarts = await import('echarts');
+      const echarts = await import('https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js');
       const chart = echarts.init(container);
       this._chartInstance = chart;
 

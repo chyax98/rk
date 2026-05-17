@@ -381,7 +381,7 @@ var RkChart = class extends HTMLElement {
     const container = this.querySelector(".rk-chart__canvas");
     if (!container) return;
     try {
-      const echarts = await import("echarts");
+      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js");
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const header = rows[0];
@@ -467,7 +467,7 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const mermaid = await import("mermaid");
+      const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
       mermaid.default.initialize({
         startOnLoad: false,
         theme: "default",

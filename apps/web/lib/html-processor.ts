@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { parseHTML } from 'linkedom';
 import { createHighlighter, type Highlighter } from 'shiki';
 
@@ -139,7 +140,7 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
     child.setAttribute('data-rk-anchor', anchor);
 
     anchors.push({
-      id: `anc_${position}`,
+      id: `anc_${crypto.randomBytes(6).toString('hex')}`,
       anchor,
       elementTag: tag,
       position,
