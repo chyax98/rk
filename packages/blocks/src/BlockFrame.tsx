@@ -1,4 +1,4 @@
-import RenderBlock from './RenderBlock.jsx';
+import RenderBlock from './RenderBlock';
 
 /**
  * BlockFrame wraps a renderable block with review affordances.

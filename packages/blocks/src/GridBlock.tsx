@@ -1,4 +1,4 @@
-import RenderBlock from './RenderBlock.jsx';
+import RenderBlock from './RenderBlock';
 
 export default function GridBlock({ columns = 2, gap = 'normal', title, children = [] }) {
   const cols = Math.min(Math.max(Number(columns) || 2, 1), 6);

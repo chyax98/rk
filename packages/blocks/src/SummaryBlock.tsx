@@ -1,4 +1,9 @@
-export default function SummaryBlock({ title, content }) {
+interface SummaryBlockProps {
+  title?: string;
+  content: string;
+}
+
+export default function SummaryBlock({ title, content }: SummaryBlockProps) {
   return (
     <div>
       {title && <div className="rk-summary-title">{title}</div>}

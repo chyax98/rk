@@ -1,4 +1,4 @@
-import { registry } from './registry.jsx';
+import { registry } from './registry';
 
 /**
  * Renders a single block by type via the registry.

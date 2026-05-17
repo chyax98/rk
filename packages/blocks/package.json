@@ -7,7 +7,7 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
-      "import": "./src/index.jsx"
+      "import": "./src/index.tsx"
     }
   },
   "peerDependencies": {

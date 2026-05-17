@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import RenderBlock from './RenderBlock.jsx';
+import RenderBlock from './RenderBlock';
 
 export default function TabsBlock({ title, tabs = [] }) {
   const safeTabs = Array.isArray(tabs) ? tabs : [];

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import MermaidDiagram from './MermaidDiagram.jsx';
-import EChartsBlock from './EChartsBlock.jsx';
+import MermaidDiagram from './MermaidDiagram';
+import EChartsBlock from './EChartsBlock';
 
 const SERVER_RENDERED_ENGINES = new Set(['plantuml', 'd2']);
 
