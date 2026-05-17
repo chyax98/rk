@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>RenderKit 主题对比测试</title>
+</head>
+<body>
+
+<h1>8 套设计主题对比</h1>
+<p>切换 data-rk-theme 属性查看不同主题效果。</p>
+
+<rk-callout tone="info" title="使用方式">
+  在 &lt;body data-rk-theme="xxx"&gt; 中设置主题名。支持的值：paper-light / dark-pro / notion-clean / linear-app / amber-terminal / glassmorphism / ibm-enterprise / editorial-kami
+</rk-callout>
+
+<h2>组件展示（通用区域）</h2>
+
+<rk-metric>
+  <rk-metric-item label="渲染速度" value="12ms" delta="快"></rk-metric-item>
+  <rk-metric-item label="WC 数量" value="24" delta="丰富"></rk-metric-item>
+  <rk-metric-item label="主题" value="8" delta="套"></rk-metric-item>
+</rk-metric>
+
+<rk-chart type="bar" title="各主题覆盖评分">
+[
+  { "theme": "paper-light", "score": 95 },
+  { "theme": "dark-pro", "score": 93 },
+  { "theme": "notion-clean", "score": 96 },
+  { "theme": "linear-app", "score": 94 },
+  { "theme": "amber-terminal", "score": 88 },
+  { "theme": "glassmorphism", "score": 91 },
+  { "theme": "ibm-enterprise", "score": 92 },
+  { "theme": "editorial-kami", "score": 90 }
+]
+</rk-chart>
+
+<rk-diagram engine="mermaid" title="架构图">
+graph TD
+  A[Agent] --> B[CLI]
+  B --> C[Server]
+  C --> D[Browser]
+  D --> E[Human]
+  E -->|评论| A
+</rk-diagram>
+
+<rk-callout tone="success" title="✅ 推荐主题">
+  <strong>paper-light</strong>：适合技术文档、API 文档<br>
+  <strong>notion-clean</strong>：适合知识库、内部文档<br>
+  <strong>dark-pro</strong>：适合开发者工具、终端用户<br>
+  <strong>linear-app</strong>：适合项目管理、任务跟踪
+</rk-callout>
+
+<rk-callout tone="warning" title="⚠️ 特殊场景">
+  <strong>amber-terminal</strong>：复古终端风格，适合演示<br>
+  <strong>glassmorphism</strong>：毛玻璃效果，适合展示页面<br>
+  <strong>ibm-enterprise</strong>：企业级严肃风格<br>
+  <strong>editorial-kami</strong>：编辑/出版风格
+</rk-callout>
+
+<rk-progress value="100" max="100" label="所有主题已就绪"></rk-progress>
+
+<rk-table title="主题特性对比">
+| 主题 | 适用场景 | 暗色模式 | 字体风格 |
+|------|----------|----------|----------|
+| paper-light | 技术文档 | ✗ | 衬线+无衬线 |
+| dark-pro | 开发者 | ✓ | 等宽为主 |
+| notion-clean | 知识库 | ✗ | 干净无衬线 |
+| linear-app | 项目管理 | ✗ | 紧凑无衬线 |
+| amber-terminal | 演示 | ✓ | 终端等宽 |
+| glassmorphism | 展示 | ✗ | 现代圆角 |
+| ibm-enterprise | 企业 | ✗ | Carbon 风格 |
+| editorial-kami | 出版 | ✗ | 日式衬线 |
+</rk-table>
+
+<rk-form title="主题偏好调查" submit-label="提交">
+  <rk-field label="最喜欢的主题" type="select" options="paper-light,dark-pro,notion-clean,linear-app,amber-terminal,glassmorphism,ibm-enterprise,editorial-kami" name="favorite"></rk-field>
+  <rk-field label="评分" type="rating" max="5" name="score"></rk-field>
+  <rk-field label="建议" type="textarea" name="suggestion" placeholder="告诉我们你想改进什么"></rk-field>
+</rk-form>
+
+</body>
+</html>

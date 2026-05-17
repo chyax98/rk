@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>RenderKit 全面测试 — 24 WC × 多变体</title>
+</head>
+<body data-rk-theme="paper-light">
+
+<h1>RenderKit 全组件测试</h1>
+<p>本文件覆盖全部 24 个 Web Component，每个至少 3 种变体。</p>
+
+<!-- ═══ 1. rk-callout ═══ -->
+<h2>rk-callout（5 种 tone）</h2>
+
+<rk-callout tone="info" title="信息提示">
+  这是一条信息级别的提示，用于一般性说明。
+</rk-callout>
+
+<rk-callout tone="warning" title="注意">
+  这是一条警告提示，提醒用户注意潜在问题。
+</rk-callout>
+
+<rk-callout tone="danger" title="危险">
+  这是一条危险警告，表示可能导致数据丢失的操作。
+</rk-callout>
+
+<rk-callout tone="success" title="成功">
+  操作已成功完成，所有数据已保存。
+</rk-callout>
+
+<rk-callout tone="tip" title="提示">
+  使用 Cmd+K 快速打开命令面板。
+</rk-callout>
+
+<!-- ═══ 2. rk-stat ═══ -->
+<h2>rk-stat（3 种变体）</h2>
+
+<rk-stat label="活跃用户" value="12,847" unit="人" delta="+12.3%"></rk-stat>
+
+<rk-stat label="错误率" value="0.03" unit="%" delta="-0.01%" tone="negative"></rk-stat>
+
+<rk-stat label="系统状态" value="正常" tone="positive"></rk-stat>
+
+<!-- ═══ 3. rk-chart ═══ -->
+<h2>rk-chart（JSON 格式）</h2>
+
+<rk-chart type="line" title="月度活跃用户趋势">
+[
+  { "month": "1月", "mau": 98000, "dau": 12000 },
+  { "month": "2月", "mau": 112000, "dau": 15000 },
+  { "month": "3月", "mau": 128400, "dau": 18200 },
+  { "month": "4月", "mau": 135000, "dau": 19500 },
+  { "month": "5月", "mau": 167000, "dau": 22000 }
+]
+</rk-chart>
+
+<rk-chart type="bar" title="季度收入">
+[
+  { "quarter": "Q1", "revenue": 450000 },
+  { "quarter": "Q2", "revenue": 520000 },
+  { "quarter": "Q3", "revenue": 610000 },
+  { "quarter": "Q4", "revenue": 780000 }
+]
+</rk-chart>
+
+<rk-chart type="pie" title="技术栈分布">
+[
+  { "stack": "TypeScript", "count": 45 },
+  { "stack": "Python", "count": 25 },
+  { "stack": "Go", "count": 15 },
+  { "stack": "Rust", "count": 10 },
+  { "stack": "Other", "count": 5 }
+]
+</rk-chart>
+
+<rk-chart type="area" title="页面访问量">
+[
+  { "day": "周一", "pv": 12000 },
+  { "day": "周二", "pv": 15000 },
+  { "day": "周三", "pv": 18000 },
+  { "day": "周四", "pv": 16500 },
+  { "day": "周五", "pv": 14000 },
+  { "day": "周六", "pv": 8000 },
+  { "day": "周日", "pv": 6000 }
+]
+</rk-chart>
+
+<!-- ═══ 4. rk-diagram ═══ -->
+<h2>rk-diagram（Mermaid）</h2>
+
+<rk-diagram engine="mermaid" title="工作流程">
+graph LR
+  A[Agent 编写] --> B[CLI push]
+  B --> C[Server 处理]
+  C --> D[浏览器渲染]
+  D --> E[人类评论]
+  E --> A
+</rk-diagram>
+
+<rk-diagram engine="mermaid" title="系统架构">
+graph TD
+  subgraph 前端
+    UI[Web Components]
+    Panel[评论面板]
+  end
+  subgraph 后端
+    API[Next.js API]
+    DB[SQLite]
+    Processor[HTML Processor]
+  end
+  UI --> API
+  Panel --> API
+  API --> DB
+  API --> Processor
+</rk-diagram>
+
+<!-- ═══ 5. rk-badge ═══ -->
+<h2>rk-badge（6 种颜色）</h2>
+
+<rk-badge color="blue">TypeScript</rk-badge>
+<rk-badge color="green">Next.js</rk-badge>
+<rk-badge color="red">紧急</rk-badge>
+<rk-badge color="orange">实验性</rk-badge>
+<rk-badge color="purple">新功能</rk-badge>
+<rk-badge color="gray">文档</rk-badge>
+
+<!-- ═══ 6. rk-kanban ═══ -->
+<h2>rk-kanban</h2>
+
+<rk-kanban title="Sprint Board">
+  <rk-kanban-col title="待办">
+    <rk-kanban-card title="用户认证" label="P0" color="red"></rk-kanban-card>
+    <rk-kanban-card title="数据导出" label="P1" color="orange"></rk-kanban-card>
+  </rk-kanban-col>
+  <rk-kanban-col title="进行中">
+    <rk-kanban-card title="评论系统" label="P0" color="red"></rk-kanban-card>
+    <rk-kanban-card title="主题切换" label="P2" color="blue"></rk-kanban-card>
+  </rk-kanban-col>
+  <rk-kanban-col title="完成">
+    <rk-kanban-card title="CI/CD 流水线" label="P1" color="green"></rk-kanban-card>
+    <rk-kanban-card title="单元测试" label="P1" color="green"></rk-kanban-card>
+  </rk-kanban-col>
+</rk-kanban>
+
+<!-- ═══ 7. rk-form ═══ -->
+<h2>rk-form</h2>
+
+<rk-form title="用户反馈" submit-label="提交反馈">
+  <rk-field label="姓名" type="text" name="name" placeholder="请输入姓名"></rk-field>
+  <rk-field label="评分" type="rating" max="5" name="score"></rk-field>
+  <rk-field label="分类" type="select" options="Bug,建议,其他" name="category"></rk-field>
+  <rk-field label="详细描述" type="textarea" name="desc" placeholder="请描述问题或建议"></rk-field>
+</rk-form>
+
+<!-- ═══ 8. rk-grid ═══ -->
+<h2>rk-grid</h2>
+
+<rk-grid columns="2">
+  <div><rk-stat label="日活" value="18K"></rk-stat></div>
+  <div><rk-stat label="月活" value="128K"></rk-stat></div>
+</rk-grid>
+
+<rk-grid columns="3">
+  <div><rk-stat label="API" value="12ms" tone="positive"></rk-stat></div>
+  <div><rk-stat label="DB" value="3ms" tone="positive"></rk-stat></div>
+  <div><rk-stat label="CDN" value="45ms" tone="neutral"></rk-stat></div>
+</rk-grid>
+
+<rk-grid columns="4">
+  <div><rk-badge color="blue">v1.0</rk-badge></div>
+  <div><rk-badge color="green">稳定</rk-badge></div>
+  <div><rk-badge color="orange">测试中</rk-badge></div>
+  <div><rk-badge color="gray">计划中</rk-badge></div>
+</rk-grid>
+
+<!-- ═══ 9. rk-tabs ═══ -->
+<h2>rk-tabs</h2>
+
+<rk-tabs>
+  <rk-tab label="概览">
+    <rk-summary>系统整体运行正常，所有核心指标达标。</rk-summary>
+  </rk-tab>
+  <rk-tab label="详细数据">
+    <rk-chart type="line" title="趋势">
+    [
+      { "day": "1", "val": 100 },
+      { "day": "2", "val": 120 },
+      { "day": "3", "val": 115 },
+      { "day": "4", "val": 140 }
+    ]
+    </rk-chart>
+  </rk-tab>
+  <rk-tab label="配置">
+    <rk-callout tone="info">当前配置为生产环境默认值。</rk-callout>
+  </rk-tab>
+</rk-tabs>
+
+<!-- ═══ 10. rk-timeline ═══ -->
+<h2>rk-timeline</h2>
+
+<rk-timeline>
+  <rk-step status="done">2024-Q1：项目启动</rk-step>
+  <rk-step status="done">2024-Q2：MVP 发布</rk-step>
+  <rk-step status="active">2024-Q3：用户增长阶段</rk-step>
+  <rk-step status="pending">2024-Q4：国际化扩展</rk-step>
+  <rk-step status="pending">2025-Q1：企业版发布</rk-step>
+</rk-timeline>
+
+<!-- ═══ 11. rk-metric ═══ -->
+<h2>rk-metric</h2>
+
+<rk-metric>
+  <rk-metric-item label="MAU" value="128K" delta="+12%"></rk-metric-item>
+  <rk-metric-item label="DAU" value="18K" delta="+5%"></rk-metric-item>
+  <rk-metric-item label="留存率" value="42%" delta="-2%"></rk-metric-item>
+</rk-metric>
+
+<!-- ═══ 12. rk-decision ═══ -->
+<h2>rk-decision</h2>
+
+<rk-decision title="是否迁移到新架构">
+  <rk-reason>性能提升 30%</rk-reason>
+  <rk-reason>维护成本降低</rk-reason>
+  <rk-reason>团队技术栈统一</rk-reason>
+  <rk-alternative>保持现状，渐进优化</rk-alternative>
+</rk-decision>
+
+<!-- ═══ 13. rk-steps ═══ -->
+<h2>rk-steps</h2>
+
+<rk-steps>
+  <rk-step>安装依赖：pnpm install</rk-step>
+  <rk-step active>配置环境：复制 .env.example</rk-step>
+  <rk-step>启动服务：pnpm dev</rk-step>
+  <rk-step>推送文档：rk push hello.html</rk-step>
+</rk-steps>
+
+<!-- ═══ 14. rk-checklist ═══ -->
+<h2>rk-checklist</h2>
+
+<rk-checklist>
+  <rk-item checked>TypeScript 迁移完成</rk-item>
+  <rk-item checked>24 个 Web Components 就绪</rk-item>
+  <rk-item checked>8 套设计主题完成</rk-item>
+  <rk-item>单元测试覆盖率 80%</rk-item>
+  <rk-item>生产环境压测通过</rk-item>
+</rk-checklist>
+
+<!-- ═══ 15. rk-table ═══ -->
+<h2>rk-table</h2>
+
+<rk-table title="服务健康状态">
+| 服务 | 状态 | 延迟 | 可用率 |
+|------|------|------|--------|
+| API Gateway | ✅ 正常 | 12ms | 99.99% |
+| 用户服务 | ✅ 正常 | 8ms | 99.95% |
+| 数据库 | ✅ 正常 | 3ms | 99.99% |
+| CDN | ⚠️ 降级 | 45ms | 99.90% |
+</rk-table>
+
+<!-- ═══ 16. rk-comparison ═══ -->
+<h2>rk-comparison</h2>
+
+<rk-comparison>
+<rk-comparison-col label="方案 A：微服务">
+<rk-item>独立部署</rk-item>
+<rk-item>技术栈灵活</rk-item>
+<rk-item>运维复杂</rk-item>
+</rk-comparison-col>
+<rk-comparison-col label="方案 B：单体">
+<rk-item>部署简单</rk-item>
+<rk-item>性能好</rk-item>
+<rk-item>扩展性受限</rk-item>
+</rk-comparison-col>
+</rk-comparison>
+
+<!-- ═══ 17. rk-code ═══ -->
+<h2>rk-code</h2>
+
+<rk-code language="typescript">
+interface RenderKitConfig {
+  theme: 'paper-light' | 'dark-pro' | 'notion-clean';
+  endpoint: string;
+  port: number;
+}
+
+const config: RenderKitConfig = {
+  theme: 'paper-light',
+  endpoint: 'http://localhost:3737',
+  port: 3737,
+};
+</rk-code>
+
+<!-- ═══ 18. rk-quote ═══ -->
+<h2>rk-quote</h2>
+
+<rk-quote author="Linus Torvalds" source="Linux Kernel">
+  Talk is cheap. Show me the code.
+</rk-quote>
+
+<rk-quote author="Donald Knuth">
+  Premature optimization is the root of all evil.
+</rk-quote>
+
+<!-- ═══ 19. rk-highlight ═══ -->
+<h2>rk-highlight</h2>
+
+<rk-highlight>
+  重要变更：v2.0 将引入全新的评论系统，支持文件级别的线程化讨论。
+  请所有用户在 2024-06-01 前完成数据迁移。
+</rk-highlight>
+
+<!-- ═══ 20. rk-collapsible ═══ -->
+<h2>rk-collapsible</h2>
+
+<rk-collapsible title="常见问题 #1：如何安装？">
+  使用 pnpm install 安装依赖，然后运行 pnpm dev 启动开发服务器。
+</rk-collapsible>
+
+<rk-collapsible title="常见问题 #2：如何推送文档？" collapsed>
+  使用 rk push your-doc.html 命令推送 HTML 文件到 RenderKit 服务器。
+</rk-collapsible>
+
+<rk-collapsible title="常见问题 #3：支持哪些主题？" collapsed>
+  当前支持 8 套主题：paper-light, dark-pro, notion-clean, linear-app, amber-terminal, glassmorphism, ibm-enterprise, editorial-kami。
+</rk-collapsible>
+
+<!-- ═══ 21. rk-progress ═══ -->
+<h2>rk-progress</h2>
+
+<rk-progress value="85" max="100" label="项目进度"></rk-progress>
+<rk-progress value="42" max="100" label="测试覆盖"></rk-progress>
+<rk-progress value="100" max="100" label="部署完成"></rk-progress>
+
+<!-- ═══ 22. rk-image ═══ -->
+<h2>rk-image</h2>
+
+<rk-image src="https://placehold.co/600x300/EEE/333?text=RenderKit+Screenshot" caption="RenderKit 文档渲染示例" alt="截图"></rk-image>
+
+<!-- ═══ 23. rk-summary ═══ -->
+<h2>rk-summary</h2>
+
+<rk-summary>
+  RenderKit 是一个 HTML-first 的文档渲染系统。Agent 使用 24 个 Web Components 编写文档，
+  通过 CLI 推送到服务器，人类在浏览器中审阅和评论，Agent 根据反馈迭代优化。
+  当前支持 8 套设计主题、4 种图表引擎、飞书式评论系统。
+</rk-summary>
+
+<!-- ═══ 24. rk-3d ═══ -->
+<h2>rk-3d</h2>
+
+<rk-3d title="3D 立方体示例">
+{
+  "type": "box",
+  "size": [1, 1, 1],
+  "color": "#4488ff"
+}
+</rk-3d>
+
+</body>
+</html>
