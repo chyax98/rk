@@ -58,7 +58,7 @@
 Latest known green gates:
 
 ```text
-pnpm verify         -> Results: 225 passed, 0 failed
+pnpm verify         -> Results: 231 passed, 0 failed
 pnpm verify:sqlite  -> Results: 102 passed, 0 failed
 pnpm verify:smoke   -> Results: 24 passed, 0 failed
 pnpm verify:browser -> Results: 37 passed, 0 failed

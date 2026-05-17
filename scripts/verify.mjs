@@ -197,7 +197,18 @@ console.log("\n== Agent-facing CLI ==");
 const agentCase = run("node scripts/verify-agent.mjs");
 assert("agent-facing recipe/design CLI passes", agentCase.code === 0, agentCase.stdout || agentCase.stderr);
 
-// ── Section 9: Web build ──
+// ── Section 9: Web metadata ──
+console.log("\n== Web metadata ==");
+const layoutSource = readFileSync(resolve(root, "apps/web/app/layout.jsx"), "utf8");
+const artifactPageSource = readFileSync(resolve(root, "apps/web/app/a/[id]/page.jsx"), "utf8");
+assert("root layout declares metadataBase", layoutSource.includes("metadataBase"));
+assert("root layout declares Open Graph metadata", layoutSource.includes("openGraph") && layoutSource.includes("renderkit-og.svg"));
+assert("root layout declares Twitter card metadata", layoutSource.includes("twitter") && layoutSource.includes("summary_large_image"));
+assert("artifact page generates dynamic metadata", artifactPageSource.includes("generateMetadata") && artifactPageSource.includes("artifactDescription"));
+assert("artifact page metadata uses artifact title", artifactPageSource.includes("artifact.revision.model.title"));
+assert("OG image asset exists", existsSync(resolve(root, "apps/web/public/renderkit-og.svg")));
+
+// ── Section 10: Web build ──
 console.log("\n== Web build ==");
 try {
   execSync("pnpm --filter @renderkit/web build", { cwd: root, stdio: "inherit", encoding: "utf8" });
