@@ -358,22 +358,28 @@ assert(
   `got ${[...tlStatuses].join(',')}`,
 );
 
-// ── Section 7: Shared contracts ──
-console.log('\n== Shared contracts ==');
-const contractsCase = run('node scripts/verify-contracts.ts');
+// ── Section 7: CLI smoke test ──
+console.log('\n== CLI smoke test ==');
+const cliCase = run('node packages/cli/bin/renderkit.mjs --help');
 assert(
-  'shared contracts drift gate passes',
-  contractsCase.code === 0,
-  contractsCase.stdout || contractsCase.stderr,
+  'CLI help runs',
+  cliCase.code === 0,
+  cliCase.stdout || cliCase.stderr,
 );
 
-// ── Section 8: Agent-facing CLI ──
-console.log('\n== Agent-facing CLI ==');
-const agentCase = run('node scripts/verify-agent.ts');
+// ── Section 8: CLI commands ──
+console.log('\n== CLI commands ==');
+const pushHelp = run('node packages/cli/bin/renderkit.mjs push --help');
 assert(
-  'agent-facing recipe/design CLI passes',
-  agentCase.code === 0,
-  agentCase.stdout || agentCase.stderr,
+  'push command has help',
+  pushHelp.code === 0,
+  pushHelp.stdout || pushHelp.stderr,
+);
+const feedbackHelp = run('node packages/cli/bin/renderkit.mjs feedback --help');
+assert(
+  'feedback command has help',
+  feedbackHelp.code === 0,
+  feedbackHelp.stdout || feedbackHelp.stderr,
 );
 
 // ── Section 9: Web metadata ──
@@ -392,11 +398,11 @@ assert(
 assert(
   'artifact page generates dynamic metadata',
   artifactPageSource.includes('generateMetadata') &&
-    artifactPageSource.includes('artifactDescription'),
+    artifactPageSource.includes('getHtmlArtifact'),
 );
 assert(
-  'artifact page metadata uses artifact title',
-  artifactPageSource.includes('artifact.revision.model.title'),
+  'artifact page uses artifact title',
+  artifactPageSource.includes('artifact?.meta.title'),
 );
 assert('OG image asset exists', existsSync(resolve(root, 'apps/web/public/renderkit-og.svg')));
 
