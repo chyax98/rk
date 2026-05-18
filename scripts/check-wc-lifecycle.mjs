@@ -39,6 +39,14 @@ for (const file of readdirSync(elementsDir).filter((f) => f.endsWith('.ts')).sor
     });
   }
 
+  if (/async\s+_render|private\s+async\s+_render|async\s+_renderMermaid/.test(text) && !text.includes('_renderSeq')) {
+    findings.push({
+      file: `packages/components/src/elements/${file}`,
+      line: 1,
+      rule: 'async renderers must use _renderSeq to ignore stale async completions',
+    });
+  }
+
   const majorOnlyCdn = /https:\/\/cdn\.jsdelivr\.net\/npm\/(?:@[^/]+\/)?[^@/'"]+@[0-9]+(?:\/|['"])/g;
   let m;
   while ((m = majorOnlyCdn.exec(text)) !== null) {

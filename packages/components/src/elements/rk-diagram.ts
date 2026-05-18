@@ -2,6 +2,7 @@
 class RkDiagram extends HTMLElement {
   _raw = '';
   _observer: ResizeObserver | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'caption', 'engine'];
@@ -14,7 +15,9 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._observer?.disconnect();
+    this._observer = null;
   }
 
   attributeChangedCallback(): void {
@@ -23,6 +26,10 @@ connectedCallback(): void {
   }
 
   _render(): void {
+    const seq = ++this._renderSeq;
+    this._observer?.disconnect();
+    this._observer = null;
+
     const title = this.getAttribute('title') || '';
     const caption = this.getAttribute('caption') || '';
     const engine = this.getAttribute('engine') || 'mermaid';
@@ -65,12 +72,12 @@ connectedCallback(): void {
     }
 
     if (engine === 'graphviz' || engine === 'dot') {
-      this._renderGraphviz();
+      this._renderGraphviz(seq);
       return;
     }
 
     // default: mermaid — pass theme context
-    this._renderMermaid();
+    this._renderMermaid(seq);
   }
 
   /** Detect if current theme is dark based on CSS var */
@@ -213,7 +220,7 @@ connectedCallback(): void {
     return null;
   }
 
-  async _renderMermaid(): Promise<void> {
+  async _renderMermaid(seq: number): Promise<void> {
     const canvas = this.querySelector('.rk-diagram__canvas') as HTMLElement;
     const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
     if (!canvas || !this._raw) return;
@@ -222,6 +229,7 @@ connectedCallback(): void {
       const mermaid = await import(
         'https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs'
       );
+      if (seq !== this._renderSeq) return;
 
       // Beautiful-mermaid style: CSS variable driven themeVariables
       const isDark = this._isDark();
@@ -236,6 +244,7 @@ connectedCallback(): void {
 
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.default.render(id, this._raw);
+      if (seq !== this._renderSeq) return;
 
       if (loading) loading.remove();
       canvas.innerHTML = svg;
@@ -259,7 +268,7 @@ connectedCallback(): void {
     }
   }
 
-  async _renderGraphviz(): Promise<void> {
+  async _renderGraphviz(seq: number): Promise<void> {
     const canvas = this.querySelector('.rk-diagram__canvas') as HTMLElement;
     const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
     if (!canvas || !this._raw) return;
@@ -268,6 +277,7 @@ connectedCallback(): void {
       // viz-standalone.js is a UMD bundle: it sets globalThis.Viz, not named ES exports
       // @ts-expect-error
       await import('https://cdn.jsdelivr.net/npm/@viz-js/viz@3.14.0/lib/viz-standalone.js');
+      if (seq !== this._renderSeq) return;
       // @ts-expect-error
       const vizGlobal = globalThis as typeof globalThis & {
         Viz?: {
@@ -282,6 +292,7 @@ connectedCallback(): void {
       const instanceFn = vizGlobal.Viz?.instance;
       if (!instanceFn) throw new Error('Viz.js not loaded');
       const viz = await instanceFn();
+      if (seq !== this._renderSeq) return;
 
       // Dark theme support: inject graph attributes before first '{'
       const isDark = this._isDark();

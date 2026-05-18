@@ -23,6 +23,8 @@ function parsePipeTable(raw: string): string[][] {
 class RkChart extends HTMLElement {
   _raw = '';
   _chartInstance: { dispose?: () => void } | null = null;
+  _ro: ResizeObserver | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['type', 'title', 'caption', 'xfield', 'yfield'];
@@ -35,6 +37,15 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
+    this._cleanup();
+  }
+
+  _cleanup(): void {
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
     if (this._chartInstance) {
       this._chartInstance.dispose?.();
       this._chartInstance = null;
@@ -47,6 +58,9 @@ connectedCallback(): void {
   }
 
   _render(): void {
+    const seq = ++this._renderSeq;
+    this._cleanup();
+
     const type = this.getAttribute('type') || 'bar';
     const title = this.getAttribute('title') || '';
     const caption = this.getAttribute('caption') || '';
@@ -56,15 +70,15 @@ connectedCallback(): void {
       return;
     }
     if (type === 'radar') {
-      this._renderRadar(title, caption);
+      this._renderRadar(title, caption, seq);
       return;
     }
     if (type === 'gauge') {
-      this._renderGauge(title, caption);
+      this._renderGauge(title, caption, seq);
       return;
     }
 
-    this._renderEcharts(type, title, caption);
+    this._renderEcharts(type, title, caption, seq);
   }
 
   _renderKpi(title: string, caption: string): void {
@@ -128,7 +142,7 @@ connectedCallback(): void {
   // Data formats:
   //   Simple (header/body): col0=dimension, col1=value[, col2=value2...]
   //   Multi-series JSON: { axes: [...], series: [{name, values:[...]}, ...] }
-  async _renderRadar(title: string, caption: string): Promise<void> {
+  async _renderRadar(title: string, caption: string, seq: number): Promise<void> {
     this.innerHTML = /* html */ `
       <div class="rk-chart">
         ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ''}
@@ -143,6 +157,8 @@ connectedCallback(): void {
       const echarts = await import(
         'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
+      if (seq !== this._renderSeq) return;
+
       const chart = echarts.init(container);
       this._chartInstance = chart;
 
@@ -195,8 +211,11 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
         })),
       });
 
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
@@ -207,7 +226,7 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
   // ─── Gauge
   // Data format (JSON): { value: 72, name: "NPS", min: 0, max: 100 }
   // Or single header/body row: | Metric | Value |
-  async _renderGauge(title: string, caption: string): Promise<void> {
+  async _renderGauge(title: string, caption: string, seq: number): Promise<void> {
     this.innerHTML = /* html */ `
       <div class="rk-chart">
         ${title ? `<div class="rk-chart__title">${this._escape(title)}</div>` : ''}
@@ -222,6 +241,8 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
       const echarts = await import(
         'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
+      if (seq !== this._renderSeq) return;
+
       const chart = echarts.init(container);
       this._chartInstance = chart;
 
@@ -265,8 +286,11 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
         }],
       });
 
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
@@ -274,7 +298,7 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
     }
   }
 
-  async _renderEcharts(title: string, type: string, caption: string): Promise<void> {
+  async _renderEcharts(type: string, title: string, caption: string, seq: number): Promise<void> {
     const parsed = this._parseData();
     if (!parsed) {
       this.innerHTML = `<div class="rk-chart"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">Insufficient data for chart</p></div>`;
@@ -298,6 +322,8 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
       const echarts = await import(
         'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
+      if (seq !== this._renderSeq) return;
+
       const chart = echarts.init(container);
       this._chartInstance = chart;
 
@@ -392,8 +418,11 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
       chart.setOption(option);
 
       // Responsive resize
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;

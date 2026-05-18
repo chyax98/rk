@@ -45,6 +45,7 @@ class RkSketch extends HTMLElement {
   _raw = '';
   _ro: ResizeObserver | null = null;
   _loaded = false;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['width', 'height', 'roughness', 'title'];
@@ -57,6 +58,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     if (this._ro) { this._ro.disconnect(); this._ro = null; }
   }
 
@@ -120,6 +122,9 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    if (this._ro) { this._ro.disconnect(); this._ro = null; }
+
     const width = parseInt(this.getAttribute('width') || '500', 10) || 500;
     const height = parseInt(this.getAttribute('height') || '300', 10) || 300;
     const roughness = parseFloat(this.getAttribute('roughness') || '1.5') || 1.5;
@@ -161,6 +166,7 @@ connectedCallback(): void {
         /* @vite-ignore */
         'https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js'
       )) as unknown as { default: { svg: (el: SVGSVGElement) => RoughSVG } };
+      if (seq !== this._renderSeq) return;
 
       const rc = (rough.default || rough) as { svg: (el: SVGSVGElement) => RoughSVG };
       const drawer = rc.svg(svg);

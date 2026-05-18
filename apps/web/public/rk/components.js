@@ -1862,6 +1862,8 @@ function parsePipeTable3(raw) {
 var RkChart = class extends HTMLElement {
   _raw = "";
   _chartInstance = null;
+  _ro = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["type", "title", "caption", "xfield", "yfield"];
   }
@@ -1870,6 +1872,14 @@ var RkChart = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
+    this._cleanup();
+  }
+  _cleanup() {
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
     if (this._chartInstance) {
       this._chartInstance.dispose?.();
       this._chartInstance = null;
@@ -1880,6 +1890,8 @@ var RkChart = class extends HTMLElement {
     if (this._raw) this._render();
   }
   _render() {
+    const seq = ++this._renderSeq;
+    this._cleanup();
     const type = this.getAttribute("type") || "bar";
     const title = this.getAttribute("title") || "";
     const caption = this.getAttribute("caption") || "";
@@ -1888,14 +1900,14 @@ var RkChart = class extends HTMLElement {
       return;
     }
     if (type === "radar") {
-      this._renderRadar(title, caption);
+      this._renderRadar(title, caption, seq);
       return;
     }
     if (type === "gauge") {
-      this._renderGauge(title, caption);
+      this._renderGauge(title, caption, seq);
       return;
     }
-    this._renderEcharts(type, title, caption);
+    this._renderEcharts(type, title, caption, seq);
   }
   _renderKpi(title, caption) {
     const rows = parsePipeTable3(this._raw);
@@ -1947,7 +1959,7 @@ var RkChart = class extends HTMLElement {
   // Data formats:
   //   Simple (header/body): col0=dimension, col1=value[, col2=value2...]
   //   Multi-series JSON: { axes: [...], series: [{name, values:[...]}, ...] }
-  async _renderRadar(title, caption) {
+  async _renderRadar(title, caption, seq) {
     this.innerHTML = /* html */
     `
       <div class="rk-chart">
@@ -1960,6 +1972,7 @@ var RkChart = class extends HTMLElement {
     if (!container) return;
     try {
       const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
+      if (seq !== this._renderSeq) return;
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const raw = this._raw.trim();
@@ -2003,8 +2016,11 @@ var RkChart = class extends HTMLElement {
           data: [{ value: s.values, name: s.name }]
         }))
       });
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
@@ -2014,7 +2030,7 @@ var RkChart = class extends HTMLElement {
   // ─── Gauge
   // Data format (JSON): { value: 72, name: "NPS", min: 0, max: 100 }
   // Or single header/body row: | Metric | Value |
-  async _renderGauge(title, caption) {
+  async _renderGauge(title, caption, seq) {
     this.innerHTML = /* html */
     `
       <div class="rk-chart">
@@ -2027,6 +2043,7 @@ var RkChart = class extends HTMLElement {
     if (!container) return;
     try {
       const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
+      if (seq !== this._renderSeq) return;
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const raw = this._raw.trim();
@@ -2067,15 +2084,18 @@ var RkChart = class extends HTMLElement {
           data: [{ value: gaugeValue, name: gaugeName }]
         }]
       });
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
       this._reportRenderError("echarts-gauge", message);
     }
   }
-  async _renderEcharts(title, type, caption) {
+  async _renderEcharts(type, title, caption, seq) {
     const parsed = this._parseData();
     if (!parsed) {
       this.innerHTML = `<div class="rk-chart"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">Insufficient data for chart</p></div>`;
@@ -2094,6 +2114,7 @@ var RkChart = class extends HTMLElement {
     if (!container) return;
     try {
       const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
+      if (seq !== this._renderSeq) return;
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const xField = this.getAttribute("xfield") || header[0] || "x";
@@ -2159,8 +2180,11 @@ var RkChart = class extends HTMLElement {
         }));
       }
       chart.setOption(option);
-      const ro = new ResizeObserver(() => chart.resize());
-      ro.observe(container);
+      this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
+        chart.resize();
+      });
+      this._ro.observe(container);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
@@ -2191,6 +2215,7 @@ customElements.define("rk-chart", RkChart);
 var RkDiagram = class extends HTMLElement {
   _raw = "";
   _observer = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "caption", "engine"];
   }
@@ -2199,13 +2224,18 @@ var RkDiagram = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._observer?.disconnect();
+    this._observer = null;
   }
   attributeChangedCallback() {
     if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
+    const seq = ++this._renderSeq;
+    this._observer?.disconnect();
+    this._observer = null;
     const title = this.getAttribute("title") || "";
     const caption = this.getAttribute("caption") || "";
     const engine = this.getAttribute("engine") || "mermaid";
@@ -2240,10 +2270,10 @@ var RkDiagram = class extends HTMLElement {
       return;
     }
     if (engine === "graphviz" || engine === "dot") {
-      this._renderGraphviz();
+      this._renderGraphviz(seq);
       return;
     }
-    this._renderMermaid();
+    this._renderMermaid(seq);
   }
   /** Detect if current theme is dark based on CSS var */
   _isDark() {
@@ -2357,12 +2387,13 @@ var RkDiagram = class extends HTMLElement {
     }
     return null;
   }
-  async _renderMermaid() {
+  async _renderMermaid(seq) {
     const canvas = this.querySelector(".rk-diagram__canvas");
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
       const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs");
+      if (seq !== this._renderSeq) return;
       const isDark = this._isDark();
       const themeVars = this._getMermaidThemeVars();
       mermaid.default.initialize({
@@ -2373,6 +2404,7 @@ var RkDiagram = class extends HTMLElement {
       });
       const id = `mermaid-${Math.random().toString(36).slice(2, 9)}`;
       const { svg } = await mermaid.default.render(id, this._raw);
+      if (seq !== this._renderSeq) return;
       if (loading) loading.remove();
       canvas.innerHTML = svg;
       this._makeSvgResponsive(canvas);
@@ -2393,16 +2425,18 @@ var RkDiagram = class extends HTMLElement {
       </div>`;
     }
   }
-  async _renderGraphviz() {
+  async _renderGraphviz(seq) {
     const canvas = this.querySelector(".rk-diagram__canvas");
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
       await import("https://cdn.jsdelivr.net/npm/@viz-js/viz@3.14.0/lib/viz-standalone.js");
+      if (seq !== this._renderSeq) return;
       const vizGlobal = globalThis;
       const instanceFn = vizGlobal.Viz?.instance;
       if (!instanceFn) throw new Error("Viz.js not loaded");
       const viz = await instanceFn();
+      if (seq !== this._renderSeq) return;
       const isDark = this._isDark();
       let dotCode = this._raw;
       if (isDark) {
@@ -3220,6 +3254,7 @@ var RkSketch = class extends HTMLElement {
   _raw = "";
   _ro = null;
   _loaded = false;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["width", "height", "roughness", "title"];
   }
@@ -3228,6 +3263,7 @@ var RkSketch = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     if (this._ro) {
       this._ro.disconnect();
       this._ro = null;
@@ -3287,6 +3323,11 @@ var RkSketch = class extends HTMLElement {
     svg.appendChild(el);
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
     const width = parseInt(this.getAttribute("width") || "500", 10) || 500;
     const height = parseInt(this.getAttribute("height") || "300", 10) || 300;
     const roughness = parseFloat(this.getAttribute("roughness") || "1.5") || 1.5;
@@ -3321,6 +3362,7 @@ var RkSketch = class extends HTMLElement {
         /* @vite-ignore */
         "https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js"
       );
+      if (seq !== this._renderSeq) return;
       const rc = rough.default || rough;
       const drawer = rc.svg(svg);
       for (const shape of spec.shapes) {
