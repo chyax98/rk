@@ -1,6 +1,6 @@
 {
   "name": "@renderkit/cli",
-  "version": "0.0.2-alpha.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -11,6 +11,6 @@
     "build": "node -e \"console.log('cli: no build yet')\""
   },
   "dependencies": {
-    "commander": "latest"
+    "commander": "14.0.3"
   }
 }

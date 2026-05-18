@@ -1,11 +1,11 @@
 {
   "name": "@renderkit/components",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "node --experimental-strip-types build.ts"
+    "build": "node build.mjs"
   }
 }

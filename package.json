@@ -1,18 +1,17 @@
 {
   "name": "renderkit-workspace",
-  "version": "0.0.2-alpha.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @renderkit/web dev",
-    "build": "pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
+    "dev": "concurrently --names web,wc \"pnpm --filter @renderkit/web dev\" \"node packages/components/build.mjs --watch\"",
+    "dev:web": "pnpm --filter @renderkit/web dev",
+    "build": "node packages/components/build.mjs && pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node packages/cli/bin/renderkit.mjs",
     "push:example": "pnpm renderkit push examples/hello.html --open",
     "format": "pnpm exec biome format --write apps/web/app apps/web/lib packages/components/src packages/design/src tests package.json biome.json",
     "biome:check": "pnpm exec biome check apps/web/app apps/web/lib packages/components/src packages/design/src tests package.json biome.json",
-
     "test": "node --experimental-strip-types --test tests/comment-anchor.test.ts tests/store-routes.test.ts tests/html-processor.test.ts tests/wc-render.test.ts tests/cli.test.ts",
-
     "test:wc": "node --experimental-strip-types --test tests/wc-render.test.ts",
     "test:cli": "node --experimental-strip-types --test tests/cli.test.ts",
     "score": "node --experimental-strip-types scripts/score.ts",
@@ -23,6 +22,8 @@
     "@eslint/js": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.28.0",
     "eslint": "^9.0.0",
     "lefthook": "^2.1.6",
     "linkedom": "^0.18.12"

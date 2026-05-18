@@ -98,6 +98,14 @@ function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_form_submissions_artifact
       ON form_submissions(artifact_id);
   `);
+
+  // tags + archived columns
+  try {
+    db.exec(`ALTER TABLE artifacts ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE artifacts ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`);
+  } catch {}
 }
 
 export function closeDb(): void {

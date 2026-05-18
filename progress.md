@@ -9,6 +9,63 @@ In Progress
 
 ## Notes
 
+## 2026-05-18 技术优化实施 (worker subagent)
+
+### 修改内容
+
+**任务 1：锁定 latest 依赖**
+- `apps/web/package.json`：`next: 16.2.6`、`react: 19.2.6`、`react-dom: 19.2.6`、`mermaid: 11.15.0`、`echarts: 6.0.0`
+- `packages/cli/package.json`：`commander: 14.0.3`
+
+**任务 2+3：CLI 模块化 + `rk doctor` 命令**
+- 新增 `packages/cli/src/utils.mjs`：提取 `getEndpoint`、`getLockPath`、`readLock`、`writeLock`、`output`、`getDefaultDbPath`
+- `packages/cli/bin/renderkit.mjs`：import utils，新增 `doctor` 命令
+- `rk doctor` 功能：server health + latency、DB 文件存在 + 大小、Node 版本、CLI 路径
+
+**任务 4：esbuild watch 集成**
+- 新增 `packages/components/build.mjs`：esbuild context-based build + watch
+- 根 `package.json`：dev 脚本改为 `concurrently` 并行 Next.js + esbuild watch
+- build 脚本先跑 WC bundle 再 build web
+- 新增 devDependencies：`esbuild@^0.28.0`、`concurrently@^9.2.1`
+
+### 验证结果
+- `pnpm run test` → 75/75 通过
+- `cd apps/web && pnpm exec tsc --noEmit --pretty false` → 无错误
+- `pnpm --filter @renderkit/web build` → 通过
+- `rk doctor` → 输出完整诊断 JSON
+- `node packages/components/build.mjs` → WC bundle 重建成功
+- `pnpm biome:check` → 2 pre-existing errors in `HtmlArtifactView.tsx`（未修改，baseline 同样存在）
+
+### 变更文件
+- `apps/web/package.json` — 锁版本
+- `packages/cli/package.json` — 锁 commander
+- `packages/cli/bin/renderkit.mjs` — 模块化 + doctor 命令
+- `packages/cli/src/utils.mjs` — 新文件，提取的工具函数
+- `packages/components/build.mjs` — 新文件，esbuild 构建脚本
+- `packages/components/package.json` — build 脚本路径更新
+- `apps/web/public/rk/components.js` — esbuild 重建（格式从逐文件拼接变为 IIFE 包裹）
+- `package.json` — dev/build 脚本 + 新 devDependencies
+- `pnpm-lock.yaml` — lockfile 更新
+
+## 2026-05-18 Feature & Ecosystem Research（research subagent）
+
+### 研究内容
+- Agent 文档场景分析（8 种场景覆盖矩阵）
+- 图表/可视化生态：Observable Plot / Vega-Lite / ECharts 扩展 / Chart.js
+- WC 生态集成：Shoelace / Spectrum / FAST / GitHub Primer
+- 地图可视化方案
+- 新组件机会（10 个，含优先级）
+- Agent 工具链集成（Python SDK、Prompt Library、LangGraph、Claude CDN）
+
+### 核心结论
+1. **最高性价比**：扩展 ECharts 图表类型（radar/funnel/gauge/heatmap/treemap），零新依赖，60-100行
+2. **最高价值新组件**：rk-card（产品文档基础）、rk-diff（代码审查场景）、rk-section（布局修复）
+3. **不做**：Shoelace/Spectrum/FAST 集成、Leaflet/MapboxGL、Vega-Lite
+4. **生态突破点**：Python SDK（打开 LangChain/CrewAI/AutoGen 生态）
+
+### 输出文件
+- `/Users/xd/Worker/tools/RenderKit/research.md`
+
 ## 2026-05-18 review 问题修复 (commit 5ffb35f)
 
 ### 修复内容

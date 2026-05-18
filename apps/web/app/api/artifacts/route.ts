@@ -18,9 +18,10 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req?: Request) {
   try {
-    const artifacts = await listArtifacts();
+    const includeArchived = req ? new URL(req.url).searchParams.get('archived') === '1' : false;
+    const artifacts = await listArtifacts(includeArchived);
     return Response.json({ ok: true, artifacts });
   } catch (e: unknown) {
     return Response.json({ ok: false, error: String(e) }, { status: 500 });

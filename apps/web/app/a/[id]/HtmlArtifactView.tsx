@@ -160,7 +160,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         target.removeAttribute('data-comment-count');
       }
     }
-  }, [commentsByAnchor, visibleAnchors, displayedHtml]);
+  }, [commentsByAnchor, visibleAnchors]);
 
   // Clicking only the right-side badge zone opens panel and focuses matching comments.
   useEffect(() => {
@@ -457,6 +457,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           {openComments.map((c) => (
             /* biome-ignore lint/a11y/useSemanticElements: comment card contains nested action buttons; native button would be invalid HTML */
             <div
+              key={c.id}
               className={`rk-comment-card${activeComment === c.id ? ' is-active' : ''}`}
               role="button"
               tabIndex={0}

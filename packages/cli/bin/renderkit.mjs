@@ -7,55 +7,23 @@
  * rk open <file.html>      Open artifact in browser
  * rk status <file.html>    Show artifact status
  * rk serve [--port 3737]   Start the local dev server
+ * rk doctor                Diagnose local environment
  */
 import { Command } from 'commander';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  getEndpoint,
+  getLockPath,
+  readLock,
+  writeLock,
+  output,
+  getDefaultDbPath,
+} from '../src/utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getEndpoint() {
-  return process.env.RENDERKIT_ENDPOINT || 'http://localhost:3737';
-}
-
-/** .rk-lock/<basename>.json  (basename = filename without extension) */
-function getLockPath(file) {
-  const dir = path.dirname(file);
-  const base = path.basename(file, path.extname(file));
-  return path.join(dir, '.rk-lock', `${base}.json`);
-}
-
-async function readLock(file) {
-  try {
-    const raw = await fs.readFile(getLockPath(file), 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-async function writeLock(file, data) {
-  const lockPath = getLockPath(file);
-  await fs.mkdir(path.dirname(lockPath), { recursive: true });
-  await fs.writeFile(lockPath, JSON.stringify({ ...data, lockedAt: new Date().toISOString() }, null, 2));
-}
-
-function output(data, json = true) {
-  if (json) {
-    console.log(JSON.stringify(data, null, 2));
-  } else {
-    // Human-readable fallback
-    if (data.ok === false) {
-      console.error('Error:', data.error || JSON.stringify(data));
-    } else {
-      console.log(JSON.stringify(data, null, 2));
-    }
-  }
-}
 
 function openUrl(url) {
   const platform = process.platform;
@@ -103,6 +71,7 @@ program
   .command('push <file>')
   .description('Upload or update an HTML artifact')
   .option('--open', 'Open in browser after push')
+  .option('--tag <tags>', 'Comma-separated tags (e.g. "project:alpha,type:report")')
   .option('--endpoint <url>', 'Server endpoint', getEndpoint())
   .option('--json', 'Force JSON output (default: true)')
   .action(async (file, opts) => {
@@ -159,6 +128,18 @@ program
 
     const artifactUrl = `${endpoint}/a/${json.artifactId}`;
     await writeLock(file, { artifactId: json.artifactId, url: artifactUrl, endpoint });
+
+    // Apply tags if --tag was provided
+    if (opts.tag) {
+      const tags = opts.tag.split(',').map((t) => t.trim()).filter(Boolean);
+      if (tags.length > 0) {
+        await fetch(`${endpoint}/api/artifacts/${json.artifactId}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ tags }),
+        }).catch(() => {});
+      }
+    }
 
     const result = {
       ok: true,
@@ -272,6 +253,119 @@ program
       console.error('Failed to start server:', e.message);
       process.exit(1);
     });
+  });
+
+// rk doctor
+program
+  .command('doctor')
+  .description('Diagnose local RenderKit environment')
+  .action(async () => {
+    const checks = {};
+
+    // 1. Server health
+    const endpoint = getEndpoint();
+    const t0 = Date.now();
+    let serverOk = false;
+    let latency = null;
+    try {
+      const res = await fetch(`${endpoint}/api/health`, { signal: AbortSignal.timeout(5000) });
+      latency = Date.now() - t0;
+      const body = await res.json();
+      serverOk = body.ok === true;
+    } catch {
+      latency = null;
+    }
+    checks.server = {
+      endpoint,
+      ok: serverOk,
+      ...(latency !== null ? { latencyMs: latency } : {}),
+    };
+
+    // 2. DB file
+    const dbPath = getDefaultDbPath();
+    let dbExists = false;
+    let dbSize = null;
+    try {
+      const stat = await fs.stat(dbPath);
+      dbExists = true;
+      dbSize = stat.size;
+    } catch {
+      // doesn't exist
+    }
+    checks.database = {
+      path: dbPath,
+      exists: dbExists,
+      ...(dbSize !== null ? { sizeBytes: dbSize } : {}),
+    };
+
+    // 3. Node version
+    checks.node = process.version;
+
+    // 4. CLI path
+    checks.cli = fileURLToPath(import.meta.url);
+
+    output({ ok: true, checks });
+  });
+
+program
+  .command('archive <file>')
+  .description('Archive an artifact (hide from main list)')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ archived: true }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+    output(json);
+  });
+
+program
+  .command('prune')
+  .description('Delete test/scratch artifacts matching a title pattern')
+  .option('--pattern <glob>', 'Title prefix pattern to delete (e.g. "rk-test-")', 'rk-test-')
+  .option('--dry-run', 'List what would be deleted without deleting', false)
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const pattern = opts.pattern;
+    const dryRun = opts.dryRun;
+
+    // List all artifacts
+    const listRes = await fetch(`${endpoint}/api/artifacts`).catch(() => null);
+    if (!listRes?.ok) {
+      output({ ok: false, error: 'Could not reach server. Is it running?' });
+      process.exit(1);
+    }
+    const { artifacts } = await listRes.json();
+    const matches = (artifacts || []).filter((a) => a.title?.startsWith(pattern));
+
+    if (matches.length === 0) {
+      output({ ok: true, pruned: 0, message: `No artifacts matching prefix "${pattern}"` });
+      return;
+    }
+
+    if (dryRun) {
+      output({ ok: true, dryRun: true, wouldDelete: matches.map((a) => ({ id: a.id, title: a.title })) });
+      return;
+    }
+
+    let pruned = 0;
+    const errors = [];
+    for (const a of matches) {
+      const res = await fetch(`${endpoint}/api/artifacts/${a.id}`, { method: 'DELETE' });
+      if (res.ok) pruned++;
+      else errors.push(a.id);
+    }
+    output({ ok: true, pruned, total: matches.length, errors: errors.length ? errors : undefined });
   });
 
 program.parse();

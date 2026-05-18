@@ -18,6 +18,8 @@ interface DbArtifact {
   format: string;
   created_at: string;
   updated_at: string;
+  tags?: string;
+  archived?: number;
 }
 
 interface DbRevision {
@@ -89,6 +91,8 @@ export interface ArtifactMeta {
   format: string;
   createdAt: string;
   updatedAt: string;
+  tags: string[];
+  archived: boolean;
 }
 
 export interface HtmlArtifactBundle {
@@ -145,6 +149,8 @@ function rowToArtifact(r: DbArtifact): ArtifactMeta {
     format: r.format || 'html',
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    tags: JSON.parse(r.tags ?? '[]') as string[],
+    archived: Boolean(r.archived),
   };
 }
 
@@ -172,9 +178,12 @@ export async function ensureStore(): Promise<void> {
   getDb();
 }
 
-export async function listArtifacts(): Promise<ArtifactMeta[]> {
+export async function listArtifacts(includeArchived = false): Promise<ArtifactMeta[]> {
   const db = getDb();
-  const rows = db.prepare('SELECT * FROM artifacts ORDER BY created_at DESC').all() as DbArtifact[];
+  const sql = includeArchived
+    ? 'SELECT * FROM artifacts ORDER BY updated_at DESC'
+    : 'SELECT * FROM artifacts WHERE archived = 0 ORDER BY updated_at DESC';
+  const rows = db.prepare(sql).all() as DbArtifact[];
   return rows.map(rowToArtifact);
 }
 
@@ -532,6 +541,38 @@ export async function getRevision(
 }
 
 /* ── HTML artifact: read ────────────────────────────────── */
+
+export async function updateArtifactMeta(
+  id: string,
+  patch: { tags?: string[]; archived?: boolean },
+): Promise<boolean> {
+  const db = getDb();
+  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as
+    | { id: string }
+    | undefined;
+  if (!row) return false;
+
+  const sets: string[] = [];
+  const values: unknown[] = [];
+
+  if (patch.tags !== undefined) {
+    sets.push('tags = ?');
+    values.push(JSON.stringify(patch.tags));
+  }
+  if (patch.archived !== undefined) {
+    sets.push('archived = ?');
+    values.push(patch.archived ? 1 : 0);
+  }
+
+  if (sets.length === 0) return true;
+
+  sets.push('updated_at = ?');
+  values.push(now());
+  values.push(id);
+
+  db.prepare(`UPDATE artifacts SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+  return true;
+}
 
 export async function getHtmlArtifact(id: string): Promise<HtmlArtifactBundle | null> {
   const db = getDb();
