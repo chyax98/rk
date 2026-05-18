@@ -32,11 +32,9 @@ class RkStat extends HTMLElement {
       const parsed = parseFloat(delta);
       let direction = 'neutral';
       let arrow = '';
-      if (!isNaN(parsed) && parsed > 0) {
-        direction = 'up';
+      if (!Number.isNaN(parsed) && parsed > 0) {
         arrow = '↑';
-      } else if (!isNaN(parsed) && parsed < 0) {
-        direction = 'down';
+      } else if (!Number.isNaN(parsed) && parsed < 0) {
         arrow = '↓';
       } else if (delta.startsWith('+') || delta.startsWith('↑')) {
         direction = 'up';

@@ -38,9 +38,7 @@ class RkSteps extends HTMLElement {
             <div class="rk-steps__circle">${circle}</div>
             <div class="rk-steps__label">${this._escape(label)}</div>
           </div>`;
-        const connector = i < steps.length - 1
-          ? '<div class="rk-steps__connector"></div>'
-          : '';
+        const connector = i < steps.length - 1 ? '<div class="rk-steps__connector"></div>' : '';
         return itemHtml + connector;
       })
       .join('');

@@ -1,6 +1,6 @@
+import { diffAnchors } from '../../../../../lib/anchor-diff.ts';
 import { getDb } from '../../../../../lib/db.ts';
 import { processHTML } from '../../../../../lib/html-processor.ts';
-import { diffAnchors } from '../../../../../lib/anchor-diff.ts';
 
 function now() {
   return new Date().toISOString();
@@ -40,12 +40,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const nextAnchorIds = anchors.map((a) => a.anchor);
 
     const txn = db.transaction(() => {
-      db.prepare('UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?').run(
-        nextRev,
-        artifact.title || title,
-        _now,
-        id,
-      );
+      db.prepare(
+        'UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?',
+      ).run(nextRev, artifact.title || title, _now, id);
 
       db.prepare(
         'INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, html_source, processed_html, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',

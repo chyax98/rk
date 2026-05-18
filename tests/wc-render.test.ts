@@ -4,74 +4,9 @@
  *
  * 运行: node --experimental-strip-types --test tests/wc-render.test.ts
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { parseHTML } from 'linkedom';
-
-/**
- * 创建一个 linkedom document 并注册一个 WC class
- * 返回 document 和全局注册映射
- */
-function createDoc() {
-  const { document, customElements, window } = parseHTML(`
-    <!DOCTYPE html>
-    <html><body>
-      <link rel="stylesheet" href="/rk/theme.css">
-      <link rel="stylesheet" href="/rk/components.css">
-    </body></html>
-  `);
-
-  // 模拟 customElements.define — linkedom 不支持原生 CE
-  // 我们直接实例化 WC class 并替换元素
-  return { document, customElements, window };
-}
-
-/**
- * 手动测试 WC 输出：用 linkedom 解析 HTML，模拟 connectedCallback
- * 由于 linkedom 不支持 customElements，我们通过 import WC class 并手动调用
- */
-async function renderWC(tagName: string, innerHTML: string, attrs: Record<string, string> = {}): Promise<string> {
-  // 动态 import WC module
-  const mod = await import(`../packages/components/src/elements/${tagName}.ts`);
-  // 获取 WC class（假设有 export）
-  const WcClass = mod[tagName.split('-').map((s, i) =>
-    i === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1)
-  ).join('').replace(/^rk/, 'Rk')];
-
-  if (!WcClass) {
-    // fallback: 直接用 linkedom 解析
-    const { document } = parseHTML(`<${tagName}>${innerHTML}</${tagName}>`);
-    const el = document.querySelector(tagName);
-    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-    // 尝试调用 _render if class available
-    return el.outerHTML;
-  }
-
-  const { document } = parseHTML(`<${tagName}>${innerHTML}</${tagName}>`);
-  const el = Object.create(WcClass.prototype);
-  // 设置基本属性
-  for (const [k, v] of Object.entries(attrs)) {
-    el.setAttribute?.(k, v);
-  }
-  el.textContent = innerHTML;
-  el.innerHTML = innerHTML;
-
-  // 模拟 connectedCallback
-  if (el.connectedCallback) {
-    el._raw = innerHTML.trim();
-    el.innerHTML = '';
-    // 需要基本的 DOM 方法
-    el.querySelector = () => null;
-    el.querySelectorAll = () => [];
-    el.querySelector = (sel: string) => {
-      const { document: d } = parseHTML(el.innerHTML || '');
-      return d.querySelector(sel);
-    };
-    try { el.connectedCallback(); } catch { /* linkedom 限制 */ }
-  }
-
-  return el.innerHTML || innerHTML;
-}
 
 // ── 简化测试：直接用 linkedom 解析 WC HTML 输出格式 ──
 

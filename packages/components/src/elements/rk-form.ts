@@ -15,14 +15,20 @@ class RkField extends HTMLElement {
     return ['label', 'type', 'max', 'placeholder', 'options', 'required', 'name', 'value'];
   }
 
-  connectedCallback(): void { this._render(); }
-  attributeChangedCallback(): void { this._render(); }
+  connectedCallback(): void {
+    this._render();
+  }
+  attributeChangedCallback(): void {
+    this._render();
+  }
 
   getValue(): unknown {
     const input = this.querySelector('input,textarea,select') as HTMLInputElement | null;
     const type = this.getAttribute('type') || 'text';
     if (type === 'rating') {
-      const checked = this.querySelector('.rk-field__star--active:last-of-type') as HTMLElement | null;
+      const checked = this.querySelector(
+        '.rk-field__star--active:last-of-type',
+      ) as HTMLElement | null;
       return checked ? Number(checked.dataset.value) : 0;
     }
     if (type === 'checkbox') {
@@ -36,7 +42,10 @@ class RkField extends HTMLElement {
     const type = this.getAttribute('type') || 'text';
     const max = Number(this.getAttribute('max') || 5);
     const placeholder = this.getAttribute('placeholder') || '';
-    const options = (this.getAttribute('options') || '').split(',').map(s => s.trim()).filter(Boolean);
+    const options = (this.getAttribute('options') || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     const required = this.hasAttribute('required');
     const name = this.getAttribute('name') || label.toLowerCase().replace(/\s+/g, '_');
 
@@ -61,7 +70,9 @@ class RkField extends HTMLElement {
         onblur="this.style.borderColor='var(--rk-border)'"
       ></textarea>`;
     } else if (type === 'select') {
-      const opts = options.map(o => `<option value="${this._escape(o)}">${this._escape(o)}</option>`).join('');
+      const opts = options
+        .map((o) => `<option value="${this._escape(o)}">${this._escape(o)}</option>`)
+        .join('');
       control = `<select id="${fieldId}" name="${name}" style="${sharedStyle}cursor:pointer;"
         onfocus="this.style.borderColor='var(--rk-accent)'"
         onblur="this.style.borderColor='var(--rk-border)'"
@@ -111,13 +122,17 @@ class RkField extends HTMLElement {
 
     this.innerHTML = `
       <div class="rk-field" style="margin-bottom:var(--rk-space-4,16px);">
-        ${type !== 'checkbox' ? `
+        ${
+          type !== 'checkbox'
+            ? `
           <label for="${fieldId}" style="
             display:block;margin-bottom:6px;
             font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
             color:var(--rk-text,#1a1a1a);
           ">${this._escape(label)}${required ? ' <span style="color:var(--rk-tone-danger-border,#dc2626)">*</span>' : ''}</label>
-        ` : ''}
+        `
+            : ''
+        }
         ${control}
       </div>
     `;
@@ -140,13 +155,16 @@ class RkForm extends HTMLElement {
   connectedCallback(): void {
     // Capture field declarations before first render
     if (!this._fieldsHTML) {
-      this._fieldsHTML = Array.from(this.querySelectorAll('rk-field'))
-        .map(f => f.outerHTML).join('') ||
-        this.innerHTML; // fallback to raw HTML
+      this._fieldsHTML =
+        Array.from(this.querySelectorAll('rk-field'))
+          .map((f) => f.outerHTML)
+          .join('') || this.innerHTML; // fallback to raw HTML
     }
     this._render();
   }
-  attributeChangedCallback(): void { if (this._fieldsHTML) this._render(); }
+  attributeChangedCallback(): void {
+    if (this._fieldsHTML) this._render();
+  }
 
   _render(): void {
     const title = this.getAttribute('title') || '表单';
@@ -169,11 +187,15 @@ class RkForm extends HTMLElement {
           font:700 var(--rk-text-lg,20px)/1.3 var(--rk-font-sans,sans-serif);
           color:var(--rk-text,#1a1a1a);
         ">${this._escape(title)}</h3>
-        ${description ? `<p style="
+        ${
+          description
+            ? `<p style="
           margin:0 0 var(--rk-space-4,16px);
           font:400 var(--rk-text-sm,13px)/1.6 var(--rk-font-sans);
           color:var(--rk-text-tertiary,#6b6b66);
-        ">${this._escape(description)}</p>` : `<div style="margin-bottom:var(--rk-space-4,16px)"></div>`}
+        ">${this._escape(description)}</p>`
+            : `<div style="margin-bottom:var(--rk-space-4,16px)"></div>`
+        }
         <div class="rk-form__fields">${fieldHTML}</div>
         <button type="button" class="rk-form__submit"
           onclick="(function(btn){
@@ -182,7 +204,7 @@ class RkForm extends HTMLElement {
             const result = [];
             fields.forEach(f => {
               const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
-              const name = f.getAttribute('name') || label.toLowerCase().replace(/\s+/g, '_');
+              const name = f.getAttribute('name') || label.toLowerCase().replace(/s+/g, '_');
               const type = f.getAttribute('type') || 'text';
               let val;
               if(type==='rating'){

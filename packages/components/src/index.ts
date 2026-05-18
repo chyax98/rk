@@ -110,7 +110,8 @@ export const COMPONENTS: readonly ComponentDescriptor[] = [
     tag: 'rk-collapsible',
     className: 'RkCollapsible',
     attributes: ['summary', 'open'],
-    description: 'Collapsible section using native details/summary. open attr for default expanded.',
+    description:
+      'Collapsible section using native details/summary. open attr for default expanded.',
   },
   {
     tag: 'rk-highlight',
@@ -129,7 +130,8 @@ export const COMPONENTS: readonly ComponentDescriptor[] = [
     className: 'RkSteps',
     attributes: ['current'],
     childElements: ['rk-step'],
-    description: 'Horizontal step indicator. current=1-based step number. rk-step children for labels.',
+    description:
+      'Horizontal step indicator. current=1-based step number. rk-step children for labels.',
   },
   {
     tag: 'rk-metric',

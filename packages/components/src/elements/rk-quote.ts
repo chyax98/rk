@@ -26,11 +26,12 @@ class RkQuote extends HTMLElement {
         : ` <cite>${this._escape(source)}</cite>`
       : '';
 
-    const figcaption = attribution || source
-      ? `<figcaption class="rk-quote__attribution">
+    const figcaption =
+      attribution || source
+        ? `<figcaption class="rk-quote__attribution">
           ${attribution ? `— ${this._escape(attribution)}` : ''}${sourceHtml}
         </figcaption>`
-      : '';
+        : '';
 
     this.innerHTML = /* html */ `
       <figure class="rk-quote">
@@ -47,7 +48,11 @@ class RkQuote extends HTMLElement {
   }
 
   _escapeAttr(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }
 

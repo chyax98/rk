@@ -22,7 +22,7 @@ function parsePipeTable(raw: string): string[][] {
 
 class RkChart extends HTMLElement {
   _raw = '';
-  _chartInstance: any = null;
+  _chartInstance: { dispose?: () => void } | null = null;
 
   static get observedAttributes() {
     return ['type', 'title', 'caption', 'xfield', 'yfield'];
@@ -102,9 +102,11 @@ class RkChart extends HTMLElement {
         const arr: Record<string, unknown>[] = Array.isArray(json) ? json : [json];
         if (arr.length === 0) return null;
         const header = Object.keys(arr[0]);
-        const body = arr.map(row => header.map(k => String(row[k] ?? '')));
+        const body = arr.map((row) => header.map((k) => String(row[k] ?? '')));
         return { header, body };
-      } catch { /* fall through to pipe table */ }
+      } catch {
+        /* fall through to pipe table */
+      }
     }
     // Pipe table
     const rows = parsePipeTable(raw);
@@ -133,7 +135,9 @@ class RkChart extends HTMLElement {
     if (!container) return;
 
     try {
-      const echarts = await import('https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js');
+      const echarts = await import(
+        'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js'
+      );
       const chart = echarts.init(container);
       this._chartInstance = chart;
 
@@ -145,48 +149,65 @@ class RkChart extends HTMLElement {
       const yi = yIdx >= 0 ? yIdx : 1;
 
       const xData = body.map((r) => r[xi] || '');
-      const seriesType = type === 'scatter' ? 'scatter' : type === 'pie' ? 'pie' : type === 'area' ? 'line' : type;
+      const seriesType =
+        type === 'scatter' ? 'scatter' : type === 'pie' ? 'pie' : type === 'area' ? 'line' : type;
 
       // Detect all numeric columns for multi-series
       const numericCols = header
         .map((h, i) => ({ h, i }))
-        .filter(({ i }) => i !== xi && body.some(r => !isNaN(parseFloat(r[i]))));
+        .filter(({ i }) => i !== xi && body.some((r) => !Number.isNaN(parseFloat(r[i]))));
 
       // If yfield specified, use only that; otherwise use all numeric cols
-      const seriesCols = yField !== header[0] && header.includes(yField)
-        ? [{ h: yField, i: yi }]
-        : numericCols.length > 0 ? numericCols : [{ h: header[yi] || 'value', i: yi }];
+      const seriesCols =
+        yField !== header[0] && header.includes(yField)
+          ? [{ h: yField, i: yi }]
+          : numericCols.length > 0
+            ? numericCols
+            : [{ h: header[yi] || 'value', i: yi }];
 
-      const option: Record<string, any> = {
+      const option: Record<string, unknown> = {
         tooltip: { trigger: seriesType === 'pie' ? 'item' : 'axis' },
         legend: seriesCols.length > 1 ? { show: true } : { show: false },
       };
 
       if (seriesType === 'pie') {
-        option.series = [{
-          type: 'pie',
-          radius: ['40%', '70%'],
-          data: body.map((r, i) => ({
-            name: r[xi] || `Item ${i + 1}`,
-            value: parseFloat(r[seriesCols[0]?.i ?? yi] || '0'),
-          })),
-        }];
+        option.series = [
+          {
+            type: 'pie',
+            radius: ['40%', '70%'],
+            data: body.map((r, i) => ({
+              name: r[xi] || `Item ${i + 1}`,
+              value: parseFloat(r[seriesCols[0]?.i ?? yi] || '0'),
+            })),
+          },
+        ];
       } else {
         // Smart Y-axis formatter for large numbers
-        const allVals = seriesCols.flatMap(({ i: si }) => body.map(r => parseFloat(r[si] || '0')));
-        const maxVal = Math.max(...allVals.filter(v => !isNaN(v)));
-        const axisFormatter = maxVal >= 10000
-          ? (v: number) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M'
-              : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)
-          : (v: number) => String(v);
+        const allVals = seriesCols.flatMap(({ i: si }) =>
+          body.map((r) => parseFloat(r[si] || '0')),
+        );
+        const maxVal = Math.max(...allVals.filter((v) => !Number.isNaN(v)));
+        const axisFormatter =
+          maxVal >= 10000
+            ? (v: number) =>
+                v >= 1000000
+                  ? `${(v / 1000000).toFixed(1)}M`
+                  : v >= 1000
+                    ? `${(v / 1000).toFixed(0)}K`
+                    : String(v)
+            : (v: number) => String(v);
 
         option.grid = { left: '12%', right: '5%', top: '15%', bottom: '10%', containLabel: true };
-        option.xAxis = { type: 'category', data: xData, axisLabel: { interval: 0, rotate: xData.length > 6 ? 30 : 0 } };
+        option.xAxis = {
+          type: 'category',
+          data: xData,
+          axisLabel: { interval: 0, rotate: xData.length > 6 ? 30 : 0 },
+        };
         option.yAxis = { type: 'value', axisLabel: { formatter: axisFormatter } };
         option.series = seriesCols.map(({ h, i: si }) => ({
           name: h,
           type: seriesType,
-          data: body.map(r => parseFloat(r[si] || '0')),
+          data: body.map((r) => parseFloat(r[si] || '0')),
           ...(type === 'area' ? { areaStyle: { opacity: 0.2 } } : {}),
           smooth: type === 'line' || type === 'area',
           symbolSize: 6,
@@ -198,8 +219,9 @@ class RkChart extends HTMLElement {
       // Responsive resize
       const ro = new ResizeObserver(() => chart.resize());
       ro.observe(container);
-    } catch (err: any) {
-      container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(err?.message || String(err))}</div>`;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      container.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm)">ECharts load failed: ${this._escape(message)}</div>`;
     }
   }
 

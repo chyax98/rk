@@ -71,7 +71,10 @@ describe('comment anchor contract', () => {
       new Request('http://localhost/api/artifacts/x/comments', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ['block' + 'Id']: anchor, text: 'legacy comment' }),
+        body: JSON.stringify({
+          ['block' + 'Id']: anchor,
+          text: 'legacy comment',
+        }),
       }),
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );

@@ -28,7 +28,7 @@ class RkCallout extends HTMLElement {
   _render(): void {
     const tone = this.getAttribute('tone') || 'info';
     const title = this.getAttribute('title') || '';
-    const icon = ICONS[tone] || ICONS['info'];
+    const icon = ICONS[tone] || ICONS.info;
 
     this.innerHTML = /* html */ `
       <div class="rk-callout rk-callout--${tone}">

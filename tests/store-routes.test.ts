@@ -3,7 +3,7 @@
  * 覆盖 artifact/comment/revision/submission/feedback 关键成功与错误分支。
  */
 import assert from 'node:assert/strict';
-import { rmSync, mkdtempSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, beforeEach, describe, it } from 'node:test';
@@ -11,25 +11,25 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 const testHome = mkdtempSync(join(tmpdir(), 'renderkit-store-routes-'));
 process.env.HOME = testHome;
 
-let closeDb;
-let store;
-let artifactsRoute;
-let artifactRoute;
-let commentsRoute;
-let commentRoute;
-let feedbackRoute;
-let revisionsRoute;
-let revisionsListRoute;
-let revisionRoute;
-let submissionsRoute;
+let closeDb: (() => void) | undefined;
+let store: typeof import('../apps/web/lib/store.ts');
+let artifactsRoute: typeof import('../apps/web/app/api/artifacts/route.ts');
+let artifactRoute: typeof import('../apps/web/app/api/artifacts/[id]/route.ts');
+let commentsRoute: typeof import('../apps/web/app/api/artifacts/[id]/comments/route.ts');
+let commentRoute: typeof import('../apps/web/app/api/artifacts/[id]/comments/[commentId]/route.ts');
+let feedbackRoute: typeof import('../apps/web/app/api/artifacts/[id]/feedback/route.ts');
+let revisionsRoute: typeof import('../apps/web/app/api/artifacts/[id]/revisions/route.ts');
+let revisionsListRoute: typeof import('../apps/web/app/api/artifacts/[id]/revisions/list/route.ts');
+let revisionRoute: typeof import('../apps/web/app/api/artifacts/[id]/revisions/[rev]/route.ts');
+let submissionsRoute: typeof import('../apps/web/app/api/artifacts/[id]/submissions/route.ts');
 
 async function resetDb() {
   closeDb?.();
   rmSync(join(testHome, '.renderkit'), { recursive: true, force: true });
 }
 
-async function jsonOf(res) {
-  return res.json();
+async function jsonOf<T = unknown>(res: Response): Promise<T> {
+  return res.json() as Promise<T>;
 }
 
 async function makeArtifact(html = '<h1>Doc</h1><p>Body</p>', file = 'doc.html') {
@@ -107,15 +107,26 @@ describe('store: artifact lifecycle', () => {
 describe('store: comments / feedback / submissions', () => {
   it('addComment 校验 artifact 与 anchor', async () => {
     const missingArtifact = await store.addComment('missing', 'a', 'x');
-    assert.deepEqual(missingArtifact, { ok: false, status: 404, error: 'artifact not found' });
+    assert.deepEqual(missingArtifact, {
+      ok: false,
+      status: 404,
+      error: 'artifact not found',
+    });
 
     const { pushed } = await makeArtifact();
     const missingAnchor = await store.addComment(pushed.artifactId, 'not-exist', 'x');
-    assert.deepEqual(missingAnchor, { ok: false, status: 400, error: 'anchor not found' });
+    assert.deepEqual(missingAnchor, {
+      ok: false,
+      status: 400,
+      error: 'anchor not found',
+    });
   });
 
   it('addComment 规范化 selector 并持久化', async () => {
-    const { pushed, artifact } = await makeArtifact('<h1>Selector</h1><p>Body</p>', 'selector.html');
+    const { pushed, artifact } = await makeArtifact(
+      '<h1>Selector</h1><p>Body</p>',
+      'selector.html',
+    );
     const anchor = artifact.anchors[0].anchor;
     const selector = {
       type: 'TextQuoteSelector',
@@ -193,7 +204,9 @@ describe('store: comments / feedback / submissions', () => {
 
     const add = await store.addComment(first.artifactId, anchor, 'watch');
     assert.equal(add.ok, true);
-    await store.addFormSubmission(first.artifactId, 'Survey', [{ name: 'score', label: 'Score', value: 5 }]);
+    await store.addFormSubmission(first.artifactId, 'Survey', [
+      { name: 'score', label: 'Score', value: 5 },
+    ]);
 
     const second = await store.pushHTML('<h1>Keep</h1>', 'orph.html');
     assert.equal(second.revision, 2);
@@ -217,7 +230,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       new Request('http://localhost/api/artifacts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ html: '<h1>Route Doc</h1><p>A</p>', title: 'route-doc' }),
+        body: JSON.stringify({
+          html: '<h1>Route Doc</h1><p>A</p>',
+          title: 'route-doc',
+        }),
       }),
     );
     assert.equal(createRes.status, 200);
@@ -242,7 +258,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       params: Promise.resolve({ id: created.artifactId }),
     });
     assert.equal(delRes.status, 200);
-    assert.deepEqual(await jsonOf(delRes), { ok: true, artifactId: created.artifactId });
+    assert.deepEqual(await jsonOf(delRes), {
+      ok: true,
+      artifactId: created.artifactId,
+    });
 
     const missingRes = await artifactRoute.GET(new Request('http://localhost'), {
       params: Promise.resolve({ id: created.artifactId }),
@@ -251,7 +270,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
   });
 
   it('comments route 校验 anchor/text/unknown anchor，并支持 patch text/status', async () => {
-    const { pushed, artifact } = await makeArtifact('<h1>Comment Route</h1><p>B</p>', 'comment-route.html');
+    const { pushed, artifact } = await makeArtifact(
+      '<h1>Comment Route</h1><p>B</p>',
+      'comment-route.html',
+    );
     const anchor = artifact.anchors[0].anchor;
 
     const noAnchor = await commentsRoute.POST(
@@ -262,7 +284,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       }),
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );
-    assert.deepEqual(await jsonOf(noAnchor), { ok: false, error: 'anchor is required' });
+    assert.deepEqual(await jsonOf(noAnchor), {
+      ok: false,
+      error: 'anchor is required',
+    });
 
     const noText = await commentsRoute.POST(
       new Request('http://localhost', {
@@ -272,7 +297,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       }),
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );
-    assert.deepEqual(await jsonOf(noText), { ok: false, error: 'text required' });
+    assert.deepEqual(await jsonOf(noText), {
+      ok: false,
+      error: 'text required',
+    });
 
     const badAnchor = await commentsRoute.POST(
       new Request('http://localhost', {
@@ -283,7 +311,10 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );
     assert.equal(badAnchor.status, 400);
-    assert.deepEqual(await jsonOf(badAnchor), { ok: false, error: 'anchor not found' });
+    assert.deepEqual(await jsonOf(badAnchor), {
+      ok: false,
+      error: 'anchor not found',
+    });
 
     const ok = await commentsRoute.POST(
       new Request('http://localhost', {
@@ -303,9 +334,17 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({}),
       }),
-      { params: Promise.resolve({ id: pushed.artifactId, commentId: created.comment.id }) },
+      {
+        params: Promise.resolve({
+          id: pushed.artifactId,
+          commentId: created.comment.id,
+        }),
+      },
     );
-    assert.deepEqual(await jsonOf(patchMissing), { ok: false, error: 'provide text or status' });
+    assert.deepEqual(await jsonOf(patchMissing), {
+      ok: false,
+      error: 'provide text or status',
+    });
 
     const patchText = await commentRoute.PATCH(
       new Request('http://localhost', {
@@ -313,7 +352,12 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'edited route' }),
       }),
-      { params: Promise.resolve({ id: pushed.artifactId, commentId: created.comment.id }) },
+      {
+        params: Promise.resolve({
+          id: pushed.artifactId,
+          commentId: created.comment.id,
+        }),
+      },
     );
     const patchedText = await jsonOf(patchText);
     assert.equal(patchedText.ok, true);
@@ -325,7 +369,12 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ status: 'resolved' }),
       }),
-      { params: Promise.resolve({ id: pushed.artifactId, commentId: created.comment.id }) },
+      {
+        params: Promise.resolve({
+          id: pushed.artifactId,
+          commentId: created.comment.id,
+        }),
+      },
     );
     const patchedStatus = await jsonOf(patchStatus);
     assert.equal(patchedStatus.ok, true);
@@ -348,13 +397,19 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );
     assert.equal(badFields.status, 400);
-    assert.deepEqual(await jsonOf(badFields), { ok: false, error: 'fields must be array' });
+    assert.deepEqual(await jsonOf(badFields), {
+      ok: false,
+      error: 'fields must be array',
+    });
 
     const goodFields = await submissionsRoute.POST(
       new Request('http://localhost', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ formTitle: 'Good', fields: [{ name: 'a', label: 'A', value: 1 }] }),
+        body: JSON.stringify({
+          formTitle: 'Good',
+          fields: [{ name: 'a', label: 'A', value: 1 }],
+        }),
       }),
       { params: Promise.resolve({ id: pushed.artifactId }) },
     );
@@ -363,8 +418,8 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     assert.match(submission.submissionId, /^sub_/);
 
     const feedback = await feedbackRoute.GET(new Request('http://localhost'), {
-      params: Promise.resolve({ id: pushed.artifactId }) },
-    );
+      params: Promise.resolve({ id: pushed.artifactId }),
+    });
     const json = await jsonOf(feedback);
     assert.equal(json.ok, true);
     assert.equal(json.submissions.length, 1);
@@ -410,8 +465,8 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     assert.equal(updated.revision, 2);
 
     const list = await revisionsListRoute.GET(new Request('http://localhost'), {
-      params: Promise.resolve({ id: pushed.artifactId }) },
-    );
+      params: Promise.resolve({ id: pushed.artifactId }),
+    });
     const listed = await jsonOf(list);
     assert.equal(listed.ok, true);
     assert.equal(listed.revisions.length, 2);
@@ -419,18 +474,18 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     assert.equal(listed.revisions[1].revisionNumber, 1);
 
     const badRev = await revisionRoute.GET(new Request('http://localhost'), {
-      params: Promise.resolve({ id: pushed.artifactId, rev: 'abc' }) },
-    );
+      params: Promise.resolve({ id: pushed.artifactId, rev: 'abc' }),
+    });
     assert.equal(badRev.status, 400);
 
     const missingRev = await revisionRoute.GET(new Request('http://localhost'), {
-      params: Promise.resolve({ id: pushed.artifactId, rev: '99' }) },
-    );
+      params: Promise.resolve({ id: pushed.artifactId, rev: '99' }),
+    });
     assert.equal(missingRev.status, 404);
 
     const rev1 = await revisionRoute.GET(new Request('http://localhost'), {
-      params: Promise.resolve({ id: pushed.artifactId, rev: '1' }) },
-    );
+      params: Promise.resolve({ id: pushed.artifactId, rev: '1' }),
+    });
     const rev1Json = await jsonOf(rev1);
     assert.equal(rev1Json.ok, true);
     assert.ok(rev1Json.processedHtml.includes('Gone'));

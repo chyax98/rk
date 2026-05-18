@@ -350,10 +350,7 @@
   font-size: var(--rk-text-sm);
 }
 /* KPI variant */
-.rk-chart-kpi {
-}
 .rk-chart-kpi__grid {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--rk-space-4);
 }
@@ -570,12 +567,7 @@
   border-radius: var(--rk-radius-lg);
   background: var(--rk-surface-solid);
 }
-.rk-comparison--proscons {
-}
-.rk-comparison--matrix {
-}
 .rk-comparison__title {
-  margin-bottom: var(--rk-space-3);
   color: var(--rk-text);
   font-size: var(--rk-text-xl);
   font-weight: var(--rk-weight-bold);
@@ -800,7 +792,9 @@
   letter-spacing: var(--rk-tracking-wide);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: color var(--rk-ease), border-color var(--rk-ease);
+  transition:
+    color var(--rk-ease),
+    border-color var(--rk-ease);
   white-space: nowrap;
 }
 .rk-tabs__btn:hover {
@@ -823,12 +817,24 @@
   display: grid;
   gap: var(--rk-space-4);
 }
-.rk-grid--cols-2 { grid-template-columns: repeat(2, 1fr); }
-.rk-grid--cols-3 { grid-template-columns: repeat(3, 1fr); }
-.rk-grid--cols-4 { grid-template-columns: repeat(4, 1fr); }
-.rk-grid--gap-sm { gap: var(--rk-space-2); }
-.rk-grid--gap-md { gap: var(--rk-space-4); }
-.rk-grid--gap-lg { gap: var(--rk-space-6); }
+.rk-grid--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.rk-grid--cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.rk-grid--cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.rk-grid--gap-sm {
+  gap: var(--rk-space-2);
+}
+.rk-grid--gap-md {
+  gap: var(--rk-space-4);
+}
+.rk-grid--gap-lg {
+  gap: var(--rk-space-6);
+}
 .rk-grid__cell {
   min-width: 0;
 }
@@ -1066,7 +1072,9 @@
   font-weight: var(--rk-weight-bold);
   background: var(--rk-border-subtle);
   color: var(--rk-muted);
-  transition: background var(--rk-ease), color var(--rk-ease);
+  transition:
+    background var(--rk-ease),
+    color var(--rk-ease);
 }
 .rk-steps__item--done .rk-steps__circle {
   background: var(--rk-tone-success-border);
@@ -1119,9 +1127,15 @@
   display: grid;
   gap: 0;
 }
-.rk-metric--cols-2 { grid-template-columns: repeat(2, 1fr); }
-.rk-metric--cols-3 { grid-template-columns: repeat(3, 1fr); }
-.rk-metric--cols-4 { grid-template-columns: repeat(4, 1fr); }
+.rk-metric--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.rk-metric--cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.rk-metric--cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 .rk-metric__card {
   padding: var(--rk-space-4) var(--rk-space-5);
   border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);

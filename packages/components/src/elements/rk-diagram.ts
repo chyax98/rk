@@ -51,7 +51,8 @@ class RkDiagram extends HTMLElement {
     if (engine === 'plantuml') {
       const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
       if (loading) {
-        loading.innerHTML = '⚠️ PlantUML 图表需要服务端处理后查看。<br><small>在 server 启动状态下推送 artifact 即可自动渲染。</small>';
+        loading.innerHTML =
+          '⚠️ PlantUML 图表需要服务端处理后查看。<br><small>在 server 启动状态下推送 artifact 即可自动渲染。</small>';
       }
       return;
     }
@@ -77,7 +78,7 @@ class RkDiagram extends HTMLElement {
     if (bg.startsWith('#')) {
       const hex = bg.slice(1);
       const r = parseInt(hex.slice(0, 2), 16);
-      return !isNaN(r) && r < 80;
+      return !Number.isNaN(r) && r < 80;
     }
     return bg.includes('0b1') || bg.includes('08090a') || bg.includes('161616');
   }
@@ -112,21 +113,21 @@ class RkDiagram extends HTMLElement {
     // Strip any remaining quotes
     bgRaw = bgRaw.replace(/^["']|["']$/g, '');
 
-    const text       = token('--rk-text', '#1a1a1a');
-    const textSec    = token('--rk-text-secondary', '#3d3d3d');
-    const muted      = token('--rk-muted', '#737373');
-    const accent     = token('--rk-accent', '#0267a5');
-    const border     = token('--rk-border', '#dfe3ea');
-    const surface    = token('--rk-surface', '#ffffff');
-    const surfaceR   = token('--rk-surface-raised', surface);
+    const text = token('--rk-text', '#1a1a1a');
+    const textSec = token('--rk-text-secondary', '#3d3d3d');
+    const muted = token('--rk-muted', '#737373');
+    const accent = token('--rk-accent', '#0267a5');
+    const border = token('--rk-border', '#dfe3ea');
+    const surface = token('--rk-surface', '#ffffff');
+    const surfaceR = token('--rk-surface-raised', surface);
     const fontFamily = token('--rk-font-sans', "'Inter', 'Noto Sans SC', sans-serif");
 
     // Build node fill: subtle accent tint (light theme = accent at ~10%, dark = accent at ~20%)
     const isDark = this._isDark();
     const nodeFill = isDark
       ? this._mixColors(accent, bgRaw, 0.18)
-      : this._mixColors(accent, bgRaw, 0.10);
-    const nodeBorder = this._mixColors(accent, bgRaw, isDark ? 0.35 : 0.30);
+      : this._mixColors(accent, bgRaw, 0.1);
+    const nodeBorder = this._mixColors(accent, bgRaw, isDark ? 0.35 : 0.3);
 
     return {
       // Background
@@ -166,7 +167,7 @@ class RkDiagram extends HTMLElement {
       // Notes
       noteBkgColor: this._mixColors(accent, bgRaw, 0.08),
       noteTextColor: text,
-      noteBorderColor: this._mixColors(accent, bgRaw, 0.20),
+      noteBorderColor: this._mixColors(accent, bgRaw, 0.2),
     };
   }
 
@@ -205,7 +206,7 @@ class RkDiagram extends HTMLElement {
     // rgb/rgba
     const rgb = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
     if (rgb) {
-      return { r: parseInt(rgb[1]), g: parseInt(rgb[2]), b: parseInt(rgb[3]) };
+      return { r: parseInt(rgb[1], 10), g: parseInt(rgb[2], 10), b: parseInt(rgb[3], 10) };
     }
     return null;
   }
@@ -216,7 +217,9 @@ class RkDiagram extends HTMLElement {
     if (!canvas || !this._raw) return;
 
     try {
-      const mermaid = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+      const mermaid = await import(
+        'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'
+      );
 
       // Beautiful-mermaid style: CSS variable driven themeVariables
       const isDark = this._isDark();
@@ -235,9 +238,10 @@ class RkDiagram extends HTMLElement {
       if (loading) loading.remove();
       canvas.innerHTML = svg;
       this._makeSvgResponsive(canvas);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       if (loading) loading.remove();
-      canvas.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm);white-space:pre-wrap">Mermaid error: ${this._escape(err?.message || String(err))}</div>`;
+      canvas.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm);white-space:pre-wrap">Mermaid error: ${this._escape(message)}</div>`;
     }
   }
 
@@ -246,16 +250,19 @@ class RkDiagram extends HTMLElement {
     const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
     if (!canvas || !this._raw) return;
     try {
-      // @ts-ignore
-      const mod = await import('https://cdn.jsdelivr.net/npm/@terrastruct/d2@0.1.33/dist/browser/index.js');
+      // @ts-expect-error
+      const mod = await import(
+        'https://cdn.jsdelivr.net/npm/@terrastruct/d2@0.1.33/dist/browser/index.js'
+      );
       const Renderer = mod.Renderer || mod.default || mod.D2 || mod;
       const renderer = new Renderer();
       const svg = await renderer.render(this._raw);
       if (loading) loading.remove();
-      canvas.innerHTML = typeof svg === 'string' ? svg : (svg?.svg || svg?.toString() || '');
+      canvas.innerHTML = typeof svg === 'string' ? svg : svg?.svg || svg?.toString() || '';
       this._makeSvgResponsive(canvas);
-    } catch (e: any) {
-      if (loading) loading.textContent = `D2 渲染失败: ${e?.message || String(e)}`;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (loading) loading.textContent = `D2 渲染失败: ${message}`;
     }
   }
 
@@ -266,10 +273,20 @@ class RkDiagram extends HTMLElement {
     try {
       // Use @viz-js/viz (same as docu.md / markdown-viewer-extension)
       // viz-standalone.js is a UMD bundle: it sets globalThis.Viz, not named ES exports
-      // @ts-ignore
+      // @ts-expect-error
       await import('https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js');
-      // @ts-ignore
-      const instanceFn = (globalThis as any).Viz?.instance;
+      // @ts-expect-error
+      const vizGlobal = globalThis as typeof globalThis & {
+        Viz?: {
+          instance?: () => Promise<{
+            renderSVGElement: (
+              source: string,
+              options?: { graphAttributes?: Record<string, string> },
+            ) => SVGElement;
+          }>;
+        };
+      };
+      const instanceFn = vizGlobal.Viz?.instance;
       if (!instanceFn) throw new Error('Viz.js not loaded');
       const viz = await instanceFn();
 
@@ -277,10 +294,11 @@ class RkDiagram extends HTMLElement {
       const isDark = this._isDark();
       let dotCode = this._raw;
       if (isDark) {
-        const prelude = '  graph [fontcolor="#c9d1d9" bgcolor="transparent"];\n'
-          + '  node [color="#8b949e" fontcolor="#c9d1d9"];\n'
-          + '  edge [color="#8b949e" fontcolor="#c9d1d9"];\n';
-        dotCode = dotCode.replace('{', '{\n' + prelude);
+        const prelude =
+          '  graph [fontcolor="#c9d1d9" bgcolor="transparent"];\n' +
+          '  node [color="#8b949e" fontcolor="#c9d1d9"];\n' +
+          '  edge [color="#8b949e" fontcolor="#c9d1d9"];\n';
+        dotCode = dotCode.replace('{', `{\n${prelude}`);
       }
 
       const svgEl = viz.renderSVGElement(dotCode, {
@@ -291,8 +309,9 @@ class RkDiagram extends HTMLElement {
       if (loading) loading.remove();
       canvas.innerHTML = svgString;
       this._makeSvgResponsive(canvas);
-    } catch (e: any) {
-      if (loading) loading.textContent = `Graphviz 渲染失败: ${e?.message || String(e)}`;
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      if (loading) loading.textContent = `Graphviz 渲染失败: ${message}`;
     }
   }
 

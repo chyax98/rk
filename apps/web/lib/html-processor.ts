@@ -115,14 +115,15 @@ async function krokiRender(engine: string, source: string): Promise<string | nul
 
 /** Pre-process diagrams via Kroki SSR: plantuml + graphviz (best-effort, failures are silent) */
 async function processPlantUML(html: string): Promise<string> {
-  const regex = /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+  const regex =
+    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
   const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(html)) !== null) {
-    const engine = (m[2] || 'plantuml').replace('dot', 'graphviz');
-    matches.push({ full: m[0], attrs: m[1], engine, source: m[3].trim() });
+  let match = regex.exec(html);
+  while (match !== null) {
+    const engine = (match[2] || 'plantuml').replace('dot', 'graphviz');
+    matches.push({ full: match[0], attrs: match[1], engine, source: match[3].trim() });
+    match = regex.exec(html);
   }
-  if (matches.length === 0) return html;
 
   const resolved = await Promise.all(
     matches.map(async ({ full, attrs, engine, source }) => {
@@ -130,7 +131,7 @@ async function processPlantUML(html: string): Promise<string> {
       if (!svg) return { full, replacement: full };
       const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
       return { full, replacement };
-    })
+    }),
   );
 
   let result = html;

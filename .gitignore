@@ -11,3 +11,4 @@ research/design-assets/external-repos/
 dist/
 .pwcli/
 .alma-snapshots
+**/*.tsbuildinfo

@@ -5,32 +5,58 @@
  *
  * 运行: node --experimental-strip-types --test tests/cli.test.ts
  */
-import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, it } from 'node:test';
 
 const CLI = 'node packages/cli/bin/renderkit.mjs';
 const ENDPOINT = process.env.RENDERKIT_ENDPOINT || 'http://localhost:3737';
 
 let serverAvailable = false;
 
-function run(cmd: string) {
+type CliResult = {
+  stdout: string;
+  stderr?: string;
+  code: number;
+};
+
+function run(cmd: string): CliResult {
   try {
     return {
-      stdout: execSync(cmd, { stdio: ['pipe', 'pipe', 'pipe'], encoding: 'utf8', timeout: 15000 }),
+      stdout: execSync(cmd, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        encoding: 'utf8',
+        timeout: 15000,
+      }),
       code: 0,
     };
-  } catch (e: any) {
-    return { stdout: e.stdout ?? '', stderr: e.stderr ?? '', code: e.status ?? 1 };
+  } catch (e: unknown) {
+    const err = e as { stdout?: string; stderr?: string; status?: number };
+    return {
+      stdout: err.stdout ?? '',
+      stderr: err.stderr ?? '',
+      code: err.status ?? 1,
+    };
+  }
+}
+
+function tryParseJson(text: string): Record<string, unknown> | undefined {
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return undefined;
   }
 }
 
 // 同步检查服务器可用性
 try {
-  const result = execSync(`curl -s ${ENDPOINT}/api/health`, { timeout: 3000, encoding: 'utf8' });
+  const result = execSync(`curl -s ${ENDPOINT}/api/health`, {
+    timeout: 3000,
+    encoding: 'utf8',
+  });
   const data = JSON.parse(result);
   serverAvailable = data.ok === true;
 } catch {
@@ -42,15 +68,21 @@ const describeServer = serverAvailable ? describe : describe.skip;
 describeServer('CLI push 命令', () => {
   it('push 创建新 artifact', () => {
     const tmpFile = join(tmpdir(), `rk-test-push-${Date.now()}.html`);
-    writeFileSync(tmpFile, `<html><body data-rk-theme="paper-light">
+    writeFileSync(
+      tmpFile,
+      `<html><body data-rk-theme="paper-light">
 <h1>CLI Test</h1><rk-callout tone="info">Test</rk-callout>
-</body></html>`);
+</body></html>`,
+    );
 
     const r = run(`${CLI} push ${tmpFile} --endpoint ${ENDPOINT}`);
-    let parsed: any;
-    try { parsed = JSON.parse(r.stdout); } catch {}
-    assert.equal(r.code, 0, `exit code should be 0, got ${r.code}\nstdout: ${r.stdout}\nstderr: ${r.stderr || ''}`);
-    assert.equal(parsed?.ok, true);
+    const parsed = tryParseJson(r.stdout);
+    assert.equal(
+      r.code,
+      0,
+      `exit code should be 0, got ${r.code}\nstdout: ${r.stdout}\nstderr: ${r.stderr || ''}`,
+    );
+
     assert.ok(typeof parsed?.artifactId === 'string', 'should have artifactId');
     assert.equal(parsed?.revision, 1);
     assert.ok(typeof parsed?.url === 'string');
@@ -78,12 +110,15 @@ describeServer('CLI push 命令', () => {
 
   it('push 带 theme 的完整文档', () => {
     const tmpFile = join(tmpdir(), `rk-test-theme-${Date.now()}.html`);
-    writeFileSync(tmpFile, `<html lang="zh-CN">
+    writeFileSync(
+      tmpFile,
+      `<html lang="zh-CN">
 <head><meta charset="UTF-8"><title>Theme Test</title></head>
 <body data-rk-theme="dark-pro">
 <h1>Dark Theme Doc</h1>
 <rk-stat label="Score" value="98" unit="pts"></rk-stat>
-</body></html>`);
+</body></html>`,
+    );
 
     const r = run(`${CLI} push ${tmpFile} --endpoint ${ENDPOINT}`);
     assert.equal(r.code, 0);

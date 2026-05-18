@@ -4,8 +4,8 @@
  *
  * 运行: node --experimental-strip-types --test tests/html-processor.test.ts
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { processHTML } from '../apps/web/lib/html-processor.ts';
 
 // ── extractBodyContent (通过 processHTML 间接测试) ──
@@ -53,7 +53,10 @@ describe('processHTML anchor generation', () => {
     const html = `<h1>Title</h1><p>Paragraph</p><rk-callout tone="info">Note</rk-callout>`;
     const result = await processHTML(html);
     assert.ok(result.processedHtml.includes('data-rk-anchor'), 'should inject anchors');
-    assert.ok(result.anchors.length >= 2, `should have at least 2 anchors, got ${result.anchors.length}`);
+    assert.ok(
+      result.anchors.length >= 2,
+      `should have at least 2 anchors, got ${result.anchors.length}`,
+    );
   });
 
   it('相同内容生成确定性 anchor', async () => {
@@ -63,7 +66,11 @@ describe('processHTML anchor generation', () => {
     // anchor 值应该基于 tag+position+text，确定性
     assert.equal(r1.anchors.length, r2.anchors.length, 'same anchor count');
     for (let i = 0; i < r1.anchors.length; i++) {
-      assert.equal(r1.anchors[i].anchor, r2.anchors[i].anchor, `anchor ${i} should be deterministic`);
+      assert.equal(
+        r1.anchors[i].anchor,
+        r2.anchors[i].anchor,
+        `anchor ${i} should be deterministic`,
+      );
     }
   });
 
@@ -78,7 +85,7 @@ describe('processHTML anchor generation', () => {
   it('rk-* 组件生成 anchor', async () => {
     const html = `<rk-stat label="CPU" value="99.9%"></rk-stat><rk-callout tone="info">Note</rk-callout>`;
     const result = await processHTML(html);
-    const rkAnchors = result.anchors.filter(a => a.elementTag.startsWith('rk-'));
+    const rkAnchors = result.anchors.filter((a) => a.elementTag.startsWith('rk-'));
     assert.ok(rkAnchors.length >= 1, 'should have rk-* anchors');
   });
 
@@ -86,7 +93,10 @@ describe('processHTML anchor generation', () => {
     const html = `<span>Inline</span><em>Also inline</em>`;
     const result = await processHTML(html);
     // span 和 em 不是块级元素，不应该生成 anchor
-    assert.ok(result.anchors.length === 0, `inline elements should not generate anchors, got ${result.anchors.length}`);
+    assert.ok(
+      result.anchors.length === 0,
+      `inline elements should not generate anchors, got ${result.anchors.length}`,
+    );
   });
 });
 
@@ -98,8 +108,10 @@ describe('processHTML title extraction', () => {
     // Agent HTML 中的 <title> 在剥离后不可用，改用 <h1> 回退
     const html = `<html><head><title>My Document</title></head><body><h1>Fallback</h1></body></html>`;
     const result = await processHTML(html);
-    assert.ok(result.title === 'Fallback' || result.title === 'My Document',
-      `expected 'Fallback' or 'My Document', got '${result.title}'`);
+    assert.ok(
+      result.title === 'Fallback' || result.title === 'My Document',
+      `expected 'Fallback' or 'My Document', got '${result.title}'`,
+    );
   });
 
   it('从 <h1> 标签提取标题（无 title 标签时）', async () => {

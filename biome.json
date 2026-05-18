@@ -8,15 +8,26 @@
   "files": {
     "ignoreUnknown": true,
     "includes": [
-      "**",
+      "apps/**/*.ts",
+      "apps/**/*.tsx",
+      "apps/**/*.css",
+      "apps/**/*.json",
+      "packages/**/*.ts",
+      "packages/**/*.tsx",
+      "packages/**/*.css",
+      "packages/**/*.json",
+      "tests/**/*.ts",
+      "*.json",
       "!**/node_modules",
       "!**/.next",
       "!**/dist",
       "!**/.data",
       "!**/.pwcli",
-      "!**/research/design-assets/external-repos",
-      "!**/*.rk.lock.json",
-      "!scripts",
+      "!apps/web/public/rk/components.js",
+      "!apps/web/public/rk/components.css",
+      "!apps/web/public/rk/app-style-backup.css",
+      "!apps/web/next-env.d.ts",
+      "!**/*.tsbuildinfo",
       "!packages/blocks/src/index.d.ts"
     ]
   },
@@ -54,7 +65,8 @@
         "noDangerouslySetInnerHtml": "warn"
       },
       "style": {
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "noDescendingSpecificity": "off"
       },
       "a11y": {
         "useButtonType": "warn",
@@ -68,7 +80,8 @@
       },
       "complexity": {
         "useLiteralKeys": "warn",
-        "useOptionalChain": "warn"
+        "useOptionalChain": "warn",
+        "noImportantStyles": "off"
       }
     }
   },
