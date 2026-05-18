@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3737",
-    "start": "next start -p 3737",
+    "dev": "next dev -p ${PORT:-3737}",
+    "start": "next start -p ${PORT:-3000}",
     "build": "next build"
   },
   "dependencies": {

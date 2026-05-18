@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 
-const dataDir = path.join(os.homedir(), '.renderkit', 'data');
+// Allow override via RENDERKIT_DATA_DIR (used in deployment / tests).
+// Default: ~/.renderkit/data/renderkit.db
+const dataDir = process.env.RENDERKIT_DATA_DIR || path.join(os.homedir(), '.renderkit', 'data');
 const dbPath = path.join(dataDir, 'renderkit.db');
 
 let _db: Database.Database | null = null;

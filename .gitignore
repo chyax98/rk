@@ -13,3 +13,10 @@ dist/
 reports/render-scan/
 .alma-snapshots
 **/*.tsbuildinfo
+
+# CLI lock files (per-artifact lock; never check in)
+.rk-lock/
+**/.rk-lock/
+
+# scoring report (generated)
+score-report.json
