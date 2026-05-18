@@ -61,6 +61,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._loaded || this._raw) this._render();
   }
 

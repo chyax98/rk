@@ -63,6 +63,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._Zdog && this._raw) {
       this._cleanup();
       this._render();

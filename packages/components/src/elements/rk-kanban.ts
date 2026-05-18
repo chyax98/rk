@@ -25,6 +25,7 @@ class RkKanbanCard extends HTMLElement {
     this._render();
   }
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 
@@ -140,6 +141,7 @@ class RkKanbanCol extends HTMLElement {
     this._renderShell();
   }
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     this._renderShell();
   }
 

@@ -16,6 +16,7 @@ class RkModel extends HTMLElement {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     this._render();
   }
 

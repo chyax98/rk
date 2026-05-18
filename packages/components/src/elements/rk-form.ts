@@ -19,6 +19,7 @@ class RkField extends HTMLElement {
     this._render();
   }
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     this._render();
   }
 
@@ -163,6 +164,7 @@ class RkForm extends HTMLElement {
     this._render();
   }
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._fieldsHTML) this._render();
   }
 

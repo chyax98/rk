@@ -9,6 +9,7 @@ var RkSection = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -49,6 +50,7 @@ var RkCard = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -121,6 +123,7 @@ var RkTabs = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -184,6 +187,7 @@ var RkCollapsible = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -219,6 +223,7 @@ var RkMetric = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -373,6 +378,7 @@ var RkCallout = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -409,6 +415,7 @@ var RkStat = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw !== "" || this.hasAttribute("value")) this._render();
   }
   _render() {
@@ -469,6 +476,7 @@ var RkSummary = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -500,6 +508,7 @@ var RkCode = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -597,6 +606,7 @@ var RkTable = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -664,6 +674,7 @@ var RkDecision = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -723,6 +734,7 @@ var RkChecklist = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -786,6 +798,7 @@ var RkComparison = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -866,6 +879,7 @@ var RkTimeline = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -921,6 +935,7 @@ var RkImage = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -969,6 +984,7 @@ var RkQuote = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1009,6 +1025,7 @@ var RkHighlight = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1040,6 +1057,7 @@ var RkProgress = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1082,6 +1100,7 @@ var RkSteps = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1132,6 +1151,7 @@ var RkBadge = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1212,6 +1232,7 @@ var RkKanbanCard = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1294,6 +1315,7 @@ var RkKanbanCol = class extends HTMLElement {
     this._renderShell();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     this._renderShell();
   }
   _upgradeCards() {
@@ -1372,6 +1394,7 @@ var RkField = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     this._render();
   }
   getValue() {
@@ -1493,6 +1516,7 @@ var RkForm = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._fieldsHTML) this._render();
   }
   _render() {
@@ -1606,6 +1630,7 @@ var RkDiff = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1733,6 +1758,7 @@ var RkNarrative = class extends HTMLElement {
     this._render();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -1838,6 +1864,7 @@ var RkChart = class extends HTMLElement {
     }
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -2163,6 +2190,7 @@ var RkDiagram = class extends HTMLElement {
     this._observer?.disconnect();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _render() {
@@ -2600,6 +2628,7 @@ var RkInfographic = class extends HTMLElement {
     this._cleanup();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _cleanup() {
@@ -2831,6 +2860,7 @@ var RkDatagrid = class extends HTMLElement {
     this._destroy();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _destroy() {
@@ -3015,6 +3045,7 @@ var RkPlot = class extends HTMLElement {
     this._ro = null;
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   async _render() {
@@ -3142,6 +3173,7 @@ var RkSketch = class extends HTMLElement {
     }
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._loaded || this._raw) this._render();
   }
   _escape(s) {
@@ -3323,6 +3355,7 @@ var RkZdog = class extends HTMLElement {
     this._cleanup();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._Zdog && this._raw) {
       this._cleanup();
       this._render();
@@ -3522,6 +3555,7 @@ var RkModel = class extends HTMLElement {
   disconnectedCallback() {
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     this._render();
   }
   _escape(s) {
@@ -3741,6 +3775,7 @@ var RkPlot3d = class extends HTMLElement {
     this._cleanup();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _cleanup() {
@@ -3891,6 +3926,7 @@ var RkGraph3d = class extends HTMLElement {
     this._cleanup();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
   _cleanup() {
