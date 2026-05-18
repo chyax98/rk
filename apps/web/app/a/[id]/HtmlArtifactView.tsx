@@ -93,6 +93,37 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     return () => document.documentElement.removeAttribute('data-rk-artifact-id');
   }, [meta.id]);
 
+  // Collect rk-render-error events from WC components and POST to server.
+  useEffect(() => {
+    const pending: { engine: string; message: string; anchor: string }[] = [];
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const flush = () => {
+      if (pending.length === 0) return;
+      const batch = pending.splice(0);
+      fetch(`/api/artifacts/${meta.id}/render-errors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(batch),
+      }).catch(() => {/* best-effort */});
+    };
+
+    const handler = (e: Event) => {
+      const { engine, message, anchor } = (e as CustomEvent).detail ?? {};
+      if (!engine || !message) return;
+      pending.push({ engine: String(engine), message: String(message), anchor: String(anchor ?? '') });
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(flush, 1000); // debounce 1s
+    };
+
+    document.addEventListener('rk-render-error', handler);
+    return () => {
+      document.removeEventListener('rk-render-error', handler);
+      if (timer) clearTimeout(timer);
+      flush();
+    };
+  }, [meta.id]);
+
   const scrollToAnchor = useCallback((anchor: string, commentId?: string) => {
     if (commentId) setActiveComment(commentId);
     const target = bodyRef.current?.querySelector(`[data-rk-anchor="${anchor}"]`);

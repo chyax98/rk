@@ -314,6 +314,15 @@ program
     // 4. CLI path
     checks.cli = fileURLToPath(import.meta.url);
 
+    // 5. d2 CLI
+    const { execSync } = await import('node:child_process');
+    try {
+      const d2Version = execSync('d2 --version 2>/dev/null', { encoding: 'utf8' }).trim();
+      checks.d2 = { ok: true, version: d2Version };
+    } catch {
+      checks.d2 = { ok: false, hint: 'Install: curl -fsSL https://d2lang.com/install.sh | sh' };
+    }
+
     output({ ok: true, checks });
   });
 

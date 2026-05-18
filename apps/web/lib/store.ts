@@ -320,6 +320,7 @@ export async function deleteArtifact(id: string): Promise<boolean> {
   db.prepare('DELETE FROM comments WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM anchors WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM form_submissions WHERE artifact_id = ?').run(id);
+  db.prepare('DELETE FROM render_errors WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM revisions WHERE artifact_id = ?').run(id);
   db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
   return true;
@@ -366,6 +367,64 @@ export async function getFormSubmissions(artifactId: string): Promise<FormSubmis
   }));
 }
 
+/* ── Render Errors (client-side) ──────────────────────── */
+
+export interface RenderErrorEntry {
+  id: string;
+  artifactId: string;
+  engine: string;
+  message: string;
+  anchor: string;
+  createdAt: string;
+}
+
+export async function recordRenderError(
+  artifactId: string,
+  errors: Array<{ engine: string; message: string; anchor?: string }>,
+): Promise<void> {
+  const db = getDb();
+  const ts = now();
+  const insert = db.prepare(`
+    INSERT INTO render_errors (id, artifact_id, engine, message, anchor, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  const txn = db.transaction(() => {
+    for (const e of errors) {
+      insert.run(
+        `re_${crypto.randomBytes(4).toString('hex')}`,
+        artifactId,
+        e.engine,
+        (e.message || '').slice(0, 500),
+        e.anchor || '',
+        ts,
+      );
+    }
+  });
+  txn();
+}
+
+export async function getRenderErrors(artifactId: string): Promise<RenderErrorEntry[]> {
+  const db = getDb();
+  const rows = db
+    .prepare('SELECT * FROM render_errors WHERE artifact_id = ? ORDER BY created_at DESC')
+    .all(artifactId) as Array<{
+    id: string;
+    artifact_id: string;
+    engine: string;
+    message: string;
+    anchor: string;
+    created_at: string;
+  }>;
+  return rows.map((r) => ({
+    id: r.id,
+    artifactId: r.artifact_id,
+    engine: r.engine,
+    message: r.message,
+    anchor: r.anchor,
+    createdAt: r.created_at,
+  }));
+}
+
 /* ── Feedback (CLI) ─────────────────────────────────────── */
 
 export async function getFeedback(id: string) {
@@ -377,6 +436,8 @@ export async function getFeedback(id: string) {
   );
 
   const submissions = await getFormSubmissions(id);
+
+  const renderErrors = await getRenderErrors(id);
 
   return {
     artifactId: id,
@@ -392,6 +453,7 @@ export async function getFeedback(id: string) {
       createdAt: c.createdAt,
     })),
     submissions,
+    renderErrors,
   };
 }
 

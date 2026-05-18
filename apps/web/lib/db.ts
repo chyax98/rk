@@ -106,6 +106,20 @@ function migrate(db: Database.Database): void {
   try {
     db.exec(`ALTER TABLE artifacts ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`);
   } catch {}
+
+  // render errors (client-side diagram/chart failures)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS render_errors (
+      id           TEXT PRIMARY KEY,
+      artifact_id  TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
+      engine       TEXT NOT NULL,
+      message      TEXT NOT NULL DEFAULT '',
+      anchor       TEXT NOT NULL DEFAULT '',
+      created_at   TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_render_errors_artifact
+      ON render_errors(artifact_id);
+  `);
 }
 
 export function closeDb(): void {

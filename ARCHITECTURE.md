@@ -57,7 +57,7 @@ Agent 根据评论修改 HTML，再次 rk push（循环）
 
 **媒体**: rk-image, rk-3d（Three.js）
 
-**新增**: rk-badge, rk-badge-group, rk-kanban, rk-form
+**新增**: rk-badge, rk-badge-group, rk-kanban, rk-form, rk-card, rk-section, rk-diff
 
 ## 关键设计决策
 

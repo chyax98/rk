@@ -242,27 +242,18 @@ class RkDiagram extends HTMLElement {
       const message = err instanceof Error ? err.message : String(err);
       if (loading) loading.remove();
       canvas.innerHTML = `<div style="padding:var(--rk-space-3);color:var(--rk-tone-danger-border);font-size:var(--rk-text-sm);white-space:pre-wrap">Mermaid error: ${this._escape(message)}</div>`;
+      this._reportRenderError('mermaid', message);
     }
   }
 
-  async _renderD2(): Promise<void> {
+  _renderD2(): void {
     const canvas = this.querySelector('.rk-diagram__canvas') as HTMLElement;
     const loading = this.querySelector('.rk-diagram__loading') as HTMLElement;
-    if (!canvas || !this._raw) return;
-    try {
-      // @ts-expect-error
-      const mod = await import(
-        'https://cdn.jsdelivr.net/npm/@terrastruct/d2@0.1.33/dist/browser/index.js'
-      );
-      const Renderer = mod.Renderer || mod.default || mod.D2 || mod;
-      const renderer = new Renderer();
-      const svg = await renderer.render(this._raw);
-      if (loading) loading.remove();
-      canvas.innerHTML = typeof svg === 'string' ? svg : svg?.svg || svg?.toString() || '';
-      this._makeSvgResponsive(canvas);
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
-      if (loading) loading.textContent = `D2 渲染失败: ${message}`;
+    if (loading) loading.remove();
+    if (canvas) {
+      canvas.innerHTML = `<div class="rk-diagram__error" style="padding:var(--rk-space-4);color:var(--rk-tone-warning-border);background:var(--rk-tone-warning-bg);border-radius:var(--rk-radius-sm);font-size:var(--rk-text-sm)">
+        <strong>D2 rendering unavailable</strong> — the D2 WASM package is broken. Use <code>engine="mermaid"</code> or <code>engine="graphviz"</code> instead.
+      </div>`;
     }
   }
 
@@ -312,7 +303,18 @@ class RkDiagram extends HTMLElement {
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       if (loading) loading.textContent = `Graphviz 渲染失败: ${message}`;
+      this._reportRenderError('graphviz', message);
     }
+  }
+
+  /** Dispatch a rk-render-error CustomEvent so the viewer can collect and report errors */
+  _reportRenderError(engine: string, message: string): void {
+    this.dispatchEvent(
+      new CustomEvent('rk-render-error', {
+        bubbles: true,
+        detail: { engine, message, anchor: this.dataset.rkAnchor || '' },
+      }),
+    );
   }
 
   _makeSvgResponsive(container: HTMLElement): void {

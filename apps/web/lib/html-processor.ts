@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { parseHTML } from 'linkedom';
 import { createHighlighter, type Highlighter } from 'shiki';
 
@@ -103,6 +104,38 @@ async function preRenderCodeBlocks(document: Document): Promise<void> {
   }
 }
 
+/** Render D2 source via local d2 binary (best-effort) */
+async function d2Render(
+  source: string,
+): Promise<{ svg: string; error: null } | { svg: null; error: string }> {
+  return new Promise((resolve) => {
+    const proc = spawn('d2', ['--layout=elk', '--theme=0', '-'], {
+      timeout: 15000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let svg = '';
+    let err = '';
+    proc.stdin.write(source);
+    proc.stdin.end();
+    proc.stdout.on('data', (d: Buffer) => (svg += d.toString()));
+    proc.stderr.on('data', (d: Buffer) => (err += d.toString()));
+    proc.on('close', (code) => {
+      if (code === 0 && svg.includes('<svg')) resolve({ svg, error: null });
+      else
+        resolve({
+          svg: null,
+          error: err.trim().replace(/^err:\s*/gm, '').slice(0, 300) || `exit code ${String(code)}`,
+        });
+    });
+    proc.on('error', (e) => {
+      resolve({
+        svg: null,
+        error: `d2 not found: ${e.message}. Install: curl -fsSL https://d2lang.com/install.sh | sh`,
+      });
+    });
+  });
+}
+
 /** Fetch SVG from Kroki for a given engine (best-effort) */
 async function krokiRender(
   engine: string,
@@ -126,21 +159,25 @@ async function krokiRender(
   }
 }
 
-/** Pre-process diagrams via Kroki SSR: plantuml + graphviz (best-effort, failures are silent) */
+/** Pre-process diagrams via SSR: d2 (local binary) + plantuml/graphviz (Kroki) */
 async function processPlantUML(html: string): Promise<{ html: string; warnings: RenderWarning[] }> {
   const regex =
-    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot|d2)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
   const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
   let match = regex.exec(html);
   while (match !== null) {
-    const engine = (match[2] || 'plantuml').replace('dot', 'graphviz');
+    const raw = (match[2] || 'plantuml');
+    const engine = raw === 'dot' ? 'graphviz' : raw;
     matches.push({ full: match[0], attrs: match[1], engine, source: match[3].trim() });
     match = regex.exec(html);
   }
 
   const resolved = await Promise.all(
     matches.map(async ({ full, attrs, engine, source }) => {
-      const result = await krokiRender(engine, source);
+      const result =
+        engine === 'd2'
+          ? await d2Render(source)
+          : await krokiRender(engine, source);
       if (!result.svg)
         return { full, replacement: full, warning: { engine, message: result.error } };
       const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${result.svg}</div></rk-diagram>`;
