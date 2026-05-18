@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Maps &amp; Geo Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"MP-01","selector":".leaflet-container"},
+{"id":"MP-02","selector":".leaflet-container"},
+{"id":"MP-03","selector":".rk-globe__container"},
+{"id":"MP-04","selector":".rk-globe__container"}
+]}</script></head>
+<body data-rk-theme="dark-pro">
+<h1>Maps &amp; Geo Cases</h1>
+<rk-section title="Leaflet Maps" level="h2" divider>
+  <rk-map title="OSM Default" center="39.9,116.4" zoom="10" height="320">
+[{"lat":39.9,"lng":116.4,"label":"Beijing"},{"lat":39.85,"lng":116.35,"label":"Near"}]
+  </rk-map>
+  <rk-map title="Carto Dark" center="31.2,121.5" zoom="9" tiles="carto-dark" height="320">
+[{"lat":31.2,"lng":121.5,"label":"Shanghai"},{"lat":31.15,"lng":121.4,"label":"Pudong"}]
+  </rk-map>
+</rk-section>
+<rk-section title="Globe" level="h2">
+  <rk-globe title="Global Points" height="400" auto-rotate>
+[{"lat":39.9,"lng":116.4,"size":1,"color":"#ef4444","label":"Beijing"},{"lat":31.2,"lng":121.5,"size":1,"color":"#3b82f6","label":"Shanghai"},{"lat":51.5,"lng":-0.1,"size":1,"color":"#10b981","label":"London"}]
+  </rk-globe>
+</rk-section>
+</body></html>
