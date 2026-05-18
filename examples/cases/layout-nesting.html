@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Layout Nesting Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"LY-01","selector":"rk-section rk-card"},
+{"id":"LY-02","selector":"rk-grid[cols='2']"},
+{"id":"LY-03","selector":"rk-grid[cols='3']"},
+{"id":"LY-04","selector":"rk-tabs .rk-tabs__panel"},
+{"id":"LY-05","selector":"rk-card rk-section"},
+{"id":"LY-06","selector":"rk-card rk-grid"},
+{"id":"LY-07","selector":".rk-section--divider"},
+{"id":"LY-08","selector":"rk-card rk-collapsible"},
+{"id":"LY-09","selector":"rk-grid rk-metric"},
+{"id":"LY-10","selector":"rk-section rk-card rk-grid rk-metric"}
+]}</script></head>
+<body data-rk-theme="notion-clean">
+<h1>Layout Nesting Cases</h1>
+<rk-section title="Section with Card" divider><rk-card title="Nested Card">Card body.</rk-card></rk-section>
+<rk-grid cols="2" gap="16"><div><rk-card title="Left">A</rk-card></div><div><rk-card title="Right">B</rk-card></div></rk-grid>
+<rk-grid cols="3" gap="12"><div>One</div><div>Two</div><div>Three</div></rk-grid>
+<rk-tabs><rk-tab label="One">Panel one</rk-tab><rk-tab label="Two">Panel two</rk-tab></rk-tabs>
+<rk-card title="Card with Section"><rk-section title="Inner Section" level="h3">Inner text.</rk-section></rk-card>
+<rk-card title="Card with Grid"><rk-grid cols="2"><div>A</div><div>B</div></rk-grid></rk-card>
+<rk-card title="Card with Collapsible"><rk-collapsible title="Details" open>Nested details.</rk-collapsible></rk-card>
+<rk-grid cols="2"><div><rk-metric cols="2"><rk-metric-item label="A" value="1"></rk-metric-item><rk-metric-item label="B" value="2"></rk-metric-item></rk-metric></div><div>Text</div></rk-grid>
+<rk-section title="Deep Nest" divider><rk-card title="Deep Card"><rk-grid cols="2"><div><rk-metric cols="2"><rk-metric-item label="C" value="3"></rk-metric-item><rk-metric-item label="D" value="4"></rk-metric-item></rk-metric></div><div><rk-callout type="success">OK</rk-callout></div></rk-grid></rk-card></rk-section>
+</body></html>

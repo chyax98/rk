@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Chart Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"CH-01","selector":"rk-chart[type='bar'] div[id^='echarts-']"},
+{"id":"CH-02","selector":"rk-chart[type='line'] div[id^='echarts-']"},
+{"id":"CH-03","selector":"rk-chart[type='area'] div[id^='echarts-']"},
+{"id":"CH-04","selector":"rk-chart[type='pie'] div[id^='echarts-']"},
+{"id":"CH-05","selector":"rk-chart[type='scatter'] div[id^='echarts-']"},
+{"id":"CH-06","selector":"rk-chart[type='funnel'] div[id^='echarts-']"},
+{"id":"CH-07","selector":"rk-chart[type='radar'] div[id^='echarts-']"},
+{"id":"CH-08","selector":"rk-chart[type='gauge'] div[id^='echarts-']"},
+{"id":"CH-09","selector":"rk-plot svg","min":2},
+{"id":"CH-10","selector":"rk-plot3d .js-plotly-plot","min":2}
+]}</script></head>
+<body data-rk-theme="linear-app">
+<h1>Chart Cases</h1>
+<rk-grid cols="2" gap="20">
+<rk-chart type="bar" title="Bar">[{"month":"Jan","value":12},{"month":"Feb","value":18},{"month":"Mar","value":24}]</rk-chart>
+<rk-chart type="line" title="Line">[{"month":"Jan","value":12},{"month":"Feb","value":18},{"month":"Mar","value":24}]</rk-chart>
+<rk-chart type="area" title="Area">[{"month":"Jan","value":12},{"month":"Feb","value":18},{"month":"Mar","value":24}]</rk-chart>
+<rk-chart type="pie" title="Pie">[{"name":"A","value":40},{"name":"B","value":35},{"name":"C","value":25}]</rk-chart>
+<rk-chart type="scatter" title="Scatter">[{"x":1,"y":2},{"x":2,"y":5},{"x":3,"y":4}]</rk-chart>
+<rk-chart type="funnel" title="Funnel">[{"name":"Visit","value":100},{"name":"Signup","value":42},{"name":"Paid","value":18}]</rk-chart>
+<rk-chart type="radar" title="Radar">{"axes":["Speed","Quality","Cost"],"series":[{"name":"A","values":[80,70,60]},{"name":"B","values":[60,85,75]}]}</rk-chart>
+<rk-chart type="gauge" title="Gauge">{"value":72,"name":"NPS","min":0,"max":100}</rk-chart>
+<rk-plot title="Plot Bar">{"marks":[{"type":"barY","data":[{"x":"A","y":5},{"x":"B","y":8}],"x":"x","y":"y"}],"x":{"label":"Name"},"y":{"label":"Value"}}</rk-plot>
+<rk-plot title="Plot Line">{"marks":[{"type":"lineY","data":[{"x":1,"y":2},{"x":2,"y":5},{"x":3,"y":4}],"x":"x","y":"y"}],"x":{"label":"Step"},"y":{"label":"Value"}}</rk-plot>
+<rk-plot3d title="3D Scatter" height="360">{"data":[{"type":"scatter3d","mode":"markers","x":[1,2,3],"y":[2,1,3],"z":[3,2,1]}]}</rk-plot3d>
+<rk-plot3d title="3D Surface" height="360">{"data":[{"type":"surface","z":[[1,2,3],[2,3,4],[3,4,5]]}]}</rk-plot3d>
+</rk-grid>
+</body></html>

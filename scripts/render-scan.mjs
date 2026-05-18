@@ -72,6 +72,17 @@ async function health() {
   }
 }
 
+function parseDeclaredSmoke(html) {
+  const m = html.match(/<script[^>]*(?:data-rk-smoke|id=["']rk-smoke["'])[^>]*>([\s\S]*?)<\/script>/i);
+  if (!m) return [];
+  try {
+    const parsed = JSON.parse(m[1]);
+    return Array.isArray(parsed) ? parsed : (parsed.cases || []);
+  } catch (e) {
+    return [{ id: 'rk-smoke-parse', selector: 'html', min: 1, parseError: e instanceof Error ? e.message : String(e) }];
+  }
+}
+
 async function pushCase(file) {
   const html = readFileSync(file, 'utf8');
   const title = basename(file, extname(file));
@@ -108,6 +119,26 @@ function browserJson(command, args = []) {
   const r = run('opencli', ['browser', session, command, ...args], { timeout: 60_000 });
   if (!r.ok) return { ok: false, error: r.stderr || r.stdout, count: 0, entries: [], messages: [] };
   return parseJson(r.stdout, { ok: false, raw: r.stdout, count: 0, entries: [], messages: [] });
+}
+
+function declaredSmokeSnippet(cases) {
+  return `(() => {
+    const cases = ${JSON.stringify(cases)};
+    const all = (sel) => {
+      try { return [...document.querySelectorAll(sel)]; }
+      catch (e) { return { error: String(e.message || e) }; }
+    };
+    const text = (el) => (el?.textContent || '').trim();
+    return cases.map((c) => {
+      if (c.parseError) return { id: c.id, ok: false, error: c.parseError };
+      const matches = all(c.selector || '');
+      if (!Array.isArray(matches)) return { id: c.id, selector: c.selector, ok: false, error: matches.error };
+      const count = matches.length;
+      const min = c.min ?? 1;
+      const contains = c.text ? matches.some((el) => text(el).includes(c.text)) : true;
+      return { id: c.id || c.name || c.selector, selector: c.selector, min, count, text: c.text || null, ok: count >= min && contains };
+    });
+  })()`;
 }
 
 const collectSnippet = String.raw`(() => {
@@ -197,6 +228,7 @@ function markdownReport(report) {
   lines.push(`- endpoint: ${report.endpoint}`);
   lines.push(`- session: ${report.session}`);
   lines.push(`- files: ${report.results.length}`);
+  lines.push(`- declared cases: ${report.declaredCaseCount}`);
   lines.push(`- pass: ${report.pass}`);
   lines.push(`- fail: ${report.fail}`);
   lines.push('');
@@ -239,6 +271,9 @@ async function main() {
     process.stdout.write(`scan ${rel} ... `);
     const result = { file: rel, ok: false, summary: {}, push: null, dom: null, console: null, network: null, feedback: null };
     try {
+      const sourceHtml = readFileSync(file, 'utf8');
+      const declaredSmoke = parseDeclaredSmoke(sourceHtml);
+      result.declaredCaseCount = declaredSmoke.length;
       const push = await pushCase(file);
       result.push = push;
       result.artifactId = push.artifactId;
@@ -246,6 +281,9 @@ async function main() {
       openBrowser(result.url);
       run('opencli', ['browser', session, 'wait', 'time', String(Math.ceil(waitMs / 1000))], { timeout: waitMs + 20_000 });
       result.dom = browserEval(collectSnippet);
+      if (result.dom && typeof result.dom === 'object') {
+        result.dom.declared = declaredSmoke.length ? browserEval(declaredSmokeSnippet(declaredSmoke)) : [];
+      }
       result.console = browserJson('console', ['--level', 'error', '--since', '2m']);
       result.network = browserJson('network', ['--failed', '--all', '--since', '2m']);
       result.feedback = await feedback(push.artifactId);
@@ -267,6 +305,7 @@ async function main() {
     endpoint,
     session,
     inputs: files.map((f) => f.replace(`${root}/`, '')),
+    declaredCaseCount: results.reduce((n, r) => n + (r.declaredCaseCount || 0), 0),
     pass: results.filter((r) => r.ok).length,
     fail: results.filter((r) => !r.ok).length,
     results,
