@@ -30,10 +30,9 @@ number          INTEGER NOT NULL,
 source_text     TEXT NOT NULL DEFAULT '',
 source_hash     TEXT NOT NULL DEFAULT '',
 model           TEXT NOT NULL DEFAULT '{}',
-block_ids       TEXT NOT NULL DEFAULT '[]',
 html_source     TEXT,                          -- 原始 HTML
 processed_html  TEXT,                          -- 处理后 HTML（含 anchor + 高亮）
-created_at      TEXT NOT NULL
+
 ```
 
 ### anchors
@@ -51,8 +50,8 @@ text_preview    TEXT                           -- 前 200 字符
 ```sql
 id                    TEXT PRIMARY KEY,         -- 'cmt_' + 10 hex
 artifact_id           TEXT REFERENCES artifacts(id) ON DELETE CASCADE,
-block_id              TEXT NOT NULL,            -- 对应 anchor
-text                  TEXT NOT NULL DEFAULT '',
+anchor                TEXT NOT NULL,            -- 对应 data-rk-anchor
+
 selector              TEXT,                     -- JSON: TextQuoteSelector
 status                TEXT NOT NULL DEFAULT 'open',  -- open | resolved | orphaned
 created_at_revision   INTEGER,
@@ -120,4 +119,4 @@ created_at            TEXT NOT NULL
 - store 函数虽声明 `async`，内部全是同步 SQLite 调用
 - **没有连接池**，单进程单连接
 - **没有软删除**，deleteArtifact 物理删除所有关联数据
-- comment 的 `block_id` 对应 anchor 的 `anchor` 字段（不是 anchor.id）
+- comment 的 `anchor` 对应 anchors 表里的 `anchor` 字段（不是 anchor.id）

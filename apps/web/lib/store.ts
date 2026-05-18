@@ -27,7 +27,6 @@ interface DbRevision {
   source_text: string;
   source_hash: string;
   model: string;
-  block_ids: string;
   html_source: string | null;
   processed_html: string | null;
   created_at: string;
@@ -36,7 +35,7 @@ interface DbRevision {
 interface DbComment {
   id: string;
   artifact_id: string;
-  block_id: string;
+  anchor: string;
   text: string;
   selector: string | null;
   status: string;
@@ -150,8 +149,8 @@ function rowToComment(r: DbComment): Comment {
   const c: Comment = {
     id: r.id,
     artifactId: r.artifact_id,
-    anchor: r.block_id,
-    text: r.text,
+    anchor: r.anchor,
+
     selector: r.selector ? (JSON.parse(r.selector) as TextQuoteSelector) : null,
     status: r.status,
     createdAtRevision: r.created_at_revision,
@@ -205,8 +204,8 @@ export async function addComment(
 ) {
   const db = getDb();
   const artifact = db
-    .prepare('SELECT id FROM artifacts WHERE id = ?')
-    .get(artifactId) as DbArtifact | undefined;
+    .prepare('SELECT id, current_revision FROM artifacts WHERE id = ?')
+    .get(artifactId) as Pick<DbArtifact, 'id' | 'current_revision'> | undefined;
   if (!artifact) return { ok: false as const, status: 404, error: 'artifact not found' };
 
   const currentRev = artifact.current_revision;
@@ -222,7 +221,7 @@ export async function addComment(
   };
 
   db.prepare(`
-    INSERT INTO comments (id, artifact_id, block_id, text, selector, status, created_at_revision, block_snapshot, created_at)
+    INSERT INTO comments (id, artifact_id, anchor, text, selector, status, created_at_revision, block_snapshot, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
   `).run(
     c.id,
@@ -441,8 +440,8 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
     }
 
     db.prepare(`
-      INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, block_ids, html_source, processed_html, created_at)
-      VALUES (?, ?, ?, '', '', '{}', '[]', ?, ?, ?)
+      INSERT INTO revisions (id, artifact_id, number, source_text, source_hash, model, html_source, processed_html, created_at)
+      VALUES (?, ?, ?, '', '', '{}', ?, ?, ?)
     `).run(revId, artifactId, nextRev, rawHtml, processedHtml, _now);
 
     // Delete old anchors for this artifact and insert new ones
@@ -460,10 +459,10 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
       const diff = diffAnchors(prevAnchorIds, anchorIds);
       if (diff.removed.length > 0) {
         const commentRows = db
-          .prepare('SELECT id, block_id FROM comments WHERE artifact_id = ? AND status = ?')
+          .prepare('SELECT id, anchor FROM comments WHERE artifact_id = ? AND status = ?')
           .all(artifactId, COMMENT_OPEN) as DbComment[];
         for (const c of commentRows) {
-          if (diff.removed.includes(c.block_id)) {
+          if (diff.removed.includes(c.anchor)) {
             db.prepare('UPDATE comments SET status = ? WHERE id = ?').run(COMMENT_ORPHANED, c.id);
           }
         }

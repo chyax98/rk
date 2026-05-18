@@ -83,8 +83,8 @@ const theme = useMemo(() => {
 
 ```
 POST /api/artifacts/:id/comments
-  body: { blockId: "anc_0", text: "评论内容" }
-  → store.ts addComment()
+  body: { anchor: "anc_0", text: "评论内容" }
+
   → SQLite comments 表
 
 GET /api/artifacts/:id/feedback

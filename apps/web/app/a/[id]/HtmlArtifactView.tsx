@@ -189,7 +189,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
       const res = await fetch(`/api/artifacts/${meta.id}/comments`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ blockId: adding.anchor, text: adding.text.trim() }),
+        body: JSON.stringify({ anchor: adding.anchor, text: adding.text.trim() }),
       });
       const data = await res.json();
       if (data.ok && data.comment) {
@@ -200,7 +200,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
             id: c.id,
             anchor: c.anchor || adding.anchor,
             text: c.text,
-            status: c.status || 'open',
+
             createdAt: c.createdAt,
           },
         ]);

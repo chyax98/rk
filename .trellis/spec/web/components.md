@@ -63,10 +63,10 @@ ArtifactView
 
 ### useComments(artifactId, initial)
 - 管理 `Comment[]` state
-- `submitComment(blockId, text, selector)` → fetch POST
+- `submitComment(anchor, text, selector)` → fetch POST
 - `setCommentStatus(commentId, status)` → fetch PATCH
-- `commentsFor(blockId)` → 过滤函数
-- `blockCommentStatus(blockId)` → 返回 'open' | 'orphaned' | 'resolved' | null
+- `commentsFor(anchor)` → 过滤函数
+- `commentStatusForAnchor(anchor)` → 返回 'open' | 'orphaned' | 'resolved' | null
 
 ### useReviewState()
 - reviewMode / drawerOpen / drawerMode / selected / outlineOpen / menu

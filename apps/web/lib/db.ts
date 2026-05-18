@@ -35,14 +35,15 @@ function migrate(db: Database.Database): void {
       source_text   TEXT NOT NULL,
       source_hash   TEXT NOT NULL,
       model         TEXT NOT NULL,
-      block_ids     TEXT NOT NULL,
+      html_source   TEXT,
+      processed_html TEXT,
       created_at    TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS comments (
       id                    TEXT PRIMARY KEY,
       artifact_id           TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
-      block_id              TEXT NOT NULL,
+      anchor                TEXT NOT NULL,
       text                  TEXT NOT NULL DEFAULT '',
       selector              TEXT,
       status                TEXT NOT NULL DEFAULT 'open',

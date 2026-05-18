@@ -63,8 +63,8 @@ CLI push → POST /api/artifacts { html }
 
 ### 数据模型
 
-- **Comment** 通过 `block_id`（anchor）关联文档位置
-- **TextQuoteSelector**（W3C 标准）：`{ exact, prefix, suffix }` 精确定位文本
+- **Comment** 通过 `anchor` 关联文档位置
+
 - 三态：`open` → `resolved` / `orphaned`
 
 ### 版本间 Anchor Diff
