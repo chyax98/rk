@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RenderKit Diagram Rendering Matrix</title>
+  <link rel="stylesheet" href="/rk/components.css">
+  <link rel="stylesheet" href="/rk/theme.css">
+  <script type="module" src="/rk/components.js"></script>
+</head>
+<body data-rk-theme="dark-pro">
+  <h1>Diagram Rendering Matrix</h1>
+  <p>Purpose: validate RenderKit diagram rendering with many D2 and Mermaid cases. Prefer these DSLs over bespoke compatibility code.</p>
+
+  <rk-callout type="info" title="Policy">
+    D2 for architecture/dependency/topology. Mermaid for flow/sequence/state/gantt. Every new renderer feature needs a case here or in a sibling matrix.
+  </rk-callout>
+
+  <rk-section title="D2 — Architecture / Dependency / Topology" level="h2" divider>
+    <rk-grid cols="2" gap="20">
+      <rk-card title="D2 01 — Basic Request Path">
+        <rk-diagram engine="d2" title="Basic Request Path">
+direction: right
+client: Browser
+edge: Edge Gateway
+api: API Server
+db: {
+  label: PostgreSQL
+  shape: cylinder
+}
+cache: {
+  label: Redis
+  shape: cylinder
+}
+client -> edge: HTTPS
+edge -> api: route
+api -> cache: read
+api -> db: write
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 02 — Layered System">
+        <rk-diagram engine="d2" title="Layered System">
+direction: down
+frontend: {
+  label: Frontend
+  web: Web App
+  mobile: Mobile App
+}
+services: {
+  label: Services
+  gateway: API Gateway
+  auth: Auth Service
+  billing: Billing Service
+}
+data: {
+  label: Data
+  postgres: {
+    label: PostgreSQL
+    shape: cylinder
+  }
+  s3: Object Storage
+}
+frontend.web -> services.gateway
+frontend.mobile -> services.gateway
+services.gateway -> services.auth
+services.gateway -> services.billing
+services.billing -> data.postgres
+services.billing -> data.s3
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 03 — Event Pipeline">
+        <rk-diagram engine="d2" title="Event Pipeline">
+direction: right
+producer: Producer
+kafka: {
+  label: Kafka
+  shape: queue
+}
+workerA: Worker A
+workerB: Worker B
+warehouse: {
+  label: Warehouse
+  shape: cylinder
+}
+producer -> kafka: publish
+kafka -> workerA: consume
+kafka -> workerB: consume
+workerA -> warehouse: load facts
+workerB -> warehouse: load metrics
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 04 — Trust Boundary">
+        <rk-diagram engine="d2" title="Trust Boundary">
+direction: right
+internet: Public Internet
+private: {
+  label: Private Network
+  gateway: WAF
+  app: Application
+  secrets: Secret Store
+}
+audit: Audit Log
+internet -> private.gateway
+private.gateway -> private.app
+private.app -> private.secrets
+private.app -> audit
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 05 — Monorepo Packages">
+        <rk-diagram engine="d2" title="Monorepo Packages">
+direction: right
+web: {
+  label: "@renderkit/web"
+}
+components: {
+  label: "@renderkit/components"
+}
+design: {
+  label: "@renderkit/design"
+}
+cli: {
+  label: "@renderkit/cli"
+}
+examples: examples
+web -> components
+web -> design
+components -> design
+cli -> web
+examples -> cli
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 06 — Deployment Rings">
+        <rk-diagram engine="d2" title="Deployment Rings">
+direction: down
+dev: Dev
+staging: Staging
+prod: {
+  label: Production
+  api: API Fleet
+  db: Primary DB
+  replicas: Read Replicas
+}
+canary: Canary
+dev -> staging: promote
+staging -> canary: canary deploy
+canary -> prod.api: rollout
+prod.api -> prod.db
+prod.api -> prod.replicas
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 07 — Feedback Loop">
+        <rk-diagram engine="d2" title="Feedback Loop">
+direction: right
+agent: Agent
+cli: rk CLI
+server: RenderKit Server
+browser: Browser
+human: Human Reviewer
+db: {
+  label: SQLite
+  shape: cylinder
+}
+agent -> cli: rk push
+cli -> server: POST artifact
+server -> db: store revision
+server -> browser: render artifact
+human -> browser: comment
+browser -> server: POST comment
+agent <- cli: rk feedback
+cli <- server: JSON feedback
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="D2 08 — Failure Domains">
+        <rk-diagram engine="d2" title="Failure Domains">
+direction: right
+zoneA: {
+  label: Zone A
+  apiA: API A
+  dbA: DB A
+}
+zoneB: {
+  label: Zone B
+  apiB: API B
+  dbB: DB B
+}
+lb: Load Balancer
+lb -> zoneA.apiA
+lb -> zoneB.apiB
+zoneA.apiA -> zoneA.dbA
+zoneB.apiB -> zoneB.dbB
+zoneA.dbA -> zoneB.dbB: replicate
+        </rk-diagram>
+      </rk-card>
+    </rk-grid>
+  </rk-section>
+
+  <rk-section title="Mermaid — Flow / Sequence / State / Planning" level="h2" divider>
+    <rk-grid cols="2" gap="20">
+      <rk-card title="Mermaid 01 — Flowchart TD">
+        <rk-diagram engine="mermaid" title="Flowchart TD">
+flowchart TD
+  A([Start]) --> B{Valid request?}
+  B -->|yes| C[Process]
+  B -->|no| D[Reject]
+  C --> E[(Database)]
+  E --> F([Done])
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 02 — Flowchart LR">
+        <rk-diagram engine="mermaid" title="Flowchart LR">
+flowchart LR
+  Client --> Gateway
+  Gateway --> Auth
+  Gateway --> API
+  API --> Cache
+  API --> Database
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 03 — Sequence">
+        <rk-diagram engine="mermaid" title="Sequence">
+sequenceDiagram
+  participant U as User
+  participant W as Web
+  participant A as API
+  participant D as DB
+  U->>W: Submit form
+  W->>A: POST /submit
+  A->>D: Insert row
+  D-->>A: OK
+  A-->>W: 201 Created
+  W-->>U: Show success
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 04 — State">
+        <rk-diagram engine="mermaid" title="State Machine">
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Review: submit
+  Review --> Draft: request changes
+  Review --> Approved: approve
+  Approved --> Published: publish
+  Published --> [*]
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 05 — Gantt">
+        <rk-diagram engine="mermaid" title="Gantt">
+gantt
+  title Release Plan
+  dateFormat  YYYY-MM-DD
+  section Foundation
+  API contract      :done, a1, 2026-05-01, 5d
+  Renderer cases    :active, a2, 2026-05-06, 6d
+  section Launch
+  QA sweep          :b1, 2026-05-12, 4d
+  Release           :milestone, b2, 2026-05-18, 0d
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 06 — Class">
+        <rk-diagram engine="mermaid" title="Class Diagram">
+classDiagram
+  HTMLElement <|-- RkDiagram
+  HTMLElement <|-- RkChart
+  class RkDiagram {
+    +connectedCallback()
+    +_render()
+    +_renderMermaid()
+  }
+  class RkChart {
+    +_render()
+    +_loadEcharts()
+  }
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 07 — ER">
+        <rk-diagram engine="mermaid" title="ER Diagram">
+erDiagram
+  ARTIFACT ||--o{ REVISION : has
+  ARTIFACT ||--o{ COMMENT : receives
+  REVISION ||--o{ RENDER_ERROR : records
+  ARTIFACT {
+    string id
+    string title
+  }
+  REVISION {
+    string id
+    int number
+  }
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 08 — Pie">
+        <rk-diagram engine="mermaid" title="Pie Chart">
+pie title Renderer Coverage
+  "D2" : 40
+  "Mermaid" : 40
+  "Interactive WC" : 15
+  "Legacy DSL" : 5
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 09 — Git Graph">
+        <rk-diagram engine="mermaid" title="Git Graph">
+gitGraph
+  commit id: "base"
+  branch feature
+  checkout feature
+  commit id: "add-cases"
+  commit id: "fix-renderer"
+  checkout main
+  merge feature id: "merge"
+        </rk-diagram>
+      </rk-card>
+
+      <rk-card title="Mermaid 10 — Journey">
+        <rk-diagram engine="mermaid" title="Journey">
+journey
+  title Agent authoring flow
+  section Author
+    Write HTML: 4: Agent
+    Push artifact: 5: Agent
+  section Review
+    Read page: 4: Human
+    Leave comments: 3: Human
+  section Iterate
+    Fetch feedback: 5: Agent
+    Update doc: 4: Agent
+        </rk-diagram>
+      </rk-card>
+    </rk-grid>
+  </rk-section>
+</body>
+</html>

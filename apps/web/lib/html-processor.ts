@@ -207,11 +207,13 @@ function extractBodyContent(html: string): string {
 }
 
 export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
+  // Diagram DSL must be processed before HTML parsing/serialization.
+  // Otherwise Mermaid/D2 arrows like --> are escaped to --&gt; by the parser,
+  // corrupting the source before it reaches Kroki/d2.
+  const { html: rawWithDiagrams, warnings } = await processPlantUML(rawHtml);
   // Strip full HTML wrapper if agent pushed a complete document
-  const bodyContent = extractBodyContent(rawHtml);
-  // PlantUML/Graphviz SSR via Kroki (best-effort — errors collected as warnings)
-  const { html: htmlWithDiagrams, warnings } = await processPlantUML(bodyContent);
-  const { document } = parseHTML(`<!doctype html><html><body>${htmlWithDiagrams}</body></html>`);
+  const bodyContent = extractBodyContent(rawWithDiagrams);
+  const { document } = parseHTML(`<!doctype html><html><body>${bodyContent}</body></html>`);
 
   // Pre-render code blocks with shiki (best-effort)
   await preRenderCodeBlocks(document);

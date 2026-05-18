@@ -95,7 +95,9 @@ console.log(x);
 </rk-chart>
 ```
 
-### rk-diagram — 图表（4 引擎 SSR）
+### rk-diagram — 图表 DSL（首选 Mermaid / D2）
+
+**默认路线**：D2 写架构/依赖/拓扑；Mermaid 写流程/时序/状态/甘特。Graphviz/PlantUML 只在明确需要遗留语法时用。
 
 ```html
 <!-- Mermaid -->
@@ -130,14 +132,14 @@ B --> A: 响应
 ```
 
 **引擎说明**：
-| 引擎 | 渲染方式 | 说明 |
+| 引擎 | 渲染方式 | 默认场景 |
 |---|---|---|
-| mermaid | 服务端 Kroki SSR（失败回退客户端 CDN） | 默认，语法简单 |
-| d2 | 服务端 spawn `d2` binary（需本地安装） | 声明式架构图，`rk doctor` 检测安装 |
-| graphviz/dot | 服务端 Kroki SSR | 自动布局，依赖/关系图 |
-| plantuml | 服务端 Kroki SSR | 最完整 UML 支持 |
+| d2 | 服务端 spawn `d2` binary（需本地安装） | 架构图、依赖图、系统边界、部署拓扑 |
+| mermaid | 服务端 Kroki SSR（失败回退客户端 CDN） | 流程图、时序图、状态机、甘特 |
+| graphviz/dot | 服务端 Kroki SSR | 仅 DOT 遗留图 |
+| plantuml | 服务端 Kroki SSR | 仅 UML 遗留图 |
 
-> **注意**：所有 4 个引擎均在服务端预渲染为 SVG 内联到 HTML。客户端无需加载额外 JS。如果 SSR 失败（如 d2 未安装），回退到客户端渲染（mermaid）或显示警告。
+> **注意**：不要为了旧语法加兼容 fallback。图渲染失败时，修 DSL 源码或补 case。
 
 ### rk-checklist — 待办/检查列表
 

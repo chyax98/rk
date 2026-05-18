@@ -1,4 +1,24 @@
-## 11. 组件选择指南
+## 组件选择指南
+
+### 总原则
+
+- **优先 D2 / Mermaid。** Agent 生成图表时，先问能否用文本 DSL 表达；能用就用 `rk-diagram`。
+- **不写兼容胶水。** 旧语法、旧 CDN、旧示例错了就修源头；不要为了兼容坏输入加 fallback。
+- **验证优先。** 每个新增组件/语法都需要 case；看 `rk feedback` 的 `renderErrors[]`，再浏览器抽查。
+
+### 图表 DSL 首选路线
+
+| 场景 | 首选 | 原因 |
+|------|------|------|
+| 系统架构、服务边界、部署拓扑 | `rk-diagram engine="d2"` | 结构化、自动布局、适合 agent 生成和 diff |
+| 包依赖、数据流、组件关系 | `rk-diagram engine="d2"` | D2 edge/container 表达清楚 |
+| 普通流程图、决策分支 | `rk-diagram engine="mermaid"` | 语法短，浏览器/SSR 双路径成熟 |
+| API 时序、登录/支付链路 | `rk-diagram engine="mermaid"` + `sequenceDiagram` | Mermaid 时序语法稳定 |
+| 状态机 | `rk-diagram engine="mermaid"` + `stateDiagram-v2` | 状态迁移可读 |
+| 计划排期 | `rk-diagram engine="mermaid"` + `gantt` | 时间线语义明确 |
+| 需要拖拽/编辑的流程画布 | `rk-flow` | 只有明确需要交互时用 X6 |
+| 知识图谱/大网络 | `rk-graph` / `rk-graph3d` | 只有节点很多且需要布局交互时用 |
+| 地图/地球/3D 模型 | `rk-map` / `rk-globe` / `rk-model` | 专用视觉场景 |
 
 ### 数据可视化
 
@@ -10,18 +30,6 @@
 | 3D 科学图表 | `rk-plot3d` | Plotly.js，surface/scatter3d/mesh3d |
 | 漏斗/雷达/仪表 | `rk-chart` | 同 rk-chart，type=funnel/radar/gauge |
 | 信息图 | `rk-infographic` | AntV Infographic，预设模板 |
-
-### 图 / 网络
-
-| 场景 | 推荐组件 | 说明 |
-|------|---------|------|
-| 流程图 | `rk-diagram engine="mermaid"` | 语法简单，SSR |
-| 流程图（交互式）| `rk-flow` | @antv/x6，拖拽/缩放 |
-| 知识图谱 | `rk-graph` | Cytoscape.js，5 种布局 |
-| 3D 网络图 | `rk-graph3d` | WebGL 力导向 |
-| 手绘草图 | `rk-sketch` | Rough.js，概念图/白板风 |
-| 架构图 | `rk-diagram engine="d2"` | 声明式，自动布局 |
-| 依赖图 | `rk-diagram engine="graphviz"` | DOT 语法，Kroki SSR |
 
 ### 地理
 
@@ -37,6 +45,7 @@
 | 3D 模型 | `rk-model` | GLTF/GLB，支持 AR |
 | 伪 3D 插画 | `rk-zdog` | 轻量矢量 3D，拖拽旋转 |
 | 自定义 3D 场景 | `rk-3d` | Three.js presets |
+| 手绘草图 | `rk-sketch` | Rough.js，概念图/白板风 |
 
 ### 数据表格
 
@@ -68,6 +77,3 @@
 
 - **rk-timeline**：历史事件、里程碑，有日期标记
 - **rk-steps**：流程步骤，有 current 标记当前进度
-
----
-

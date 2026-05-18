@@ -20,10 +20,10 @@
 
 ### 图表引擎选择
 
-- **Mermaid**: 通用流程图/序列图，服务端 SSR，失败回退客户端
-- **Graphviz**: 依赖图/关系图，服务端 Kroki SSR
-- **PlantUML**: UML 图，服务端 Kroki SSR
-- **D2**: 架构图，服务端 spawn d2 binary（需 `rk doctor` 检测安装）
+- **首选 D2**：系统架构、服务边界、依赖、部署拓扑。服务端 spawn `d2` binary，`rk doctor` 检测安装。
+- **首选 Mermaid**：流程图、时序图、状态机、甘特、旅程图。服务端 Kroki SSR，失败回退客户端。
+- **Graphviz / PlantUML**：仅在明确需要 DOT/UML 遗留语法时使用；不要作为默认选择。
+- **不要写兼容胶水**：旧语法不通就改语法和 case，不在组件里加多套 fallback。
 
 ### CDN 懒加载
 

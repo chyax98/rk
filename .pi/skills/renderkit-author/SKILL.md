@@ -41,6 +41,10 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 
 ## ⚠️ 最重要的规则（必读）
 
+**维护 RenderKit 仓库时不写向后兼容胶水。** 发现旧示例/旧语法/旧 CDN 错误：改主路、改文档、改 case；不要加双路径 fallback。
+
+**图表优先用 D2 / Mermaid。** D2 写架构、依赖、系统边界；Mermaid 写流程、时序、状态、甘特。只有明确需要交互/3D/地图时才用专用 WC。
+
 **自定义元素禁止自闭合标签**——HTML5 parser 会把后续元素变成子元素：
 
 ```html
@@ -100,7 +104,7 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 
 | 组件 | 用途 | 关键属性 |
 |---|---|---|
-| `rk-diagram` | 图表 SSR（Mermaid/D2/Graphviz/PlantUML）| `engine`, `title` |
+| `rk-diagram` | **首选图表 DSL：Mermaid/D2 SSR**（Graphviz/PlantUML 仅按需）| `engine`, `title` |
 | `rk-sketch` | Rough.js 手绘图 | `{shapes:[]}` JSON |
 | `rk-flow` | @antv/x6 流程图 | `{nodes,edges}` JSON |
 | `rk-graph` | Cytoscape 网络图 | `{nodes,edges}`, `layout` |
@@ -160,7 +164,7 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 | 趋势/对比图 | `rk-chart` (bar/line/pie) |
 | 统计分布 | `rk-plot` (Observable Plot) |
 | 3D 科学图 | `rk-plot3d` (Plotly) |
-| 流程/架构图 | `rk-diagram` (mermaid) / `rk-flow` |
+| 流程/架构图 | `rk-diagram`：流程/时序用 Mermaid，架构/依赖用 D2 |
 | 知识图谱 | `rk-graph` / `rk-graph3d` |
 | 地图标注 | `rk-map` |
 | 全球数据 | `rk-globe` |

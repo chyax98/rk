@@ -1,6 +1,6 @@
 # RenderKit Design System
 
-Agent 只需要在 `<body>` 上加一个属性，整个页面（包括所有 21 个 Web Components）自动切换风格：
+Agent 只需要在 `<body>` 上加一个属性，整个页面（包括所有 46 个 Web Components）自动切换风格：
 
 ```html
 <body data-rk-theme="dark-pro">

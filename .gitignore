@@ -10,5 +10,6 @@ node_modules
 research/design-assets/external-repos/
 dist/
 .pwcli/
+reports/render-scan/
 .alma-snapshots
 **/*.tsbuildinfo
