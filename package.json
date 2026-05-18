@@ -15,6 +15,7 @@
     "test:wc": "node --experimental-strip-types --test tests/wc-render.test.ts",
     "test:cli": "node --experimental-strip-types --test tests/cli.test.ts",
     "scan:render": "node scripts/render-scan.mjs",
+    "check:lifecycle": "node scripts/check-wc-lifecycle.mjs",
     "score": "node --experimental-strip-types scripts/score.ts",
     "prepare": "lefthook install"
   },
