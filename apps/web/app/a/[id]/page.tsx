@@ -132,7 +132,8 @@ export default async function ArtifactPage({
     anchorDiff = diffAnchors(compareLeftAnchors, compareRightAnchors);
   }
 
-  const panelOpen = sp.panel !== 'closed';
+  // Default to collapsed; opt-in via ?panel=open
+  const panelOpen = sp.panel === 'open';
 
   return (
     <HtmlArtifactView

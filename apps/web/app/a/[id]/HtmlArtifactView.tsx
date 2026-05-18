@@ -149,8 +149,8 @@ export default function HtmlArtifactView(props: Props) {
 
   /* ── Set artifact id so rk-form posts work ─────────────── */
   useEffect(() => {
-    document.documentElement.setAttribute('data-rk-artifact-id', meta.id);
-    return () => document.documentElement.removeAttribute('data-rk-artifact-id');
+    document.documentElement.setAttribute('data-rk-doc-id', meta.id);
+    return () => document.documentElement.removeAttribute('data-rk-doc-id');
   }, [meta.id]);
 
   /* ── Render errors: load + listen ──────────────────────── */
@@ -509,7 +509,7 @@ export default function HtmlArtifactView(props: Props) {
       const sp = new URLSearchParams();
       if (patch.rev != null && patch.rev !== meta.currentRevision) sp.set('rev', String(patch.rev));
       if (patch.compare) sp.set('compare', `${patch.compare[0]},${patch.compare[1]}`);
-      if (patch.panel === false) sp.set('panel', 'closed');
+      if (patch.panel === true) sp.set('panel', 'open');
       const qs = sp.toString();
       router.push(`/a/${meta.id}${qs ? `?${qs}` : ''}`);
     },
@@ -588,23 +588,23 @@ export default function HtmlArtifactView(props: Props) {
 
   return (
     <div
-      className={`rk-artifact${panelOpen ? ' is-panel-open' : ''}${compare ? ' is-compare' : ''}`}
+      className={`rk-doc-app${panelOpen ? ' is-panel-open' : ''}${compare ? ' is-compare' : ''}`}
       data-rk-theme={theme}
     >
       <link rel="stylesheet" href="/rk/theme.css" />
       <link rel="stylesheet" href="/rk/components.css" />
 
       {/* ── Topbar ── */}
-      <header className="rk-artifact-topbar">
-        <a href="/" className="rk-artifact-back" aria-label="返回列表">
+      <header className="rk-doc-topbar">
+        <a href="/" className="rk-doc-back" aria-label="返回列表">
           ←
         </a>
-        <div className="rk-artifact-title-wrap">
-          <span className="rk-artifact-title">{meta.title || '未命名文档'}</span>
-          <span className="rk-artifact-id" title={meta.id}>{meta.id}</span>
+        <div className="rk-doc-title-wrap">
+          <span className="rk-doc-title-text">{meta.title || '未命名文档'}</span>
+          <span className="rk-doc-id" title={meta.id}>{meta.id}</span>
         </div>
 
-        <div className="rk-artifact-topbar-spacer" />
+        <div className="rk-doc-topbar-spacer" />
 
         {/* Render error badge */}
         {renderErrors.length > 0 && (
@@ -746,7 +746,7 @@ export default function HtmlArtifactView(props: Props) {
       )}
 
       {/* ── Main body ── */}
-      <div className="rk-artifact-stage">
+      <div className="rk-doc-stage">
         {compare ? (
           <div className="rk-compare-split">
             <div className="rk-compare-pane">
