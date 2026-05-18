@@ -9,6 +9,22 @@ In Progress
 
 ## Notes
 
+## 2026-05-18 review 问题修复 (commit 5ffb35f)
+
+### 修复内容
+1. **构建恢复**：修复 `HtmlArtifactView.tsx` 本地评论 state 类型不完整、`store.ts` comment row 映射缺字段，恢复 `tsc` / `next build` 通过
+2. **评论 contract 收紧**：`POST /api/artifacts/:id/comments` 现在要求 `anchor` 非空且必须属于当前 artifact；不存在的 anchor 返回错误
+3. **默认测试覆盖补齐**：`package.json` 的 `test` 脚本纳入 `comment-anchor` 与 `cli` 套件
+4. **验证脚本同步**：`scripts/verify-smoke.ts`、`verify-browser.ts`、`verify-sqlite.ts` 统一改为 `anchor`
+5. **类型/错误处理清理**：submissions/code/diagram routes 移除 `any`，补全解析与错误分支
+
+### 验证结果
+- `pnpm run test` → 63/63 通过
+- `cd apps/web && pnpm exec tsc --noEmit --pretty false` → 无错误
+- `pnpm --filter @renderkit/web build` → 通过
+- `curl -s http://localhost:3737/api/health` → `{\"ok\":true,...}`
+- `rg -n "blockId|block_id|block_ids" apps/web tests scripts .trellis/spec/web` → 0 命中
+
 ## 2026-05-18 E2E 视觉验证 + 评论系统测试
 
 - 输出报告：`/tmp/rk-e2e-visual.md`

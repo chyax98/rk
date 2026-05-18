@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-17T18:16:02.400Z",
+  "timestamp": "2026-05-18T03:09:30.412Z",
   "total": 99,
   "maxTotal": 100,
   "percentage": 99,
@@ -54,11 +54,11 @@
       "max": 20,
       "percentage": 100,
       "details": [
-        "✓ 单元测试: 3 个文件",
+        "✓ 单元测试: 4 个文件",
         "✓ 测试 HTML: 3 个文件",
         "✓ 验证脚本: 4 个",
         "✓ 评分系统存在",
-        "✓ npm test 脚本: node --experimental-strip-types --test tests/html-processor.test.ts tests/wc-render.test.ts"
+        "✓ npm test 脚本: node --experimental-strip-types --test tests/comment-anchor.test.ts tests/html-processor.test.ts tests/wc-render.test.ts tests/cli.test.ts"
       ]
     },
     {
