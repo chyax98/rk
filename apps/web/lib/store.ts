@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { diffAnchors } from './anchor-diff.ts';
 import { getDb } from './db.ts';
-import { type ProcessedAnchor, processHTML } from './html-processor.ts';
+import { type ProcessedAnchor, processHTML, type RenderWarning } from './html-processor.ts';
 
 // All tables use CREATE TABLE IF NOT EXISTS (see db.ts): artifacts, revisions, comments, anchors, form_submissions
 
@@ -401,11 +401,12 @@ export interface HtmlArtifactResult {
   artifactId: string;
   revision: number;
   url: string;
+  warnings: RenderWarning[];
 }
 
 export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArtifactResult> {
   const db = getDb();
-  const { processedHtml, anchors, title } = await processHTML(rawHtml);
+  const { processedHtml, anchors, title, warnings } = await processHTML(rawHtml);
   const _now = now();
 
   // Check for existing artifact by file name
@@ -490,6 +491,7 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
     artifactId: finalArtifactId,
     revision: nextRev,
     url: `/a/${finalArtifactId}`,
+    warnings,
   };
 }
 

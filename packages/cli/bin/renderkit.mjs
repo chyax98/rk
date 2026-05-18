@@ -146,8 +146,18 @@ program
       artifactId: json.artifactId,
       revision: json.revision,
       url: artifactUrl,
+      ...(json.warnings?.length ? { warnings: json.warnings } : {}),
     };
     output(result);
+
+    // Print render warnings so agents can fix diagram syntax
+    if (json.warnings?.length) {
+      process.stderr.write(`\n⚠  ${json.warnings.length} diagram(s) failed to render:\n`);
+      for (const w of json.warnings) {
+        process.stderr.write(`   [${w.engine}] ${w.message}\n`);
+      }
+      process.stderr.write('\n');
+    }
 
     if (opts.open) openUrl(artifactUrl);
   });

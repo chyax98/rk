@@ -10,10 +10,16 @@ export interface ProcessedAnchor {
   textPreview: string | null;
 }
 
+export interface RenderWarning {
+  engine: string;
+  message: string;
+}
+
 export interface ProcessedHTML {
   processedHtml: string;
   anchors: ProcessedAnchor[];
   title: string;
+  warnings: RenderWarning[];
 }
 
 const TOP_LEVEL_TAGS = new Set([
@@ -98,7 +104,10 @@ async function preRenderCodeBlocks(document: Document): Promise<void> {
 }
 
 /** Fetch SVG from Kroki for a given engine (best-effort) */
-async function krokiRender(engine: string, source: string): Promise<string | null> {
+async function krokiRender(
+  engine: string,
+  source: string,
+): Promise<{ svg: string; error: null } | { svg: null; error: string }> {
   try {
     const res = await fetch(`https://kroki.io/${engine}/svg`, {
       method: 'POST',
@@ -106,15 +115,19 @@ async function krokiRender(engine: string, source: string): Promise<string | nul
       body: source,
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
-    return await res.text();
-  } catch {
-    return null;
+    if (!res.ok) {
+      // Capture Kroki's error body — it contains the actual syntax error from PlantUML/Graphviz
+      const errBody = await res.text().catch(() => `HTTP ${res.status}`);
+      return { svg: null, error: errBody.trim().slice(0, 300) };
+    }
+    return { svg: await res.text(), error: null };
+  } catch (e) {
+    return { svg: null, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
 /** Pre-process diagrams via Kroki SSR: plantuml + graphviz (best-effort, failures are silent) */
-async function processPlantUML(html: string): Promise<string> {
+async function processPlantUML(html: string): Promise<{ html: string; warnings: RenderWarning[] }> {
   const regex =
     /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
   const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
@@ -127,18 +140,23 @@ async function processPlantUML(html: string): Promise<string> {
 
   const resolved = await Promise.all(
     matches.map(async ({ full, attrs, engine, source }) => {
-      const svg = await krokiRender(engine, source);
-      if (!svg) return { full, replacement: full };
-      const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
-      return { full, replacement };
+      const result = await krokiRender(engine, source);
+      if (!result.svg)
+        return { full, replacement: full, warning: { engine, message: result.error } };
+      const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${result.svg}</div></rk-diagram>`;
+      return { full, replacement, warning: null };
     }),
   );
 
-  let result = html;
+  const warnings: RenderWarning[] = resolved
+    .filter((r) => r.warning !== null)
+    .map((r) => r.warning as RenderWarning);
+
+  let html2 = html;
   for (const { full, replacement } of resolved) {
-    result = result.replace(full, replacement);
+    html2 = html2.replace(full, replacement);
   }
-  return result;
+  return { html: html2, warnings };
 }
 
 /** Strip outer <html>/<head>/<body> wrapper if agent pushed a full document */
@@ -154,8 +172,8 @@ function extractBodyContent(html: string): string {
 export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
   // Strip full HTML wrapper if agent pushed a complete document
   const bodyContent = extractBodyContent(rawHtml);
-  // PlantUML SSR via Kroki (before DOM parsing)
-  const htmlWithDiagrams = await processPlantUML(bodyContent);
+  // PlantUML/Graphviz SSR via Kroki (best-effort — errors collected as warnings)
+  const { html: htmlWithDiagrams, warnings } = await processPlantUML(bodyContent);
   const { document } = parseHTML(`<!doctype html><html><body>${htmlWithDiagrams}</body></html>`);
 
   // Pre-render code blocks with shiki (best-effort)
@@ -184,6 +202,7 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
       processedHtml: '',
       anchors: [],
       title: title || 'Untitled',
+      warnings,
     };
   }
 
@@ -215,5 +234,6 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
     processedHtml,
     anchors,
     title: title || 'Untitled',
+    warnings,
   };
 }

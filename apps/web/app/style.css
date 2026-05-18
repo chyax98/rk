@@ -1903,42 +1903,25 @@ textarea {
   }
 }
 
-/* ─── 16:9 Wide Screen Layout (≥1440px) ─────────────────────────────────────
-   On wide displays the comment panel becomes a permanent right sidebar,
-   freeing the document area to breathe.  Content max-width grows to 960px.
-   Space utilization: ~780px content + 360px panel ≈ 72% of 1600px viewport.
+/* ─── 16:9 宽屏内容扩展 ──────────────────────────────────────────────────────
+   让生成的产物在桌面宽屏上充分利用横向空间。
+   Comment panel 保持 overlay 行为不变，只扩展内容区宽度。
+   1920×1080: content 1200px / viewport 1920px = 62% 利用率
+   1440×900 : content  960px / viewport 1440px = 67% 利用率
 ─────────────────────────────────────────────────────────────────────────── */
-@media (min-width: 1440px) {
-  /* Reserve right gutter for the always-visible panel */
-  .rk-layout {
-    padding-right: 360px;
-  }
-
-  /* Wider content column */
+@media (min-width: 1200px) {
   .rk-html-body {
     max-width: 960px;
-    padding-left: 48px;
-    padding-right: 48px;
   }
-
-  /* Panel: fixed sidebar, always visible, no shadow needed */
-  .rk-comment-panel {
-    width: 360px;
-    /* Override closed state — panel is always in view on wide screens */
-    transform: translateX(0) !important;
-    box-shadow: none;
-    border-left: 1px solid var(--rk-border, #e5e7eb);
+}
+@media (min-width: 1600px) {
+  .rk-html-body {
+    max-width: 1100px;
   }
-
-  /* Close button has no purpose when panel is always open */
-  .rk-comment-panel__close {
-    display: none;
-  }
-
-  /* Toggle button becomes a hint icon, not a functional open trigger */
-  .rk-panel-toggle-btn {
-    opacity: 0.4;
-    pointer-events: none;
+}
+@media (min-width: 1920px) {
+  .rk-html-body {
+    max-width: 1280px;
   }
 }
 

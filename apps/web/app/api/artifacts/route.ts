@@ -12,6 +12,8 @@ export async function POST(req: Request) {
       revision: result.revision,
       url: absolute(req, result.url),
       format: 'html',
+      // Surface diagram render failures so CLI/agents can act on them
+      warnings: result.warnings.length > 0 ? result.warnings : undefined,
     });
   } catch (e: unknown) {
     return Response.json({ ok: false, error: String(e) }, { status: 500 });
