@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently --names web,wc \"pnpm --filter @renderkit/web dev\" \"node packages/components/build.mjs --watch\"",
     "dev:web": "pnpm --filter @renderkit/web dev",
-    "build": "node packages/components/build.mjs && pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
+    "build": "node scripts/build-theme.mjs && node packages/components/build.mjs && pnpm --filter @renderkit/web build && pnpm --filter @renderkit/cli build",
     "renderkit": "node packages/cli/bin/renderkit.mjs",
     "push:example": "pnpm renderkit push examples/hello.html --open",
     "format": "pnpm exec biome format --write apps/web/app apps/web/lib packages/components/src packages/design/src tests package.json biome.json",

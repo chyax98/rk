@@ -3626,3 +3626,634 @@ var RkNarrative = class extends HTMLElement {
   }
 };
 customElements.define("rk-narrative", RkNarrative);
+
+// packages/components/src/elements/rk-plot3d.ts
+var RkPlot3d = class extends HTMLElement {
+  _raw = "";
+  _plotly = null;
+  _container = null;
+  _ro = null;
+  static get observedAttributes() {
+    return ["title", "height", "caption"];
+  }
+  connectedCallback() {
+    this._raw = (this.textContent || "").trim();
+    this._render();
+  }
+  disconnectedCallback() {
+    this._cleanup();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _cleanup() {
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
+    if (this._container && this._plotly) {
+      try {
+        this._plotly.purge(this._container);
+      } catch {
+      }
+    }
+    this._plotly = null;
+    this._container = null;
+  }
+  async _render() {
+    this._cleanup();
+    const title = this.getAttribute("title") || "";
+    const height = parseInt(this.getAttribute("height") || "450", 10);
+    const caption = this.getAttribute("caption") || "";
+    let spec;
+    try {
+      spec = JSON.parse(this._raw);
+    } catch (e) {
+      this.innerHTML = `<div class="rk-plot3d"><div class="rk-plot3d__error">Invalid JSON: ${e.message}</div></div>`;
+      return;
+    }
+    if (!spec.data || !Array.isArray(spec.data) || spec.data.length === 0) {
+      this.innerHTML = `<div class="rk-plot3d"><div class="rk-plot3d__error">Plotly spec requires a "data" array.</div></div>`;
+      return;
+    }
+    const container = document.createElement("div");
+    container.className = "rk-plot3d__chart";
+    container.style.width = "100%";
+    container.style.height = height + "px";
+    const wrapper = document.createElement("div");
+    wrapper.className = "rk-plot3d";
+    if (title) {
+      const h = document.createElement("div");
+      h.className = "rk-plot3d__title";
+      h.textContent = title;
+      wrapper.appendChild(h);
+    }
+    wrapper.appendChild(container);
+    if (caption) {
+      const c = document.createElement("div");
+      c.className = "rk-plot3d__caption";
+      c.textContent = caption;
+      wrapper.appendChild(c);
+    }
+    this.innerHTML = "";
+    this.appendChild(wrapper);
+    this._container = container;
+    try {
+      this._plotly = await this._loadPlotly();
+    } catch {
+      this.innerHTML = `<div class="rk-plot3d"><div class="rk-plot3d__error">Failed to load Plotly.js from CDN.</div></div>`;
+      return;
+    }
+    const textColor = getComputedStyle(this).getPropertyValue("--rk-text").trim() || "#333";
+    const defaultLayout = {
+      margin: { t: title ? 40 : 10, r: 10, b: 40, l: 10 },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: "transparent",
+      font: { color: textColor },
+      ...spec.layout || {}
+    };
+    const defaultConfig = {
+      responsive: true,
+      displayModeBar: false,
+      ...spec.config || {}
+    };
+    try {
+      await this._plotly.newPlot(container, spec.data, defaultLayout, defaultConfig);
+    } catch (e) {
+      container.innerHTML = `<div class="rk-plot3d__error">Plotly render error: ${e.message}</div>`;
+    }
+    this._ro = new ResizeObserver(() => {
+      if (this._plotly && this._container) {
+        try {
+          this._plotly.relayout(this._container, {
+            width: this._container.offsetWidth
+          });
+        } catch {
+        }
+      }
+    });
+    this._ro.observe(container);
+  }
+  _loadPlotly() {
+    const win = window;
+    if (win.Plotly) return Promise.resolve(win.Plotly);
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector("script[data-rk-plotly]");
+      if (existing) {
+        const check = () => {
+          if (win.Plotly) resolve(win.Plotly);
+          else reject(new Error("Plotly load timeout"));
+        };
+        existing.addEventListener("load", check);
+        existing.addEventListener("error", () => reject(new Error("Plotly script error")));
+        if (win.Plotly) {
+          resolve(win.Plotly);
+          return;
+        }
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2/plotly.min.js";
+      script.setAttribute("data-rk-plotly", "1");
+      script.onload = () => {
+        if (win.Plotly) resolve(win.Plotly);
+        else reject(new Error("Plotly global not found after load"));
+      };
+      script.onerror = () => reject(new Error("Failed to fetch Plotly CDN"));
+      document.head.appendChild(script);
+    });
+  }
+};
+customElements.define("rk-plot3d", RkPlot3d);
+
+// packages/components/src/elements/rk-graph3d.ts
+var GROUP_COLORS = [
+  "#6366f1",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4"
+];
+var RkGraph3d = class extends HTMLElement {
+  _raw = "";
+  _graph = null;
+  _ro = null;
+  static get observedAttributes() {
+    return ["title", "height", "dag"];
+  }
+  connectedCallback() {
+    this._raw = (this.textContent || "").trim();
+    this._render();
+  }
+  disconnectedCallback() {
+    this._cleanup();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _cleanup() {
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
+    if (this._graph) {
+      try {
+        this._graph._destructor();
+      } catch {
+      }
+      this._graph = null;
+    }
+  }
+  async _render() {
+    this._cleanup();
+    const title = this.getAttribute("title") || "";
+    const height = parseInt(this.getAttribute("height") || "500", 10);
+    const dagAttr = this.getAttribute("dag");
+    let data;
+    try {
+      data = JSON.parse(this._raw);
+    } catch (e) {
+      this.innerHTML = `<div class="rk-graph3d"><div class="rk-graph3d__error">Invalid JSON: ${e.message}</div></div>`;
+      return;
+    }
+    if (!data.nodes || !Array.isArray(data.nodes) || data.nodes.length === 0) {
+      this.innerHTML = `<div class="rk-graph3d"><div class="rk-graph3d__error">Graph spec requires "nodes" array.</div></div>`;
+      return;
+    }
+    if (!data.links) data.links = [];
+    const container = document.createElement("div");
+    container.className = "rk-graph3d__canvas";
+    container.style.width = "100%";
+    container.style.height = height + "px";
+    const wrapper = document.createElement("div");
+    wrapper.className = "rk-graph3d";
+    if (title) {
+      const h = document.createElement("div");
+      h.className = "rk-graph3d__title";
+      h.textContent = title;
+      wrapper.appendChild(h);
+    }
+    wrapper.appendChild(container);
+    this.innerHTML = "";
+    this.appendChild(wrapper);
+    let FG;
+    try {
+      FG = await this._loadLib();
+    } catch {
+      this.innerHTML = `<div class="rk-graph3d"><div class="rk-graph3d__error">Failed to load 3d-force-graph from CDN.</div></div>`;
+      return;
+    }
+    try {
+      const graph = FG()(container).graphData(data).nodeLabel((n) => n.label || n.id).linkLabel((l) => l.label || `${l.source} \u2192 ${l.target}`).nodeColor(
+        (n) => n.color || GROUP_COLORS[(n.group || 0) % GROUP_COLORS.length]
+      ).nodeVal((n) => n.size || n.val || 1).linkColor(() => "rgba(255,255,255,0.2)").linkWidth(1).linkDirectionalArrowLength(3.5).linkDirectionalArrowRelPos(1).backgroundColor("transparent").width(container.offsetWidth).height(container.offsetHeight).cooldownTicks(200);
+      if (dagAttr !== null) {
+        graph.dagMode("td").dagLevelDistance(50);
+      }
+      this._graph = graph;
+      this._ro = new ResizeObserver(() => {
+        if (this._graph) {
+          try {
+            this._graph.width(container.offsetWidth).height(container.offsetHeight);
+          } catch {
+          }
+        }
+      });
+      this._ro.observe(container);
+    } catch (e) {
+      container.innerHTML = `<div class="rk-graph3d__error">Graph render error: ${e.message}</div>`;
+    }
+  }
+  _loadLib() {
+    const win = window;
+    if (win.ForceGraph3D) return Promise.resolve(win.ForceGraph3D);
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector("script[data-rk-graph3d]");
+      if (existing) {
+        const check = () => {
+          if (win.ForceGraph3D) resolve(win.ForceGraph3D);
+          else reject(new Error("3d-force-graph load timeout"));
+        };
+        existing.addEventListener("load", check);
+        existing.addEventListener("error", () => reject(new Error("3d-force-graph script error")));
+        if (win.ForceGraph3D) {
+          resolve(win.ForceGraph3D);
+          return;
+        }
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/3d-force-graph@1/dist/3d-force-graph.min.js";
+      script.setAttribute("data-rk-graph3d", "1");
+      script.onload = () => {
+        if (win.ForceGraph3D) resolve(win.ForceGraph3D);
+        else reject(new Error("ForceGraph3D global not found after load"));
+      };
+      script.onerror = () => reject(new Error("Failed to fetch 3d-force-graph CDN"));
+      document.head.appendChild(script);
+    });
+  }
+};
+customElements.define("rk-graph3d", RkGraph3d);
+
+// packages/components/src/elements/rk-graph.ts
+var ACCENT_PALETTE = [
+  "#6366f1",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4"
+];
+var RkGraph = class extends HTMLElement {
+  _cy = null;
+  _raw = "";
+  _uid = Math.random().toString(36).slice(2, 9);
+  static get observedAttributes() {
+    return ["title", "height", "layout"];
+  }
+  connectedCallback() {
+    this._raw = (this.textContent || "").trim();
+    this._render();
+  }
+  disconnectedCallback() {
+    if (this._cy) {
+      this._cy.destroy();
+      this._cy = null;
+    }
+  }
+  attributeChangedCallback() {
+    if (this._cy) {
+      this._cy.destroy();
+      this._cy = null;
+    }
+    this._render();
+  }
+  _parseData() {
+    if (!this._raw) return null;
+    try {
+      const data = JSON.parse(this._raw);
+      if (!data || !Array.isArray(data.nodes)) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  async _render() {
+    const height = parseInt(this.getAttribute("height") || "400", 10) || 400;
+    const title = this.getAttribute("title") || "";
+    const layoutName = this.getAttribute("layout") || "cose";
+    const data = this._parseData();
+    const containerId = `rk-graph-${this._uid}`;
+    if (!data) {
+      this.innerHTML = `<div class="rk-graph"><div class="rk-graph__error">Invalid JSON. Expected: {"nodes": [...], "edges": [...]}</div></div>`;
+      return;
+    }
+    this.innerHTML = `
+      <div class="rk-graph">
+        ${title ? `<div class="rk-graph__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-graph__container" id="${containerId}" style="height:${height}px;width:100%;"></div>
+        <div class="rk-graph__info">${data.nodes.length} nodes, ${data.edges.length} edges</div>
+      </div>`;
+    try {
+      const cytoscape = await import(
+        /* @vite-ignore */
+        "https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.esm.min.js"
+      );
+      const container = this.querySelector(`#${containerId}`);
+      if (!container) return;
+      const groups = [...new Set(data.nodes.map((n) => n.group || "default"))];
+      const groupColor = (group) => {
+        const idx = groups.indexOf(group);
+        return ACCENT_PALETTE[idx % ACCENT_PALETTE.length];
+      };
+      const elements = [
+        ...data.nodes.map((n) => ({
+          data: {
+            id: n.id,
+            label: n.label || n.id,
+            group: n.group || "default",
+            color: groupColor(n.group || "default")
+          }
+        })),
+        ...data.edges.map((e, i) => ({
+          data: {
+            id: `e${i}`,
+            source: e.source,
+            target: e.target,
+            label: e.label || ""
+          }
+        }))
+      ];
+      const cy = cytoscape.default({
+        container,
+        elements,
+        style: [
+          {
+            selector: "node",
+            style: {
+              "label": "data(label)",
+              "text-valign": "center",
+              "text-halign": "center",
+              "font-size": "11px",
+              "color": "var(--rk-text, #1e293b)",
+              "background-color": "data(color)",
+              "border-width": 1,
+              "border-color": "var(--rk-border, #e2e8f0)",
+              "width": 60,
+              "height": 30,
+              "shape": "round-rectangle",
+              "text-wrap": "ellipsis",
+              "text-max-width": "56px",
+              "font-family": "system-ui, sans-serif"
+            }
+          },
+          {
+            selector: "edge",
+            style: {
+              "width": 1.5,
+              "line-color": "var(--rk-border, #94a3b8)",
+              "target-arrow-color": "var(--rk-border, #94a3b8)",
+              "target-arrow-shape": "triangle",
+              "curve-style": "bezier",
+              "label": "data(label)",
+              "font-size": "9px",
+              "text-rotation": "autorotate",
+              "text-outline-width": 2,
+              "text-outline-color": "var(--rk-bg, #ffffff)",
+              "color": "var(--rk-muted, #64748b)",
+              "font-family": "system-ui, sans-serif"
+            }
+          }
+        ],
+        layout: {
+          name: layoutName,
+          animate: false,
+          fit: true,
+          padding: 30
+        }
+      });
+      this._cy = cy;
+    } catch (err) {
+      const container = this.querySelector(`#${containerId}`);
+      if (container) {
+        container.innerHTML = `<div class="rk-graph__error">Graph load failed: ${err.message}</div>`;
+      }
+    }
+  }
+};
+customElements.define("rk-graph", RkGraph);
+
+// packages/components/src/elements/rk-flow.ts
+var NODE_DEFAULTS = { width: 120, height: 40 };
+var NODE_COLORS = [
+  "#6366f1",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4"
+];
+var RkFlow = class extends HTMLElement {
+  _graph = null;
+  _raw = "";
+  _uid = Math.random().toString(36).slice(2, 9);
+  _scriptLoaded = false;
+  static get observedAttributes() {
+    return ["title", "height", "readonly"];
+  }
+  connectedCallback() {
+    this._raw = (this.textContent || "").trim();
+    this._render();
+  }
+  disconnectedCallback() {
+    if (this._graph) {
+      this._graph.dispose();
+      this._graph = null;
+    }
+  }
+  attributeChangedCallback() {
+    if (this._graph) {
+      this._graph.dispose();
+      this._graph = null;
+    }
+    this._render();
+  }
+  _parseData() {
+    if (!this._raw) return null;
+    try {
+      const data = JSON.parse(this._raw);
+      if (!data || !Array.isArray(data.nodes)) return null;
+      return data;
+    } catch {
+      return null;
+    }
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  _loadScript() {
+    return new Promise((resolve, reject) => {
+      if (window.X6) {
+        resolve();
+        return;
+      }
+      const existing = document.querySelector("script[data-rk-x6]");
+      if (existing) {
+        existing.addEventListener("load", () => resolve());
+        existing.addEventListener("error", () => reject(new Error("X6 CDN load failed")));
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@antv/x6@2/dist/x6.js";
+      script.setAttribute("data-rk-x6", "");
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("X6 CDN load failed"));
+      document.head.appendChild(script);
+    });
+  }
+  async _render() {
+    const height = parseInt(this.getAttribute("height") || "350", 10) || 350;
+    const title = this.getAttribute("title") || "";
+    const readonly = this.hasAttribute("readonly") || !this.hasAttribute("readonly") && true;
+    const interactive = !this.hasAttribute("readonly") || true;
+    const data = this._parseData();
+    const containerId = `rk-flow-${this._uid}`;
+    if (!data) {
+      this.innerHTML = `<div class="rk-flow"><div class="rk-flow__error">Invalid JSON. Expected: {"nodes": [...], "edges": [...]}</div></div>`;
+      return;
+    }
+    this.innerHTML = `
+      <div class="rk-flow">
+        ${title ? `<div class="rk-flow__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-flow__container" id="${containerId}" style="height:${height}px;width:100%;"></div>
+        <div class="rk-flow__info">${data.nodes.length} nodes, ${data.edges.length} edges</div>
+      </div>`;
+    try {
+      await this._loadScript();
+      const X6 = window.X6;
+      const container = this.querySelector(`#${containerId}`);
+      if (!container) return;
+      const positionedNodes = data.nodes.map((n, i) => {
+        if (n.x !== void 0 && n.y !== void 0) return n;
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        return { ...n, x: 40 + col * 180, y: 40 + row * 80 };
+      });
+      const nodeColors = {};
+      positionedNodes.forEach((n, i) => {
+        nodeColors[n.id] = n.color || NODE_COLORS[i % NODE_COLORS.length];
+      });
+      const graph = new X6.Graph({
+        container,
+        width: container.clientWidth,
+        height,
+        autoResize: true,
+        background: { transparent: true },
+        grid: false,
+        panning: { enabled: true },
+        mousewheel: { enabled: true, modifiers: [] },
+        interacting: { nodeMovable: false },
+        connecting: {
+          anchor: "center",
+          connectionPoint: "anchor",
+          allowBlank: false,
+          snap: true,
+          createEdge() {
+            return null;
+          }
+        }
+      });
+      for (const n of positionedNodes) {
+        const color = nodeColors[n.id];
+        const w = n.width || NODE_DEFAULTS.width;
+        const h = n.height || NODE_DEFAULTS.height;
+        graph.addNode({
+          id: n.id,
+          x: n.x,
+          y: n.y,
+          width: w,
+          height: h,
+          shape: "rect",
+          attrs: {
+            body: {
+              fill: color,
+              stroke: color,
+              strokeWidth: 1,
+              rx: 6,
+              ry: 6
+            },
+            label: {
+              text: n.label || n.id,
+              fill: "#ffffff",
+              fontSize: 12,
+              fontFamily: "system-ui, sans-serif"
+            }
+          }
+        });
+      }
+      for (const e of data.edges) {
+        graph.addEdge({
+          source: e.source,
+          target: e.target,
+          attrs: {
+            line: {
+              stroke: "var(--rk-border, #94a3b8)",
+              strokeWidth: 1.5,
+              targetMarker: { name: "block", width: 8, height: 6 }
+            }
+          },
+          router: { name: "normal" },
+          connector: { name: "rounded" },
+          labels: e.label ? [
+            {
+              attrs: {
+                label: {
+                  text: e.label,
+                  fill: "var(--rk-muted, #64748b)",
+                  fontSize: 10,
+                  fontFamily: "system-ui, sans-serif"
+                },
+                rect: {
+                  fill: "var(--rk-bg, #ffffff)",
+                  stroke: "var(--rk-border, #e2e8f0)",
+                  strokeWidth: 0.5,
+                  rx: 3,
+                  ry: 3
+                }
+              }
+            }
+          ] : []
+        });
+      }
+      graph.centerContent();
+      this._graph = graph;
+    } catch (err) {
+      const container = this.querySelector(`#${containerId}`);
+      if (container) {
+        container.innerHTML = `<div class="rk-flow__error">Flow load failed: ${err.message}</div>`;
+      }
+    }
+  }
+};
+customElements.define("rk-flow", RkFlow);

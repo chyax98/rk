@@ -35,3 +35,7 @@ import './elements/rk-zdog.ts';
 import './elements/rk-model.ts';
 import './elements/rk-globe.ts';
 import './elements/rk-narrative.ts';
+import './elements/rk-plot3d.ts';
+import './elements/rk-graph3d.ts';
+import './elements/rk-graph.ts';
+import './elements/rk-flow.ts';

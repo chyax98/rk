@@ -1843,3 +1843,149 @@ h4.rk-section__title { font-size: var(--rk-text-base); font-weight: var(--rk-wei
   background: var(--rk-tone-danger-bg, #fef2f2);
   border-radius: var(--rk-radius-md);
 }
+
+/* ── Graph (Cytoscape.js) ─────────────────────────────────────── */
+.rk-graph {
+  border: 1px solid var(--rk-border, #e2e8f0);
+  border-radius: var(--rk-radius-md, 8px);
+  overflow: hidden;
+  background: var(--rk-bg, #fff);
+}
+.rk-graph__title {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rk-text, #1e293b);
+  border-bottom: 1px solid var(--rk-border, #e2e8f0);
+  background: var(--rk-surface, #f8fafc);
+}
+.rk-graph__container {
+  width: 100%;
+  background: var(--rk-bg, #fff);
+}
+.rk-graph__info {
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--rk-muted, #64748b);
+  border-top: 1px solid var(--rk-border, #e2e8f0);
+  background: var(--rk-surface, #f8fafc);
+}
+.rk-graph__error {
+  padding: 16px;
+  color: var(--rk-tone-danger, #dc2626);
+  font-size: 13px;
+}
+
+/* ── Flow (@antv/x6) ──────────────────────────────────────────── */
+.rk-flow {
+  border: 1px solid var(--rk-border, #e2e8f0);
+  border-radius: var(--rk-radius-md, 8px);
+  overflow: hidden;
+  background: var(--rk-bg, #fff);
+}
+.rk-flow__title {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rk-text, #1e293b);
+  border-bottom: 1px solid var(--rk-border, #e2e8f0);
+  background: var(--rk-surface, #f8fafc);
+}
+.rk-flow__container {
+  width: 100%;
+  background: var(--rk-bg, #fff);
+}
+.rk-flow__info {
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--rk-muted, #64748b);
+  border-top: 1px solid var(--rk-border, #e2e8f0);
+  background: var(--rk-surface, #f8fafc);
+}
+.rk-flow__error {
+  padding: 16px;
+  color: var(--rk-tone-danger, #dc2626);
+  font-size: 13px;
+}
+
+/* dark theme */
+[data-rk-theme="paper-dark"] .rk-graph,
+[data-rk-theme="paper-dark"] .rk-flow,
+:root[data-rk-theme="paper-dark"] .rk-graph,
+:root[data-rk-theme="paper-dark"] .rk-flow {
+  background: var(--rk-bg, #0f172a);
+}
+[data-rk-theme="paper-dark"] .rk-graph__title,
+[data-rk-theme="paper-dark"] .rk-flow__title,
+:root[data-rk-theme="paper-dark"] .rk-graph__title,
+:root[data-rk-theme="paper-dark"] .rk-flow__title {
+  background: var(--rk-surface, #1e293b);
+  border-bottom-color: var(--rk-border, #334155);
+}
+[data-rk-theme="paper-dark"] .rk-graph__info,
+[data-rk-theme="paper-dark"] .rk-flow__info,
+:root[data-rk-theme="paper-dark"] .rk-graph__info,
+:root[data-rk-theme="paper-dark"] .rk-flow__info {
+  background: var(--rk-surface, #1e293b);
+  border-top-color: var(--rk-border, #334155);
+}
+
+/* ── Plot3d (Plotly.js) ──────────────────────────────────────── */
+.rk-plot3d {
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  overflow: hidden;
+  background: var(--rk-surface, var(--rk-bg, #fff));
+}
+.rk-plot3d__title {
+  padding: var(--rk-space-3) var(--rk-space-4);
+  font-weight: 600;
+  font-size: var(--rk-text-base);
+  border-bottom: var(--rk-border-width) solid var(--rk-border-subtle);
+}
+.rk-plot3d__chart {
+  width: 100%;
+}
+.rk-plot3d__caption {
+  padding: var(--rk-space-2) var(--rk-space-4);
+  font-size: var(--rk-text-sm);
+  color: var(--rk-muted);
+  border-top: var(--rk-border-width) solid var(--rk-border-subtle);
+}
+.rk-plot3d__error {
+  padding: var(--rk-space-4);
+  color: var(--rk-tone-danger-border, #dc2626);
+  font-size: var(--rk-text-sm);
+  font-family: var(--rk-mono, monospace);
+  background: var(--rk-tone-danger-bg, #fef2f2);
+  border-radius: var(--rk-radius-md);
+}
+@media (prefers-color-scheme: dark) {
+  .rk-plot3d { background: var(--rk-surface, var(--rk-bg, #1a1a2e)); }
+}
+
+/* ── Graph3d (3d-force-graph) ───────────────────────────────── */
+.rk-graph3d {
+  border: var(--rk-border-width) solid var(--rk-border-subtle);
+  border-radius: var(--rk-radius-lg);
+  overflow: hidden;
+  background: #0f0f23;
+}
+.rk-graph3d__title {
+  padding: var(--rk-space-3) var(--rk-space-4);
+  font-weight: 600;
+  font-size: var(--rk-text-base);
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.rk-graph3d__canvas {
+  width: 100%;
+}
+.rk-graph3d__error {
+  padding: var(--rk-space-4);
+  color: var(--rk-tone-danger-border, #dc2626);
+  font-size: var(--rk-text-sm);
+  font-family: var(--rk-mono, monospace);
+  background: var(--rk-tone-danger-bg, #fef2f2);
+  border-radius: var(--rk-radius-md);
+}

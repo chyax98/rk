@@ -6,39 +6,32 @@ In Progress
 ## Tasks
 
 ### Done
-- [x] rk-narrative WC implemented (pure vanilla, no CDN)
-  - Inline text + sparklines + value highlights + badges + mini bars
-  - 5 phrase types: text, value, sparkline, bar, badge
-  - Zero external dependency
-- [x] CLI improvements completed
-  - D2 WASM removed, clear fallback message
-  - `_reportRenderError` added to rk-diagram + rk-chart (5 error points)
-  - `render_errors` DB table + `recordRenderError` / `getRenderErrors` in store
-  - `POST /api/artifacts/:id/render-errors` endpoint
-  - `rk feedback` now includes `renderErrors[]`
-  - `rk doctor` checks d2 CLI availability
-- [x] New WC components batch (background agents)
-  - `rk-infographic` — @antv/infographic CDN
-  - `rk-map` — Leaflet CDN (no API key needed, OpenStreetMap)
-  - `rk-plot` — Observable Plot CDN
-  - `rk-datagrid` — AG Grid Community CDN
+- [x] 13 new WC components (rk-card, rk-section, rk-diff, rk-infographic, rk-map, rk-plot, rk-datagrid, rk-narrative, rk-sketch, rk-zdog, rk-model, rk-globe, rk-chart extensions)
+- [x] D2 SSR via local binary (`spawn d2 - -`) in html-processor
+- [x] Mermaid SSR via Kroki in html-processor
+- [x] PlantUML/Graphviz SSR via Kroki (pre-existing)
+- [x] D2 WC: remove broken WASM, friendly error message
+- [x] render-error feedback loop: WC CustomEvent → HtmlArtifactView → POST API → SQLite → rk feedback
+- [x] rk doctor: d2 installation check
+- [x] Build: 130KB, 75/75 tests, 40 WCs
+- [x] rk-plot3d (Plotly.js 3D): surface, scatter3d, mesh3d, cone, streamtube
+- [x] rk-graph3d (3d-force-graph): 3D force-directed network graph with DAG layout
+- [x] Build: 149.3KB, 75/75 tests, 42 WCs
+
+- [x] rk-graph (Cytoscape.js): 2D network/knowledge graph, group coloring, layout options (cose/circle/grid/breadthfirst/concentric)
+- [x] rk-flow (@antv/x6): flow/DAG diagram, auto-layout, rounded rects, edge labels, pan/zoom
+- [x] Build: 140.5KB, 75/75 tests, 44 WCs
 
 ### In Progress
-- [ ] rk-sketch (Rough.js)
-- [ ] model-viewer integration
-- [ ] rk-plot-3d (Plotly.js)
-- [ ] rk-zdog (Zdog)
+- [ ] Design system: theme.css unification, surface tokens for new WCs
+- [ ] ECharts SSR (Node.js + jsdom)
 
-## Build
-- Bundle: 130.1KB (apps/web/public/rk/components.js)
-- Tests: 75/75 pass
-- TypeScript: no errors
+## Files Changed
+See git log for full history.
 
-## Files Changed (this session)
-- `packages/components/src/elements/rk-diagram.ts` — D2 fix + _reportRenderError
-- `packages/components/src/elements/rk-chart.ts` — _reportRenderError in 3 catch blocks
-- `apps/web/lib/db.ts` — render_errors table migration
-- `apps/web/lib/store.ts` — recordRenderError, getRenderErrors, getFeedback, deleteArtifact
-- `apps/web/app/api/artifacts/[id]/render-errors/route.ts` — NEW endpoint
-- `packages/cli/bin/renderkit.mjs` — d2 check in doctor
-- `apps/web/public/rk/components.js` — rebuilt
+## Notes
+- All visualization libraries loaded via CDN (zero bundle impact except component code)
+- SSR engines: d2=local binary, mermaid/plantuml/graphviz=Kroki HTTP
+- Mermaid SSR is best-effort with graceful client-side fallback
+- rk-plot3d: Plotly.js handles both 3D (scatter3d, surface, mesh3d, cone, streamtube) and 2D types
+- rk-graph3d: dark background (#0f0f23), group-based accent palette, optional DAG mode

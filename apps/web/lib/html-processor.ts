@@ -159,10 +159,10 @@ async function krokiRender(
   }
 }
 
-/** Pre-process diagrams via SSR: d2 (local binary) + plantuml/graphviz (Kroki) */
+/** Pre-process diagrams via SSR: d2 (local binary) + plantuml/graphviz/mermaid (Kroki) */
 async function processPlantUML(html: string): Promise<{ html: string; warnings: RenderWarning[] }> {
   const regex =
-    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot|d2)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot|d2|mermaid)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
   const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
   let match = regex.exec(html);
   while (match !== null) {
