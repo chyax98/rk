@@ -31,6 +31,50 @@ function openUrl(url) {
   spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref();
 }
 
+const CDN_CHECKS = [
+  { name: 'echarts', version: '5.6.0', url: 'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js' },
+  { name: 'ag-grid-css', version: '32.3.9', url: 'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-grid.css' },
+  { name: 'ag-grid-theme-alpine', version: '32.3.9', url: 'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-theme-alpine.css' },
+  { name: 'ag-grid', version: '32.3.9', url: 'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/dist/ag-grid-community.min.js' },
+  { name: 'cytoscape', version: '3.28.1', url: 'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.esm.min.js' },
+  { name: 'mermaid', version: '11.15.0', url: 'https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs' },
+  { name: 'roughjs', version: '4.6.6', url: 'https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js' },
+  { name: '3d-force-graph', version: '1.80.0', url: 'https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js' },
+  { name: 'plotly', version: '2.35.3', url: 'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js' },
+  { name: 'scrollama', version: '3.2.0', url: 'https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js' },
+  { name: 'viz-js', version: '3.14.0', url: 'https://cdn.jsdelivr.net/npm/@viz-js/viz@3.14.0/lib/viz-standalone.js' },
+  { name: 'observable-plot', version: '0.6.17', url: 'https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/+esm' },
+  { name: 'x6', version: '2.18.1', url: 'https://cdn.jsdelivr.net/npm/@antv/x6@2.18.1/dist/index.js' },
+  { name: 'globe.gl', version: '2.31.0', url: 'https://cdn.jsdelivr.net/npm/globe.gl@2.31.0/dist/globe.gl.min.js' },
+  { name: 'three-globe-earth', version: '2.31.0', url: 'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg' },
+  { name: 'zdog', version: '1.1.3', url: 'https://cdn.jsdelivr.net/npm/zdog@1.1.3/dist/zdog.dist.min.js' },
+  { name: 'leaflet-css', version: '1.9.4', url: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css' },
+  { name: 'leaflet-esm', version: '1.9.4', url: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js' },
+  { name: 'antv-infographic', version: '0.2.19', url: 'https://cdn.jsdelivr.net/npm/@antv/infographic@0.2.19/dist/infographic.min.js' },
+  { name: 'three', version: '0.170.0', url: 'https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js' },
+  { name: 'model-viewer', version: '3.5.0', url: 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js' },
+];
+
+async function checkCdnUrl(item) {
+  const t0 = Date.now();
+  try {
+    const res = await fetch(item.url, { method: 'HEAD', signal: AbortSignal.timeout(10000) });
+    return { ...item, ok: res.ok, status: res.status, latencyMs: Date.now() - t0, contentType: res.headers.get('content-type') || undefined };
+  } catch (e) {
+    return { ...item, ok: false, error: e instanceof Error ? e.message : String(e), latencyMs: Date.now() - t0 };
+  }
+}
+
+async function checkCdnManifest() {
+  const results = await Promise.all(CDN_CHECKS.map(checkCdnUrl));
+  return {
+    ok: results.every((r) => r.ok),
+    count: results.length,
+    failed: results.filter((r) => !r.ok).length,
+    results,
+  };
+}
+
 function formatFeedbackMarkdown(feedback) {
   if (!feedback.openComments?.length) {
     return `# RenderKit Feedback\n\nartifactId: ${feedback.artifactId}\n\n✅ 暂无待处理评论。\n`;
@@ -301,7 +345,8 @@ program
 program
   .command('doctor')
   .description('Diagnose local RenderKit environment')
-  .action(async () => {
+  .option('--cdn', 'Also verify lazy-loaded CDN dependencies')
+  .action(async (opts) => {
     const checks = {};
 
     // 1. Server health
@@ -355,7 +400,12 @@ program
       checks.d2 = { ok: false, hint: 'Install: curl -fsSL https://d2lang.com/install.sh | sh' };
     }
 
-    output({ ok: true, checks });
+    // 6. Lazy CDN dependencies (optional because it hits the network)
+    if (opts.cdn) {
+      checks.cdn = await checkCdnManifest();
+    }
+
+    output({ ok: opts.cdn ? checks.cdn.ok : true, checks });
   });
 
 // rk validate <file.html>

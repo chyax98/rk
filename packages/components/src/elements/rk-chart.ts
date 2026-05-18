@@ -141,7 +141,7 @@ connectedCallback(): void {
 
     try {
       const echarts = await import(
-        'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js'
+        'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
       const chart = echarts.init(container);
       this._chartInstance = chart;
@@ -220,7 +220,7 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
 
     try {
       const echarts = await import(
-        'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js'
+        'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
       const chart = echarts.init(container);
       this._chartInstance = chart;
@@ -296,7 +296,7 @@ max: ind.max ?? (Math.ceil(Math.max(...series.map((s) => s.values[i] ?? 0)) * 1.
 
     try {
       const echarts = await import(
-        'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js'
+        'https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js'
       );
       const chart = echarts.init(container);
       this._chartInstance = chart;

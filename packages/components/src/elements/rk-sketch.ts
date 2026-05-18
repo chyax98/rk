@@ -159,7 +159,7 @@ connectedCallback(): void {
       // Lazy load Rough.js ESM
       const rough = (await import(
         /* @vite-ignore */
-        'https://cdn.jsdelivr.net/npm/roughjs@4/bundled/rough.esm.js'
+        'https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js'
       )) as unknown as { default: { svg: (el: SVGSVGElement) => RoughSVG } };
 
       const rc = (rough.default || rough) as { svg: (el: SVGSVGElement) => RoughSVG };

@@ -125,10 +125,10 @@ connectedCallback(): void {
     try {
       // Load AG Grid CSS + theme CSS
       await this._loadStylesheet(
-        'https://cdn.jsdelivr.net/npm/ag-grid-community@32/styles/ag-grid.css',
+        'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-grid.css',
       );
       await this._loadStylesheet(
-        `https://cdn.jsdelivr.net/npm/ag-grid-community@32/styles/ag-theme-${theme}.css`,
+        `https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-theme-${theme}.css`,
       );
 
       // Load AG Grid JS
@@ -186,7 +186,7 @@ connectedCallback(): void {
 
       const script = document.createElement('script');
       script.src =
-        'https://cdn.jsdelivr.net/npm/ag-grid-community@32/dist/ag-grid-community.min.js';
+        'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/dist/ag-grid-community.min.js';
       script.onload = () => {
         if ((window as Record<string, unknown>).agGrid) {
           resolve((window as Record<string, unknown>).agGrid as AgGridModule);

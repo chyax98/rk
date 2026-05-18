@@ -194,7 +194,7 @@ connectedCallback(): void {
         return;
       }
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/3d-force-graph@1/dist/3d-force-graph.min.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js';
       script.setAttribute('data-rk-graph3d', '1');
       script.onload = () => {
         if (win.ForceGraph3D) resolve(win.ForceGraph3D);

@@ -265,13 +265,25 @@ var RkMetric = class extends HTMLElement {
 customElements.define("rk-metric", RkMetric);
 
 // packages/components/src/elements/rk-scroll-story.ts
-var SCROLLAMA_CDN = "https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.module.js";
+var SCROLLAMA_CDN = "https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js";
 function loadScrollama() {
-  if (window.__scrollama__) return Promise.resolve(window.__scrollama__);
-  return import(SCROLLAMA_CDN).then((mod) => {
-    const lib = mod.default || mod;
-    window.__scrollama__ = lib;
-    return lib;
+  if (window.scrollama) return Promise.resolve(window.scrollama);
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector("script[data-rk-scrollama]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.scrollama));
+      existing.addEventListener("error", () => reject(new Error("Scrollama CDN load failed")));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = SCROLLAMA_CDN;
+    script.setAttribute("data-rk-scrollama", "");
+    script.onload = () => {
+      if (window.scrollama) resolve(window.scrollama);
+      else reject(new Error("Scrollama global not found after load"));
+    };
+    script.onerror = () => reject(new Error("Scrollama CDN load failed"));
+    document.head.appendChild(script);
   });
 }
 var RkScrollStory = class extends HTMLElement {
@@ -1947,7 +1959,7 @@ var RkChart = class extends HTMLElement {
     const container = this.querySelector(".rk-chart__canvas");
     if (!container) return;
     try {
-      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js");
+      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const raw = this._raw.trim();
@@ -2014,7 +2026,7 @@ var RkChart = class extends HTMLElement {
     const container = this.querySelector(".rk-chart__canvas");
     if (!container) return;
     try {
-      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js");
+      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const raw = this._raw.trim();
@@ -2081,7 +2093,7 @@ var RkChart = class extends HTMLElement {
     const container = this.querySelector(".rk-chart__canvas");
     if (!container) return;
     try {
-      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.esm.min.js");
+      const echarts = await import("https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.esm.min.js");
       const chart = echarts.init(container);
       this._chartInstance = chart;
       const xField = this.getAttribute("xfield") || header[0] || "x";
@@ -2350,7 +2362,7 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+      const mermaid = await import("https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs");
       const isDark = this._isDark();
       const themeVars = this._getMermaidThemeVars();
       mermaid.default.initialize({
@@ -2386,7 +2398,7 @@ var RkDiagram = class extends HTMLElement {
     const loading = this.querySelector(".rk-diagram__loading");
     if (!canvas || !this._raw) return;
     try {
-      await import("https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js");
+      await import("https://cdn.jsdelivr.net/npm/@viz-js/viz@3.14.0/lib/viz-standalone.js");
       const vizGlobal = globalThis;
       const instanceFn = vizGlobal.Viz?.instance;
       if (!instanceFn) throw new Error("Viz.js not loaded");
@@ -2599,7 +2611,7 @@ function loadLib() {
       return;
     }
     const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/@antv/infographic@0.2/dist/infographic.min.js";
+    s.src = "https://cdn.jsdelivr.net/npm/@antv/infographic@0.2.19/dist/infographic.min.js";
     s.crossOrigin = "anonymous";
     s.onload = () => {
       if (window.AntVInfographic) {
@@ -2933,10 +2945,10 @@ var RkDatagrid = class extends HTMLElement {
     container.classList.add(themeClass);
     try {
       await this._loadStylesheet(
-        "https://cdn.jsdelivr.net/npm/ag-grid-community@32/styles/ag-grid.css"
+        "https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-grid.css"
       );
       await this._loadStylesheet(
-        `https://cdn.jsdelivr.net/npm/ag-grid-community@32/styles/ag-theme-${theme}.css`
+        `https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-theme-${theme}.css`
       );
       const agGrid = await this._loadAgGrid();
       const gridOptions = {
@@ -2980,7 +2992,7 @@ var RkDatagrid = class extends HTMLElement {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/ag-grid-community@32/dist/ag-grid-community.min.js";
+      script.src = "https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/dist/ag-grid-community.min.js";
       script.onload = () => {
         if (window.agGrid) {
           resolve(window.agGrid);
@@ -3258,7 +3270,7 @@ var RkSketch = class extends HTMLElement {
     try {
       const rough = await import(
         /* @vite-ignore */
-        "https://cdn.jsdelivr.net/npm/roughjs@4/bundled/rough.esm.js"
+        "https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js"
       );
       const rc = rough.default || rough;
       const drawer = rc.svg(svg);
@@ -3885,7 +3897,7 @@ var RkPlot3d = class extends HTMLElement {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2/plotly.min.js";
+      script.src = "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js";
       script.setAttribute("data-rk-plotly", "1");
       script.onload = () => {
         if (win.Plotly) resolve(win.Plotly);
@@ -4021,7 +4033,7 @@ var RkGraph3d = class extends HTMLElement {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/3d-force-graph@1/dist/3d-force-graph.min.js";
+      script.src = "https://cdn.jsdelivr.net/npm/3d-force-graph@1.80.0/dist/3d-force-graph.min.js";
       script.setAttribute("data-rk-graph3d", "1");
       script.onload = () => {
         if (win.ForceGraph3D) resolve(win.ForceGraph3D);
@@ -4106,7 +4118,7 @@ var RkGraph = class extends HTMLElement {
     try {
       const cytoscape = await import(
         /* @vite-ignore */
-        "https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.esm.min.js"
+        "https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.esm.min.js"
       );
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;

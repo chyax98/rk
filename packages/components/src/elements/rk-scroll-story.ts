@@ -2,7 +2,7 @@
 // Scroll-driven narrative sections using Scrollama.
 // Steps scroll into view → active class toggle → highlight/transition.
 //
-// CDN: https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.module.js
+// CDN: https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js
 //
 // Usage:
 //   <rk-scroll-story offset="0.5">
@@ -10,14 +10,28 @@
 //     <rk-step>...</rk-step>
 //   </rk-scroll-story>
 
-const SCROLLAMA_CDN = 'https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.module.js';
+const SCROLLAMA_CDN = 'https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js';
 
 function loadScrollama(): Promise<any> {
-  if ((window as any).__scrollama__) return Promise.resolve((window as any).__scrollama__);
-  return import(SCROLLAMA_CDN).then((mod) => {
-    const lib = mod.default || mod;
-    (window as any).__scrollama__ = lib;
-    return lib;
+  if ((window as any).scrollama) return Promise.resolve((window as any).scrollama);
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-rk-scrollama]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve((window as any).scrollama));
+      existing.addEventListener('error', () => reject(new Error('Scrollama CDN load failed')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = SCROLLAMA_CDN;
+    script.setAttribute('data-rk-scrollama', '');
+    script.onload = () => {
+      if ((window as any).scrollama) resolve((window as any).scrollama);
+      else reject(new Error('Scrollama global not found after load'));
+    };
+    script.onerror = () => reject(new Error('Scrollama CDN load failed'));
+    document.head.appendChild(script);
   });
 }
 

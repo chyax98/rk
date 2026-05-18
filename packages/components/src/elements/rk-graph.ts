@@ -100,7 +100,7 @@ connectedCallback(): void {
     try {
       const cytoscape = (await import(
         /* @vite-ignore */
-        'https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.esm.min.js'
+        'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.esm.min.js'
       )) as unknown as CytoscapeModule;
 
       const container = this.querySelector(`#${containerId}`) as HTMLElement;

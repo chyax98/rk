@@ -220,7 +220,7 @@ connectedCallback(): void {
 
     try {
       const mermaid = await import(
-        'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'
+        'https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs'
       );
 
       // Beautiful-mermaid style: CSS variable driven themeVariables
@@ -267,7 +267,7 @@ connectedCallback(): void {
       // Use @viz-js/viz (same as docu.md / markdown-viewer-extension)
       // viz-standalone.js is a UMD bundle: it sets globalThis.Viz, not named ES exports
       // @ts-expect-error
-      await import('https://cdn.jsdelivr.net/npm/@viz-js/viz/lib/viz-standalone.js');
+      await import('https://cdn.jsdelivr.net/npm/@viz-js/viz@3.14.0/lib/viz-standalone.js');
       // @ts-expect-error
       const vizGlobal = globalThis as typeof globalThis & {
         Viz?: {

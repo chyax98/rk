@@ -159,7 +159,7 @@ connectedCallback(): void {
         return;
       }
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2/plotly.min.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js';
       script.setAttribute('data-rk-plotly', '1');
       script.onload = () => {
         if (win.Plotly) resolve(win.Plotly);

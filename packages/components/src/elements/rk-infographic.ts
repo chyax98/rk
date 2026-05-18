@@ -35,7 +35,7 @@ function loadLib(): Promise<AntVInfographicLib> {
       return;
     }
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@antv/infographic@0.2/dist/infographic.min.js';
+    s.src = 'https://cdn.jsdelivr.net/npm/@antv/infographic@0.2.19/dist/infographic.min.js';
     s.crossOrigin = 'anonymous';
     s.onload = () => {
       if (window.AntVInfographic) {
