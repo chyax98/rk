@@ -185,6 +185,7 @@ describe('CLI 错误处理', () => {
     assert.equal(r.code, 0);
     assert.ok(r.stdout.includes('push'), 'should list push');
     assert.ok(r.stdout.includes('feedback'), 'should list feedback');
+    assert.ok(r.stdout.includes('components'), 'should list components');
     assert.ok(r.stdout.includes('open'), 'should list open');
     assert.ok(r.stdout.includes('status'), 'should list status');
   });
@@ -195,5 +196,18 @@ describe('CLI 版本和帮助', () => {
     const r = run(`${CLI} --version`);
     assert.equal(r.code, 0);
     assert.ok(r.stdout.trim().length > 0, 'should have version output');
+  });
+
+  it('components 暴露 registry 覆盖情况', () => {
+    const r = run(`${CLI} components`);
+    assert.equal(r.code, 0);
+    const parsed = JSON.parse(r.stdout);
+    assert.equal(parsed?.ok, true);
+    assert.ok(Array.isArray(parsed?.components), 'should return components array');
+    assert.ok(parsed?.count >= 40, 'should include full registered catalog');
+    assert.equal(parsed?.count, parsed?.components.length);
+    assert.ok(parsed?.documentedCount >= 20, 'should preserve rich documented descriptors');
+    assert.equal(parsed?.derivedCount, 0, 'all registered components should now be catalogued');
+    assert.ok(parsed?.components.some((component: { tag: string }) => component.tag === 'rk-map'));
   });
 });

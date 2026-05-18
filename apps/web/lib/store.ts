@@ -187,6 +187,14 @@ function normalizeText(s: string): string {
     .replace(/[\p{P}\p{S}]/gu, '')
     .trim();
 }
+
+function getOrInitArray<K, V>(map: Map<K, V[]>, key: K): V[] {
+  const existing = map.get(key);
+  if (existing) return existing;
+  const created: V[] = [];
+  map.set(key, created);
+  return created;
+}
 /* ── row mappers ────────────────────────────────────────── */
 
 function rowToArtifact(r: DbArtifact): ArtifactMeta {
@@ -263,7 +271,7 @@ export async function listArtifacts(opts: ListArtifactsOptions = {}): Promise<Ar
       break;
   }
 
-  if (opts.q && opts.q.trim()) {
+  if (opts.q?.trim()) {
     where.push('(LOWER(title) LIKE ? OR LOWER(tags) LIKE ?)');
     const needle = `%${opts.q.trim().toLowerCase()}%`;
     params.push(needle, needle);
@@ -276,10 +284,7 @@ export async function listArtifacts(opts: ListArtifactsOptions = {}): Promise<Ar
   }
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
-  const orderSql =
-    sort === 'title'
-      ? 'ORDER BY LOWER(title) ASC'
-      : 'ORDER BY updated_at DESC';
+  const orderSql = sort === 'title' ? 'ORDER BY LOWER(title) ASC' : 'ORDER BY updated_at DESC';
 
   const sql = `SELECT * FROM artifacts ${whereSql} ${orderSql}`;
   const rows = db.prepare(sql).all(...params) as DbArtifact[];
@@ -477,7 +482,9 @@ export async function updateCommentText(artifactId: string, commentId: string, t
 
 export async function softDeleteArtifact(id: string): Promise<boolean> {
   const db = getDb();
-  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as { id: string } | undefined;
+  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as
+    | { id: string }
+    | undefined;
   if (!row) return false;
   db.prepare('UPDATE artifacts SET deleted_at = ?, updated_at = ? WHERE id = ?').run(
     now(),
@@ -489,7 +496,9 @@ export async function softDeleteArtifact(id: string): Promise<boolean> {
 
 export async function restoreArtifact(id: string): Promise<boolean> {
   const db = getDb();
-  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as { id: string } | undefined;
+  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as
+    | { id: string }
+    | undefined;
   if (!row) return false;
   db.prepare('UPDATE artifacts SET deleted_at = NULL, updated_at = ? WHERE id = ?').run(now(), id);
   return true;
@@ -623,14 +632,18 @@ export async function getFeedback(id: string) {
 
   // Only return root comments (parent_id = null) with status open/addressed/orphaned
   const roots = artifact.comments.filter(
-    (c) => c.parentId === null && (c.status === COMMENT_OPEN || c.status === COMMENT_ADDRESSED || c.status === COMMENT_ORPHANED),
+    (c) =>
+      c.parentId === null &&
+      (c.status === COMMENT_OPEN ||
+        c.status === COMMENT_ADDRESSED ||
+        c.status === COMMENT_ORPHANED),
   );
 
   // Build reply index: parent_id → replies sorted by createdAt
   const repliesByParent = new Map<string, Comment[]>();
   for (const c of artifact.comments) {
     if (c.parentId) {
-      const arr = repliesByParent.get(c.parentId) ?? repliesByParent.set(c.parentId, []).get(c.parentId)!;
+      const arr = getOrInitArray(repliesByParent, c.parentId);
       arr.push(c);
     }
   }
@@ -693,7 +706,8 @@ export async function pushHTML(
   const _now = now();
   const finalTitle = file || title;
   // TODO: persist push.author once artifacts.author column exists
-  const isTest = opts.isTest === true ? 1 : opts.isTest === false ? 0 : (isTestTitle(finalTitle) ? 1 : 0);
+  const isTest =
+    opts.isTest === true ? 1 : opts.isTest === false ? 0 : isTestTitle(finalTitle) ? 1 : 0;
 
   // Check for existing artifact by file name (ignore soft-deleted ones; restore not auto)
   let artifactId: string | null = null;
@@ -759,9 +773,15 @@ export async function pushHTML(
     if (!isNew) {
       const diff = diffAnchors(prevAnchorIds, anchorIds);
       if (diff.removed.length > 0) {
-        const openComments = db
-          .prepare('SELECT id, anchor, selector FROM comments WHERE artifact_id = ? AND status = ?')
-          .all(artifactId, COMMENT_OPEN) as Array<{ id: string; anchor: string; selector: string | null }>;
+        const rebindableComments = db
+          .prepare(
+            'SELECT id, anchor, selector FROM comments WHERE artifact_id = ? AND status IN (?, ?)',
+          )
+          .all(artifactId, COMMENT_OPEN, COMMENT_ADDRESSED) as Array<{
+          id: string;
+          anchor: string;
+          selector: string | null;
+        }>;
 
         // Build lookup indices from new anchors' textPreview
         const byExact = new Map<string, string[]>();
@@ -769,11 +789,11 @@ export async function pushHTML(
         for (const a of anchors) {
           if (!a.textPreview) continue;
           const k = a.textPreview.slice(0, 200);
-          const exactArr = byExact.get(k) ?? byExact.set(k, []).get(k)!;
+          const exactArr = getOrInitArray(byExact, k);
           if (!exactArr.includes(a.anchor)) exactArr.push(a.anchor);
           const nk = normalizeText(k);
           if (nk) {
-            const normArr = byNormalized.get(nk) ?? byNormalized.set(nk, []).get(nk)!;
+            const normArr = getOrInitArray(byNormalized, nk);
             if (!normArr.includes(a.anchor)) normArr.push(a.anchor);
           }
         }
@@ -781,14 +801,12 @@ export async function pushHTML(
         const updateAnchor = db.prepare(
           'UPDATE comments SET anchor = ?, rebound_at = ? WHERE id = ?',
         );
-        const markOrphan = db.prepare(
-          'UPDATE comments SET status = ? WHERE id = ?',
-        );
+        const markOrphan = db.prepare('UPDATE comments SET status = ? WHERE id = ?');
 
-        for (const c of openComments) {
+        for (const c of rebindableComments) {
           if (!diff.removed.includes(c.anchor)) continue;
           const sel = c.selector ? JSON.parse(c.selector) : null;
-          const exact = (sel?.exact as string | undefined);
+          const exact = sel?.exact as string | undefined;
           if (!exact) {
             markOrphan.run(COMMENT_ORPHANED, c.id);
             continue;
@@ -796,21 +814,29 @@ export async function pushHTML(
 
           // Strategy 1: exact match
           let cand = byExact.get(exact.slice(0, 200)) ?? [];
-          if (cand.length === 1) { updateAnchor.run(cand[0], _now, c.id); continue; }
+          if (cand.length === 1) {
+            updateAnchor.run(cand[0], _now, c.id);
+            continue;
+          }
 
           // Strategy 2: normalized match
           if (cand.length === 0) {
             const nk = normalizeText(exact.slice(0, 200));
             cand = nk ? (byNormalized.get(nk) ?? []) : [];
           }
-          if (cand.length === 1) { updateAnchor.run(cand[0], _now, c.id); continue; }
+          if (cand.length === 1) {
+            updateAnchor.run(cand[0], _now, c.id);
+            continue;
+          }
 
           // Strategy 3: prefix/suffix disambiguation
           if (cand.length > 1) {
             const prefixHint = ((sel.prefix as string | undefined) ?? '').toLowerCase().slice(-40);
-            const suffixHint = ((sel.suffix as string | undefined) ?? '').toLowerCase().slice(0, 40);
-            const scored = cand.map(anchorId => {
-              const ix = anchors.findIndex(a => a.anchor === anchorId);
+            const suffixHint = ((sel.suffix as string | undefined) ?? '')
+              .toLowerCase()
+              .slice(0, 40);
+            const scored = cand.map((anchorId) => {
+              const ix = anchors.findIndex((a) => a.anchor === anchorId);
               const prevText = (anchors[ix - 1]?.textPreview ?? '').toLowerCase();
               const nextText = (anchors[ix + 1]?.textPreview ?? '').toLowerCase();
               let score = 0;

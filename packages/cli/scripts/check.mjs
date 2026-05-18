@@ -20,7 +20,7 @@ if (res.status !== 0) {
   process.exit(1);
 }
 
-const expected = ['push', 'feedback', 'reply', 'address', 'resolve', 'reopen', 'validate', 'doctor'];
+const expected = ['push', 'feedback', 'reply', 'address', 'resolve', 'reopen', 'validate', 'doctor', 'components'];
 const missing = expected.filter((cmd) => !res.stdout.includes(`  ${cmd} `));
 if (missing.length) {
   console.error(`cli: missing commands in --help: ${missing.join(', ')}`);

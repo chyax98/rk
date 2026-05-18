@@ -48,13 +48,6 @@ const STATUS_LABEL: Record<CommentStatus, string> = {
   orphaned: '锚点已失效',
 };
 
-const STATUS_COLOR: Record<CommentStatus, string> = {
-  open: '#f59e0b',
-  addressed: '#3b82f6',
-  resolved: '#10b981',
-  orphaned: '#9ca3af',
-};
-
 /* ─── Body subtree memoized to avoid React state churn re-mounting Web Components ─── */
 const BodyHtml = memo(
   function BodyHtml({ html }: { html: string }) {
@@ -109,10 +102,7 @@ export default function HtmlArtifactView(props: Props) {
     for (const a of anchors) m.set(a.anchor, a.textPreview?.slice(0, 80) || a.anchor);
     return m;
   }, [anchors]);
-  const anchorPos = useMemo(
-    () => new Map(anchors.map((a) => [a.anchor, a.position])),
-    [anchors],
-  );
+  const anchorPos = useMemo(() => new Map(anchors.map((a) => [a.anchor, a.position])), [anchors]);
 
   const threads = useMemo<Thread[]>(() => {
     const byParent = new Map<string, Comment[]>();
@@ -247,7 +237,7 @@ export default function HtmlArtifactView(props: Props) {
       cancelAnimationFrame(raf1);
       if (bodyRef.current) bodyRef.current.removeEventListener('scroll', onScroll);
     };
-  }, [threadByAnchor, displayedHtml]);
+  }, [threadByAnchor]);
 
   /* ── Scroll-to-anchor with offset ──────────────────────── */
   const scrollToAnchor = useCallback((anchor: string, commentId?: string) => {
@@ -319,9 +309,9 @@ export default function HtmlArtifactView(props: Props) {
         return;
       }
       const range = sel.getRangeAt(0);
-      const anchor = (range.commonAncestorContainer as HTMLElement).parentElement?.closest('[data-rk-anchor]') as
-        | HTMLElement
-        | null;
+      const anchor = (range.commonAncestorContainer as HTMLElement).parentElement?.closest(
+        '[data-rk-anchor]',
+      ) as HTMLElement | null;
       if (!anchor || !bodyRef.current?.contains(anchor)) {
         setSelectionBtn(null);
         return;
@@ -358,7 +348,7 @@ export default function HtmlArtifactView(props: Props) {
         target.removeAttribute('data-comment-count');
       }
     }
-  }, [threadByAnchor, anchorSet, displayedHtml]);
+  }, [threadByAnchor, anchorSet]);
 
   /* ── Compare mode: anchor-diff coloring + synced scroll ─── */
   useEffect(() => {
@@ -378,7 +368,7 @@ export default function HtmlArtifactView(props: Props) {
     };
     apply(compareLeftRef.current, 'left');
     apply(compareRightRef.current, 'right');
-  }, [compare, displayedHtml]);
+  }, [compare]);
 
   useEffect(() => {
     if (!compare) return;
@@ -432,7 +422,9 @@ export default function HtmlArtifactView(props: Props) {
   /* ── Build TextQuoteSelector from DOM anchor element ── */
   const buildSelector = useCallback((anchorId: string): TextQuoteSelector | null => {
     if (!bodyRef.current) return null;
-    const el = bodyRef.current.querySelector(`[data-rk-anchor="${anchorId}"]`) as HTMLElement | null;
+    const el = bodyRef.current.querySelector(
+      `[data-rk-anchor="${anchorId}"]`,
+    ) as HTMLElement | null;
     if (!el) return null;
     const exact = (el.textContent || '').trim().slice(0, 500);
     if (!exact) return null;
@@ -469,7 +461,15 @@ export default function HtmlArtifactView(props: Props) {
     } finally {
       setSubmitting(false);
     }
-}, [addingForAnchor, buildSelector, cancelDraft, draftText, localComments, meta.id, replyingToId]);
+  }, [
+    addingForAnchor,
+    buildSelector,
+    cancelDraft,
+    draftText,
+    localComments,
+    meta.id,
+    replyingToId,
+  ]);
 
   const transitionStatus = useCallback(
     async (commentId: string, next: CommentStatus) => {
@@ -534,10 +534,7 @@ export default function HtmlArtifactView(props: Props) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      const inField =
-        t?.tagName === 'INPUT' ||
-        t?.tagName === 'TEXTAREA' ||
-        t?.isContentEditable;
+      const inField = t?.tagName === 'INPUT' || t?.tagName === 'TEXTAREA' || t?.isContentEditable;
       if (inField) {
         if (e.key === 'Escape') (t as HTMLInputElement).blur();
         return;
@@ -615,7 +612,9 @@ export default function HtmlArtifactView(props: Props) {
         </a>
         <div className="rk-doc-title-wrap">
           <span className="rk-doc-title-text">{meta.title || '未命名文档'}</span>
-          <span className="rk-doc-id" title={meta.id}>{meta.id}</span>
+          <span className="rk-doc-id" title={meta.id}>
+            {meta.id}
+          </span>
         </div>
 
         <div className="rk-doc-topbar-spacer" />
@@ -642,7 +641,8 @@ export default function HtmlArtifactView(props: Props) {
               setShowCompareMenu(false);
             }}
           >
-            v{viewingRev}{!isCurrentRev && !compare && ' · 历史'}
+            v{viewingRev}
+            {!isCurrentRev && !compare && ' · 历史'}
             {compare && ` vs v${compare.leftRev}`}
           </button>
           {showRevisionsMenu && (
@@ -737,8 +737,9 @@ export default function HtmlArtifactView(props: Props) {
             </button>
           </div>
           {renderErrors.slice(0, 12).map((e) => (
-            <div
+            <button
               key={e.id}
+              type="button"
               className="rk-error-row"
               onClick={() => {
                 if (e.anchor) {
@@ -746,15 +747,10 @@ export default function HtmlArtifactView(props: Props) {
                   setShowErrorPanel(false);
                 }
               }}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(ev) => {
-                if (ev.key === 'Enter' && e.anchor) scrollToAnchor(e.anchor);
-              }}
             >
               <code className="rk-error-row-engine">{e.engine}</code>
               <span className="rk-error-row-msg">{e.message}</span>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -773,8 +769,12 @@ export default function HtmlArtifactView(props: Props) {
               <div className="rk-compare-pane-head">
                 v{compare.rightRev}（当前）
                 <span className="rk-diff-legend">
-                  <span className="rk-diff-chip rk-diff-added">+{compare.anchorDiff.added.length}</span>
-                  <span className="rk-diff-chip rk-diff-removed">−{compare.anchorDiff.removed.length}</span>
+                  <span className="rk-diff-chip rk-diff-added">
+                    +{compare.anchorDiff.added.length}
+                  </span>
+                  <span className="rk-diff-chip rk-diff-removed">
+                    −{compare.anchorDiff.removed.length}
+                  </span>
                 </span>
               </div>
               <div ref={compareRightRef} className="rk-compare-pane-body rk-html-body">
@@ -957,7 +957,9 @@ function DraftCard({
         rows={3}
       />
       <div className="rk-thread-draft-actions">
-        <button type="button" onClick={onCancel}>取消</button>
+        <button type="button" onClick={onCancel}>
+          取消
+        </button>
         <button
           type="button"
           className="is-primary"
@@ -1006,15 +1008,12 @@ function ThreadCard(props: {
           props.onActivate();
         }
       }}
-      role="button"
+      role="option"
+      aria-selected={isActive}
       tabIndex={0}
     >
       <div className="rk-thread-head">
-        <span
-          className="rk-thread-status"
-          style={{ background: STATUS_COLOR[status] }}
-          title={STATUS_LABEL[status]}
-        />
+        <span className={`rk-thread-status is-${status}`} title={STATUS_LABEL[status]} />
         <span className="rk-thread-quote">{anchorLabel}</span>
         <span className="rk-thread-author">{root.author === 'agent' ? '🤖' : '👤'}</span>
       </div>
@@ -1033,13 +1032,22 @@ function ThreadCard(props: {
             rows={3}
           />
           <div className="rk-thread-edit-actions">
-            <button type="button" onClick={(e) => { e.stopPropagation(); props.onCancelEdit(); }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onCancelEdit();
+              }}
+            >
               取消
             </button>
             <button
               type="button"
               className="is-primary"
-              onClick={(e) => { e.stopPropagation(); props.onSaveEdit(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onSaveEdit();
+              }}
               disabled={props.submitting || !props.editText.trim()}
             >
               保存
@@ -1058,12 +1066,13 @@ function ThreadCard(props: {
       ))}
 
       {props.showReplyDraft && (
-        <div className="rk-thread-reply-draft" onClick={(e) => e.stopPropagation()}>
+        <div className="rk-thread-reply-draft">
           <textarea
             placeholder="回复… (⌘↩ 提交 · Esc 取消)"
             value={props.replyText}
             // biome-ignore lint/a11y/noAutofocus: user-initiated reply focus
             autoFocus
+            onClick={(e) => e.stopPropagation()}
             onChange={(e) => props.onReplyText(e.target.value)}
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') props.onReplySubmit();
@@ -1072,13 +1081,22 @@ function ThreadCard(props: {
             rows={2}
           />
           <div className="rk-thread-edit-actions">
-            <button type="button" onClick={(e) => { e.stopPropagation(); props.onReplyCancel(); }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onReplyCancel();
+              }}
+            >
               取消
             </button>
             <button
               type="button"
               className="is-primary"
-              onClick={(e) => { e.stopPropagation(); props.onReplySubmit(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onReplySubmit();
+              }}
               disabled={props.submitting || !props.replyText.trim()}
             >
               发送
@@ -1096,31 +1114,83 @@ function ThreadCard(props: {
             minute: '2-digit',
           })}
         </span>
-        <div className="rk-thread-actions" onClick={(e) => e.stopPropagation()}>
+        <div className="rk-thread-actions">
           {status === 'open' && (
             <>
-              <button type="button" onClick={() => props.onTransition('addressed')}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onTransition('addressed');
+                }}
+              >
                 标记待验收
               </button>
-              <button type="button" className="is-primary" onClick={() => props.onTransition('resolved')}>
+              <button
+                type="button"
+                className="is-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onTransition('resolved');
+                }}
+              >
                 解决
               </button>
             </>
           )}
           {status === 'addressed' && (
             <>
-              <button type="button" onClick={() => props.onTransition('open')}>重开</button>
-              <button type="button" className="is-primary" onClick={() => props.onTransition('resolved')}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onTransition('open');
+                }}
+              >
+                重开
+              </button>
+              <button
+                type="button"
+                className="is-primary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onTransition('resolved');
+                }}
+              >
                 验收
               </button>
             </>
           )}
           {status === 'resolved' && (
-            <button type="button" onClick={() => props.onTransition('open')}>重开</button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onTransition('open');
+              }}
+            >
+              重开
+            </button>
           )}
-          <button type="button" onClick={props.onReply}>回复</button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onReply();
+            }}
+          >
+            回复
+          </button>
           {!props.isEditing && (
-            <button type="button" onClick={props.onEdit}>编辑</button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onEdit();
+              }}
+            >
+              编辑
+            </button>
           )}
         </div>
       </div>

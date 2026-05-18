@@ -41,7 +41,7 @@ export RENDERKIT_ENDPOINT=https://your-server
 | `rk reopen <file> <cid>` | 重开 |
 | `rk validate <file>` | 离线校验 HTML / WC 使用 |
 | `rk doctor` | CDN 探活 / 服务端可达性 |
-| `rk components` | 列可用 `<rk-*>` 组件 |
+| `rk components` | 列出当前 registry 已覆盖的组件，以及源码里已注册但尚未补完描述的组件 |
 | `rk open <file>` | 浏览器打开 artifact |
 
 ## 闭环示例

@@ -20,7 +20,9 @@ import {
   readLock,
   writeLock,
   output,
+  formatFeedbackMarkdown,
   getDefaultDbPath,
+  inspectComponentInventory,
 } from '../src/utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,31 +75,6 @@ async function checkCdnManifest() {
     failed: results.filter((r) => !r.ok).length,
     results,
   };
-}
-
-function formatFeedbackMarkdown(feedback) {
-  if (!feedback.openComments?.length) {
-    return `# RenderKit Feedback\n\nartifactId: ${feedback.artifactId}\n\n✅ 暂无待处理评论。\n`;
-  }
-  const lines = [
-    `# RenderKit Feedback`,
-    ``,
-    `artifactId: ${feedback.artifactId}`,
-    `revision: ${feedback.currentRevision}`,
-    `url: ${getEndpoint()}${feedback.url}`,
-    ``,
-    `## 待处理评论（${feedback.openComments.length} 条）`,
-    ``,
-  ];
-  for (const c of feedback.openComments) {
-    lines.push(`### ${c.anchor || '(全局)'}`);
-    lines.push(`- **状态**: ${c.status}`);
-    lines.push(`- **时间**: ${c.createdAt}`);
-    lines.push(`- **内容**: ${c.text}`);
-    if (c.selector) lines.push(`- **选区**: \`${c.selector}\``);
-    lines.push('');
-  }
-  return lines.join('\n');
 }
 
 // ── Commands ──────────────────────────────────────────────────────────────────
@@ -263,7 +240,7 @@ program
     }
 
     if (opts.format === 'md') {
-      console.log(formatFeedbackMarkdown(json));
+      console.log(formatFeedbackMarkdown(json, endpoint));
     } else {
       // v2: getFeedback returns thread-folded `comments` with `replies` + `waitingFor`.
       output({
@@ -410,6 +387,23 @@ program
     }
 
     output({ ok: opts.cdn ? checks.cdn.ok : true, checks });
+  });
+
+// rk components
+program
+  .command('components')
+  .description('List available rk-* components and registry coverage')
+  .action(async () => {
+    const inventory = await inspectComponentInventory();
+    output({
+      ok: true,
+      count: inventory.components.length,
+      documentedCount: inventory.documentedCount,
+      derivedCount: inventory.undocumentedTags.length,
+      components: inventory.components,
+      documentedTags: inventory.documentedTags,
+      undocumentedTags: inventory.undocumentedTags,
+    });
   });
 
 // rk validate <file.html>

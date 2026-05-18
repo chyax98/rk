@@ -264,9 +264,7 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     const created = await jsonOf(createRes);
     assert.equal(created.ok, true);
 
-    const listRes = await artifactsRoute.GET(
-      new Request('http://localhost/api/artifacts'),
-    );
+    const listRes = await artifactsRoute.GET(new Request('http://localhost/api/artifacts'));
     const listed = await jsonOf(listRes);
     assert.equal(listed.ok, true);
     assert.equal(listed.artifacts.length, 1);
@@ -583,6 +581,43 @@ describe('store: feedback thread folding + waitingFor', () => {
 });
 
 describe('store: anchor fuzzy rebind', () => {
+  it('addressed comment also rebinds when anchor ID shifts', async () => {
+    const first = await store.pushHTML('<h1>Title</h1><p>Hello World</p>', 'rebind-addressed.html');
+    const art1 = await store.getArtifact(first.artifactId);
+    assert.ok(art1);
+    const anchor = art1.anchors[1].anchor;
+
+    const add = await store.addComment(first.artifactId, anchor, 'watch', {
+      selector: { type: 'TextQuoteSelector', exact: 'Hello World', prefix: '', suffix: '' },
+    });
+    assert.equal(add.ok, true);
+    if (!add.ok) return;
+
+    const addressed = await store.updateCommentStatus(
+      first.artifactId,
+      add.comment.id,
+      store.COMMENT_ADDRESSED,
+      'agent',
+    );
+    assert.equal(addressed.ok, true);
+
+    const second = await store.pushHTML(
+      '<h1>Title</h1><p>Hello World!</p>',
+      'rebind-addressed.html',
+    );
+    assert.equal(second.revision, 2);
+
+    const feedback = await store.getFeedback(first.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'addressed');
+
+    const art2 = await store.getArtifact(first.artifactId);
+    assert.ok(art2);
+    const newAnchors = art2.anchors.map((a) => a.anchor);
+    assert.ok(newAnchors.includes(feedback.comments[0].anchor));
+  });
+
   it('exact match: comment rebinds when text unchanged but anchor ID shifts', async () => {
     // Push v1 with <p>Hello World</p>
     const first = await store.pushHTML('<h1>Title</h1><p>Hello World</p>', 'rebind-exact.html');
@@ -607,7 +642,7 @@ describe('store: anchor fuzzy rebind', () => {
     // Should have been rebound to new anchor
     const art2 = await store.getArtifact(first.artifactId);
     assert.ok(art2);
-    const newAnchors = art2.anchors.map(a => a.anchor);
+    const newAnchors = art2.anchors.map((a) => a.anchor);
     assert.ok(newAnchors.includes(feedback.comments[0].anchor));
   });
 
@@ -623,7 +658,7 @@ describe('store: anchor fuzzy rebind', () => {
     assert.equal(add.ok, true);
 
     // Change casing → exact won't match, but normalized should
-    const second = await store.pushHTML('<h1>Title</h1><p>Q2 Revenue</p>', 'rebind-norm.html');
+    await store.pushHTML('<h1>Title</h1><p>Q2 Revenue</p>', 'rebind-norm.html');
 
     const feedback = await store.getFeedback(first.artifactId);
     assert.ok(feedback);
@@ -646,7 +681,7 @@ describe('store: anchor fuzzy rebind', () => {
     // Actually normalizeSelector(null) → null, so selector is already null
 
     // Remove the anchor
-    const second = await store.pushHTML('<h1>Title</h1>', 'rebind-null.html');
+    await store.pushHTML('<h1>Title</h1>', 'rebind-null.html');
 
     const feedback = await store.getFeedback(first.artifactId);
     assert.ok(feedback);
@@ -666,7 +701,7 @@ describe('store: anchor fuzzy rebind', () => {
     assert.equal(add.ok, true);
 
     // Completely remove the <h2>
-    const second = await store.pushHTML('<h1>Title</h1>', 'rebind-drop.html');
+    await store.pushHTML('<h1>Title</h1>', 'rebind-drop.html');
 
     const feedback = await store.getFeedback(first.artifactId);
     assert.ok(feedback);
