@@ -6,6 +6,7 @@ type RendererLike = {
   setPixelRatio: (ratio: number) => void;
   setSize: (width: number, height: number) => void;
   render: (scene: SceneLike, camera: CameraLike) => void;
+  dispose?: () => void;
 };
 type CameraLike = { position: Vec3Like; aspect: number; updateProjectionMatrix: () => void };
 type DirectionalLightLike = { position: Vec3Like };
@@ -30,11 +31,35 @@ type ThreeModule = {
 
 class RkThreeD extends HTMLElement {
   private _rendered = false;
+  private _raf: number | null = null;
+  private _ro: ResizeObserver | null = null;
+  private _renderer: RendererLike | null = null;
+  private _renderSeq = 0;
 
   connectedCallback() {
     if (this._rendered) return;
     this._rendered = true;
     this._render();
+  }
+
+  disconnectedCallback() {
+    this._cleanup();
+  }
+
+  private _cleanup() {
+    this._renderSeq++;
+    if (this._raf !== null) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
+    if (this._renderer) {
+      try { this._renderer.dispose?.(); } catch { /* best-effort */ }
+      this._renderer = null;
+    }
   }
 
   private _render() {
@@ -54,14 +79,18 @@ class RkThreeD extends HTMLElement {
   }
 
   private async _loadThree(uid: string, scene: string, color: string, height: number) {
+    const seq = ++this._renderSeq;
     try {
       const THREE = (await import(
         'https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js'
       )) as unknown as ThreeModule;
+      if (seq !== this._renderSeq) return;
+
       const canvas = this.querySelector(`#rk3d-${uid}`) as HTMLCanvasElement;
       if (!canvas) return;
 
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      this._renderer = renderer;
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(canvas.clientWidth || 600, height);
 
@@ -159,7 +188,8 @@ class RkThreeD extends HTMLElement {
 
       // Animate
       const animate = () => {
-        requestAnimationFrame(animate);
+        if (seq !== this._renderSeq) return;
+        this._raf = requestAnimationFrame(animate);
         if (!isDragging) {
           mesh.rotation.x += 0.005;
           mesh.rotation.y += 0.008;
@@ -179,13 +209,13 @@ class RkThreeD extends HTMLElement {
       animate();
 
       // Resize observer
-      const ro = new ResizeObserver(() => {
+      this._ro = new ResizeObserver(() => {
         const w = canvas.clientWidth || 600;
         renderer.setSize(w, height);
         camera.aspect = w / height;
         camera.updateProjectionMatrix();
       });
-      if (canvas.parentElement) ro.observe(canvas.parentElement);
+      if (canvas.parentElement) this._ro.observe(canvas.parentElement);
     } catch {
       const canvas = this.querySelector('.rk-3d__canvas');
       if (canvas) {

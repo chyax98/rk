@@ -2453,10 +2453,35 @@ customElements.define("rk-diagram", RkDiagram);
 // packages/components/src/elements/rk-3d.ts
 var RkThreeD = class extends HTMLElement {
   _rendered = false;
+  _raf = null;
+  _ro = null;
+  _renderer = null;
+  _renderSeq = 0;
   connectedCallback() {
     if (this._rendered) return;
     this._rendered = true;
     this._render();
+  }
+  disconnectedCallback() {
+    this._cleanup();
+  }
+  _cleanup() {
+    this._renderSeq++;
+    if (this._raf !== null) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
+    if (this._renderer) {
+      try {
+        this._renderer.dispose?.();
+      } catch {
+      }
+      this._renderer = null;
+    }
   }
   _render() {
     const scene = this.getAttribute("scene") || "cube";
@@ -2472,11 +2497,14 @@ var RkThreeD = class extends HTMLElement {
     this._loadThree(uid, scene, color, parseInt(height, 10));
   }
   async _loadThree(uid, scene, color, height) {
+    const seq = ++this._renderSeq;
     try {
       const THREE = await import("https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js");
+      if (seq !== this._renderSeq) return;
       const canvas = this.querySelector(`#rk3d-${uid}`);
       if (!canvas) return;
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      this._renderer = renderer;
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(canvas.clientWidth || 600, height);
       const camera = new THREE.PerspectiveCamera(
@@ -2559,7 +2587,8 @@ var RkThreeD = class extends HTMLElement {
         isDragging = false;
       });
       const animate = () => {
-        requestAnimationFrame(animate);
+        if (seq !== this._renderSeq) return;
+        this._raf = requestAnimationFrame(animate);
         if (!isDragging) {
           mesh.rotation.x += 5e-3;
           mesh.rotation.y += 8e-3;
@@ -2576,13 +2605,13 @@ var RkThreeD = class extends HTMLElement {
         renderer.render(threeScene, camera);
       };
       animate();
-      const ro = new ResizeObserver(() => {
+      this._ro = new ResizeObserver(() => {
         const w = canvas.clientWidth || 600;
         renderer.setSize(w, height);
         camera.aspect = w / height;
         camera.updateProjectionMatrix();
       });
-      if (canvas.parentElement) ro.observe(canvas.parentElement);
+      if (canvas.parentElement) this._ro.observe(canvas.parentElement);
     } catch {
       const canvas = this.querySelector(".rk-3d__canvas");
       if (canvas) {

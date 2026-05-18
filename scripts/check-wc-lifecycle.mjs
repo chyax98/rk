@@ -30,6 +30,24 @@ for (const file of readdirSync(elementsDir).filter((f) => f.endsWith('.ts')).sor
       });
     }
   });
+
+  if (file === 'rk-3d.ts' && !text.includes('disconnectedCallback()')) {
+    findings.push({
+      file: `packages/components/src/elements/${file}`,
+      line: 1,
+      rule: 'rk-3d must cleanup WebGL/ResizeObserver/animation frame in disconnectedCallback',
+    });
+  }
+
+  const majorOnlyCdn = /https:\/\/cdn\.jsdelivr\.net\/npm\/(?:@[^/]+\/)?[^@/'"]+@[0-9]+(?:\/|['"])/g;
+  let m;
+  while ((m = majorOnlyCdn.exec(text)) !== null) {
+    findings.push({
+      file: `packages/components/src/elements/${file}`,
+      line: text.slice(0, m.index).split('\n').length,
+      rule: `CDN dependency must be pinned to an exact version: ${m[0]}`,
+    });
+  }
 }
 
 if (findings.length) {
