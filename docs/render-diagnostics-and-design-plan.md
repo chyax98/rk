@@ -22,7 +22,8 @@ Make RenderKit safe for agents to use on complex artifacts: rendering failures m
 
 ### P0 — Render Diagnostic Harness
 
-- Keep `scripts/render-scan.mjs` as the local gate.
+- Keep `scripts/render-scan.mjs` as the browser rendering gate.
+- Use `pnpm verify:agent` before handing off or pushing a renderer/lifecycle/CDN change.
 - Reports are generated under `reports/render-scan/` and ignored by git.
 - Add cases before fixing new rendering bugs.
 
@@ -45,6 +46,19 @@ Target files under `examples/cases/`:
 | `data-tables.html` | rk-table, rk-datagrid, rk-stat |
 
 Target: 100+ cases with smoke selectors or default component smoke.
+
+### Verification Gate
+
+```bash
+pnpm verify:agent
+```
+
+This runs:
+
+1. `pnpm check:lifecycle` — static WC lifecycle/CDN pin checks
+2. `pnpm run test` — server/store/CLI/linkedom tests
+3. `pnpm renderkit doctor --cdn` — lazy dependency URL audit
+4. `pnpm scan:render` — browser artifact render scan over `examples/cases/*.html`
 
 ### P2 — Lifecycle Contract
 

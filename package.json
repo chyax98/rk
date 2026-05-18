@@ -16,6 +16,7 @@
     "test:cli": "node --experimental-strip-types --test tests/cli.test.ts",
     "scan:render": "node scripts/render-scan.mjs",
     "check:lifecycle": "node scripts/check-wc-lifecycle.mjs",
+    "verify:agent": "pnpm check:lifecycle && pnpm run test && pnpm renderkit doctor --cdn && pnpm scan:render",
     "score": "node --experimental-strip-types scripts/score.ts",
     "prepare": "lefthook install"
   },
