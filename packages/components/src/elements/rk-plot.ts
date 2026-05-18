@@ -161,7 +161,7 @@ connectedCallback(): void {
   /** Lazy-load Observable Plot from CDN (ESM dynamic import) */
   async _loadPlot(): Promise<PlotModule> {
     const mod = await import(
-      'https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.esm.min.js'
+      'https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/+esm'
     );
     return mod as unknown as PlotModule;
   }

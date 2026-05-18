@@ -4,7 +4,7 @@ interface RoughSVG {
   circle: (x: number, y: number, d: number, opts?: RoughOpts) => SVGGElement;
   ellipse: (x: number, y: number, w: number, h: number, opts?: RoughOpts) => SVGGElement;
   line: (x1: number, y1: number, x2: number, y2: number, opts?: RoughOpts) => SVGGElement;
-  rect: (x: number, y: number, w: number, h: number, opts?: RoughOpts) => SVGGElement;
+  rectangle: (x: number, y: number, w: number, h: number, opts?: RoughOpts) => SVGGElement;
   path: (d: string, opts?: RoughOpts) => SVGGElement;
 }
 
@@ -169,7 +169,7 @@ connectedCallback(): void {
 
         switch (shape.type) {
           case 'rect':
-            drawer.rect(shape.x ?? 0, shape.y ?? 0, shape.w ?? 100, shape.h ?? 60, opts);
+            drawer.rectangle(shape.x ?? 0, shape.y ?? 0, shape.w ?? 100, shape.h ?? 60, opts);
             if (shape.label) {
               this._addLabel(svg,
                 (shape.x ?? 0) + (shape.w ?? 100) / 2,

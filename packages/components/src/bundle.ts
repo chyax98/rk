@@ -1,31 +1,44 @@
 // register all Web Components
+//
+// Important: register structural/container components before render-heavy child
+// components. Browser upgrades existing custom elements in definition order.
+// If rk-diagram/rk-chart upgrades before rk-section/rk-card, the container may
+// capture already-rendered child HTML as raw source and corrupt child data.
+
+// Structural / layout containers first
+import './elements/rk-section.ts';
+import './elements/rk-card.ts';
+import './elements/rk-grid.ts';
+import './elements/rk-tabs.ts';
+import './elements/rk-collapsible.ts';
+import './elements/rk-metric.ts';
+import './elements/rk-scroll-story.ts';
+
+// Lightweight content
 import './elements/rk-callout.ts';
 import './elements/rk-stat.ts';
 import './elements/rk-summary.ts';
 import './elements/rk-code.ts';
 import './elements/rk-table.ts';
-import './elements/rk-chart.ts';
-import './elements/rk-diagram.ts';
 import './elements/rk-decision.ts';
 import './elements/rk-checklist.ts';
 import './elements/rk-comparison.ts';
 import './elements/rk-timeline.ts';
-import './elements/rk-tabs.ts';
-import './elements/rk-grid.ts';
 import './elements/rk-image.ts';
 import './elements/rk-quote.ts';
-import './elements/rk-collapsible.ts';
 import './elements/rk-highlight.ts';
 import './elements/rk-progress.ts';
 import './elements/rk-steps.ts';
-import './elements/rk-metric.ts';
-import './elements/rk-3d.ts';
 import './elements/rk-badge.ts';
 import './elements/rk-kanban.ts';
 import './elements/rk-form.ts';
-import './elements/rk-card.ts';
-import './elements/rk-section.ts';
 import './elements/rk-diff.ts';
+import './elements/rk-narrative.ts';
+
+// Render-heavy / async visualizations last
+import './elements/rk-chart.ts';
+import './elements/rk-diagram.ts';
+import './elements/rk-3d.ts';
 import './elements/rk-infographic.ts';
 import './elements/rk-map.ts';
 import './elements/rk-datagrid.ts';
@@ -34,9 +47,7 @@ import './elements/rk-sketch.ts';
 import './elements/rk-zdog.ts';
 import './elements/rk-model.ts';
 import './elements/rk-globe.ts';
-import './elements/rk-narrative.ts';
 import './elements/rk-plot3d.ts';
 import './elements/rk-graph3d.ts';
 import './elements/rk-graph.ts';
 import './elements/rk-flow.ts';
-import './elements/rk-scroll-story.ts';

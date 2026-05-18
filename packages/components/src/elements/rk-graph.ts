@@ -53,6 +53,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected || !this._raw) return;
     if (this._cy) {
       this._cy.destroy();
       this._cy = null;

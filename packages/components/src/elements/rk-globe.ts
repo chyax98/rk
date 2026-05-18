@@ -26,7 +26,7 @@ interface GlobeAPI {
   atmosphereAltitude: (val: number) => GlobeAPI;
   width: (w: number) => GlobeAPI;
   height: (h: number) => GlobeAPI;
-  controls: () => { autoRotate: boolean; autoRotateSpeed: number; enableZoom: boolean };
+  controls?: () => { autoRotate: boolean; autoRotateSpeed: number; enableZoom: boolean } | undefined;
   _destructor: () => void;
   pauseAnimation: () => void;
   resumeAnimation: () => void;
@@ -53,6 +53,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     this._cleanup();
     this._render();
   }
@@ -156,10 +157,12 @@ connectedCallback(): void {
       }
 
       if (autoRotate) {
-        const controls = globe.controls();
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        controls.enableZoom = true;
+        const controls = globe.controls?.();
+        if (controls) {
+          controls.autoRotate = true;
+          controls.autoRotateSpeed = 0.5;
+          controls.enableZoom = true;
+        }
       }
 
       this._globe = globe;

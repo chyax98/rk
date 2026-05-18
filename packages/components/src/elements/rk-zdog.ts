@@ -1,9 +1,8 @@
 // ─── rk-zdog — Pseudo-3D illustration via Zdog CDN ──────────────
 
 interface ZdogIllustration {
-  rotateGraph: () => void;
+  rotate: { x?: number; y?: number; z?: number };
   updateRenderGraph: () => void;
-  destroy: () => void;
 }
 
 interface ZdogShape {
@@ -32,7 +31,7 @@ interface ZdogShape {
 type ZdogConstructor = {
   Illustration: new (opts: Record<string, unknown>) => ZdogIllustration;
   Box: new (opts: Record<string, unknown>) => unknown;
-  Sphere: new (opts: Record<string, unknown>) => unknown;
+  Hemisphere?: new (opts: Record<string, unknown>) => unknown;
   Cylinder: new (opts: Record<string, unknown>) => unknown;
   Cone: new (opts: Record<string, unknown>) => unknown;
   Rect: new (opts: Record<string, unknown>) => unknown;
@@ -127,7 +126,7 @@ connectedCallback(): void {
         return;
       }
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/zdog@1/js/zdog.dist.min.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/zdog@1.1.3/dist/zdog.dist.min.js';
       script.setAttribute('data-rk-zdog', '');
       script.onload = () => resolve((window as any).Zdog);
       script.onerror = () => reject(new Error('Failed to load Zdog'));
@@ -211,12 +210,14 @@ connectedCallback(): void {
             });
             break;
 
-          case 'sphere':
-            new Z.Sphere({
+          case 'sphere': {
+            const SphereLike = Z.Hemisphere || Z.Ellipse;
+            new SphereLike({
               ...baseOpts,
               diameter: shape.diameter ?? 80,
             });
             break;
+          }
 
           case 'cylinder':
             new Z.Cylinder({
@@ -265,7 +266,7 @@ connectedCallback(): void {
       // Animate
       const animate = () => {
         if (rotate) {
-          illo.rotateGraph();
+          illo.rotate.y = (illo.rotate.y || 0) + 0.02;
         }
         illo.updateRenderGraph();
         this._raf = requestAnimationFrame(animate);

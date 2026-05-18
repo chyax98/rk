@@ -51,6 +51,7 @@ class RkMap extends HTMLElement {
   _map: LeafletMap | null = null;
   _raw = '';
   _uid = Math.random().toString(36).slice(2, 9);
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['center', 'zoom', 'height', 'title', 'tiles'];
@@ -70,6 +71,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._map) {
       this._map.remove();
       this._map = null;
@@ -118,6 +120,12 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    if (this._map) {
+      this._map.remove();
+      this._map = null;
+    }
+
     const center = this._parseCenter();
     const zoom = parseInt(this.getAttribute('zoom') || '4', 10) || 4;
     const height = parseInt(this.getAttribute('height') || '400', 10) || 400;
@@ -142,6 +150,8 @@ connectedCallback(): void {
         /* @vite-ignore */
         'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js'
       )) as unknown as LeafletModule;
+
+      if (seq !== this._renderSeq) return;
 
       const container = this.querySelector(`#${containerId}`) as HTMLElement;
       if (!container) return;

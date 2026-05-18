@@ -65,6 +65,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected || !this._raw) return;
     if (this._graph) {
       this._graph.dispose();
       this._graph = null;
@@ -103,7 +104,7 @@ connectedCallback(): void {
         return;
       }
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@antv/x6@2/dist/x6.js';
+      script.src = 'https://cdn.jsdelivr.net/npm/@antv/x6@2.18.1/dist/index.js';
       script.setAttribute('data-rk-x6', '');
       script.onload = () => resolve();
       script.onerror = () => reject(new Error('X6 CDN load failed'));
@@ -158,7 +159,7 @@ connectedCallback(): void {
         container,
         width: container.clientWidth,
         height,
-        autoResize: true,
+        autoResize: false,
         background: { transparent: true },
         grid: false,
         panning: { enabled: true },

@@ -1,3 +1,357 @@
+// packages/components/src/elements/rk-section.ts
+var RkSection = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title", "subtitle", "level", "divider"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const subtitle = this.getAttribute("subtitle") || "";
+    const level = this.getAttribute("level") || "h2";
+    const hasDivider = this.hasAttribute("divider");
+    const safeLevel = ["h2", "h3", "h4"].includes(level) ? level : "h2";
+    const dividerClass = hasDivider ? " rk-section--divider" : "";
+    this.innerHTML = /* html */
+    `
+      <section class="rk-section${dividerClass}">
+        ${title ? `
+        <div class="rk-section__header">
+          <${safeLevel} class="rk-section__title">${this._escape(title)}</${safeLevel}>
+          ${subtitle ? `<p class="rk-section__subtitle">${this._escape(subtitle)}</p>` : ""}
+        </div>` : ""}
+        <div class="rk-section__body">${this._raw}</div>
+      </section>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-section", RkSection);
+
+// packages/components/src/elements/rk-card.ts
+var RkCard = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title", "subtitle", "variant", "accent"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const subtitle = this.getAttribute("subtitle") || "";
+    const variant = this.getAttribute("variant") || "default";
+    const accent = this.getAttribute("accent") || "";
+    const variantClass = variant !== "default" ? ` rk-card--${variant}` : "";
+    const accentClass = accent ? ` rk-card--accent-${accent}` : "";
+    this.innerHTML = /* html */
+    `
+      <div class="rk-card${variantClass}${accentClass}">
+        ${title || subtitle ? `
+        <div class="rk-card__header">
+          ${title ? `<div class="rk-card__title">${this._escape(title)}</div>` : ""}
+          ${subtitle ? `<div class="rk-card__subtitle">${this._escape(subtitle)}</div>` : ""}
+        </div>` : ""}
+        <div class="rk-card__body">${this._raw}</div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-card", RkCard);
+
+// packages/components/src/elements/rk-grid.ts
+var RkGrid = class extends HTMLElement {
+  _rendered = false;
+  static get observedAttributes() {
+    return ["cols", "gap"];
+  }
+  connectedCallback() {
+    if (this._rendered) return;
+    this._rendered = true;
+    this._build();
+  }
+  _build() {
+    const cols = this.getAttribute("cols") || "2";
+    const gap = this.getAttribute("gap") || "md";
+    const colCount = ["2", "3", "4"].includes(cols) ? cols : "2";
+    const children = Array.from(this.children);
+    const isColBased = children.some((c) => c.tagName.toLowerCase() === "rk-col");
+    const cells = isColBased ? children.filter((c) => c.tagName.toLowerCase() === "rk-col") : children;
+    const grid = document.createElement("div");
+    grid.className = `rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}`;
+    for (const cell of cells) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "rk-grid__cell";
+      wrapper.appendChild(cell);
+      grid.appendChild(wrapper);
+    }
+    this.innerHTML = "";
+    this.appendChild(grid);
+  }
+};
+customElements.define("rk-grid", RkGrid);
+
+// packages/components/src/elements/rk-tabs.ts
+var RkTabs = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const tabs = Array.from(this.querySelectorAll("rk-tab"));
+    if (tabs.length === 0) {
+      this.innerHTML = `<div class="rk-tabs"><p style="color:var(--rk-muted)">No tabs found. Use &lt;rk-tab label="\u2026"&gt; inside.</p></div>`;
+      return;
+    }
+    const navBtns = tabs.map((tab, i) => {
+      const label = tab.getAttribute("label") || `Tab ${i + 1}`;
+      const id = tab.getAttribute("id") || `tab-${i}`;
+      const active = i === 0 ? " is-active" : "";
+      return `<button class="rk-tabs__btn${active}" data-tab="${id}" role="tab" aria-selected="${i === 0}">${this._escape(label)}</button>`;
+    }).join("");
+    const panels = tabs.map((tab, i) => {
+      const id = tab.getAttribute("id") || `tab-${i}`;
+      const active = i === 0 ? " is-active" : "";
+      return `<div class="rk-tabs__panel${active}" data-tab="${id}" role="tabpanel">${tab.innerHTML}</div>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-tabs">
+        ${title ? `<div class="rk-tabs__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-tabs__nav" role="tablist">${navBtns}</div>
+        <div class="rk-tabs__panels">${panels}</div>
+      </div>
+    `;
+    this.querySelectorAll(".rk-tabs__btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.tab;
+        this.querySelectorAll(".rk-tabs__btn").forEach((b) => {
+          b.classList.remove("is-active");
+          b.setAttribute("aria-selected", "false");
+        });
+        this.querySelectorAll(".rk-tabs__panel").forEach((p) => {
+          p.classList.remove("is-active");
+        });
+        btn.classList.add("is-active");
+        btn.setAttribute("aria-selected", "true");
+        this.querySelector(`.rk-tabs__panel[data-tab="${targetId}"]`)?.classList.add("is-active");
+      });
+    });
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-tabs", RkTabs);
+
+// packages/components/src/elements/rk-collapsible.ts
+var RkCollapsible = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["summary", "open"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const summary = this.getAttribute("summary") || "Details";
+    const isOpen = this.hasAttribute("open");
+    this.innerHTML = /* html */
+    `
+      <details class="rk-collapsible"${isOpen ? " open" : ""}>
+        <summary class="rk-collapsible__summary">
+          <span class="rk-collapsible__icon">\u25B6</span>
+          <span>${this._escape(summary)}</span>
+        </summary>
+        <div class="rk-collapsible__body">${this._raw}</div>
+      </details>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-collapsible", RkCollapsible);
+
+// packages/components/src/elements/rk-metric.ts
+var RkMetric = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["cols"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const rawCols = this.getAttribute("cols") || "4";
+    const cols = ["2", "3", "4"].includes(rawCols) ? rawCols : "4";
+    const items = Array.from(this.querySelectorAll("rk-metric-item"));
+    if (items.length === 0) {
+      this.innerHTML = `<div class="rk-metric"><p style="color:var(--rk-muted)">No metric items found. Use &lt;rk-metric-item label="\u2026" value="\u2026"&gt; inside.</p></div>`;
+      return;
+    }
+    const cards = items.map((item) => {
+      const label = item.getAttribute("label") || "";
+      const value = item.getAttribute("value") || "\u2014";
+      const delta = item.getAttribute("delta") || "";
+      const tone = item.getAttribute("tone") || "";
+      const deltaHtml = delta ? `<span class="rk-metric__delta${tone ? ` rk-metric__delta--${tone}` : ""}">${this._escape(delta)}</span>` : "";
+      return `
+          <div class="rk-metric__card">
+            <div class="rk-metric__value-row">
+              <span class="rk-metric__value">${this._escape(value)}</span>
+              ${deltaHtml}
+            </div>
+            <div class="rk-metric__label">${this._escape(label)}</div>
+          </div>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-metric rk-metric--cols-${cols}">
+        ${cards}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-metric", RkMetric);
+
+// packages/components/src/elements/rk-scroll-story.ts
+var SCROLLAMA_CDN = "https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.module.js";
+function loadScrollama() {
+  if (window.__scrollama__) return Promise.resolve(window.__scrollama__);
+  return import(SCROLLAMA_CDN).then((mod) => {
+    const lib = mod.default || mod;
+    window.__scrollama__ = lib;
+    return lib;
+  });
+}
+var RkScrollStory = class extends HTMLElement {
+  _scroller = null;
+  _loaded = false;
+  static get observedAttributes() {
+    return ["offset"];
+  }
+  connectedCallback() {
+    if (!this._loaded) {
+      this._loaded = true;
+      this._init();
+    }
+  }
+  async _init() {
+    const offset = parseFloat(this.getAttribute("offset") || "0.5");
+    const sticky = this.hasAttribute("sticky");
+    try {
+      const scrollama = await loadScrollama();
+      const steps = this.querySelectorAll("rk-step");
+      if (steps.length === 0) return;
+      if (sticky) {
+        this.classList.add("rk-scroll-story--sticky");
+        const right = this.querySelector(".rk-scroll-story__steps");
+        if (!right) {
+          const stepsDiv = document.createElement("div");
+          stepsDiv.className = "rk-scroll-story__steps";
+          const graphic = document.createElement("div");
+          graphic.className = "rk-scroll-story__graphic";
+          const kids = Array.from(this.childNodes);
+          for (const kid of kids) {
+            if (kid instanceof HTMLElement && kid.tagName === "RK-STEP") {
+              stepsDiv.appendChild(kid);
+            } else if (kid instanceof Text && kid.textContent?.trim() === "") {
+              continue;
+            } else {
+              graphic.appendChild(kid);
+            }
+          }
+          this.appendChild(graphic);
+          this.appendChild(stepsDiv);
+        }
+      }
+      this._scroller = scrollama().setup({
+        step: this.querySelectorAll("rk-step"),
+        offset: Math.max(0, Math.min(1, offset)),
+        once: false,
+        progress: true
+      }).onStepEnter(({ element }) => {
+        element.classList.add("is-active");
+      }).onStepExit(({ element }) => {
+        element.classList.remove("is-active");
+      }).onStepProgress(({ element, progress }) => {
+        element.style.setProperty("--rk-step-progress", String(progress));
+      });
+      window.addEventListener("resize", this._onResize);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      this.innerHTML = `<div class="rk-scroll-story__error">Scrollama load failed: ${msg}</div>`;
+    }
+  }
+  _onResize = () => {
+    if (this._scroller) this._scroller.resize();
+  };
+  disconnectedCallback() {
+    if (this._scroller) {
+      this._scroller.destroy();
+      this._scroller = null;
+    }
+    window.removeEventListener("resize", this._onResize);
+  }
+};
+var RkStep = class extends HTMLElement {
+  static get observedAttributes() {
+    return [];
+  }
+  connectedCallback() {
+    if (!this.classList.contains("rk-step")) {
+      this.classList.add("rk-step");
+    }
+  }
+};
+customElements.define("rk-scroll-story", RkScrollStory);
+customElements.define("rk-step", RkStep);
+
 // packages/components/src/elements/rk-callout.ts
 var ICONS = {
   info: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
@@ -299,8 +653,1163 @@ var RkTable = class extends HTMLElement {
 };
 customElements.define("rk-table", RkTable);
 
-// packages/components/src/elements/rk-chart.ts
+// packages/components/src/elements/rk-decision.ts
+var RkDecision = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["question", "chosen", "status"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const question = this.getAttribute("question") || "";
+    const chosen = this.getAttribute("chosen") || "";
+    const status = this.getAttribute("status") || "proposed";
+    const reasons = this.querySelectorAll("rk-reason li");
+    const rationaleItems = Array.from(reasons).map((li) => `<li>${li.textContent || ""}</li>`).join("");
+    const alternatives = this.querySelectorAll("rk-alternative");
+    const altItems = Array.from(alternatives).map((alt) => `<li>${alt.textContent || ""}</li>`).join("");
+    let statusClass = "proposed";
+    if (["approved", "draft", "blocked", "resolved"].includes(status)) {
+      statusClass = status;
+    }
+    this.innerHTML = /* html */
+    `
+      <div class="rk-decision">
+        <div class="rk-decision__eyebrow">Decision</div>
+        ${question ? `<h3 class="rk-decision__question">${this._escape(question)}</h3>` : ""}
+        ${chosen ? `
+          <div class="rk-decision__chosen">
+            <span>Chosen: <strong>${this._escape(chosen)}</strong></span>
+            <span class="rk-decision__status rk-decision__status--${statusClass}">${this._escape(status)}</span>
+          </div>
+        ` : ""}
+        ${rationaleItems ? `
+          <div class="rk-decision__rationale">
+            <h4>Rationale</h4>
+            <ul>${rationaleItems}</ul>
+          </div>
+        ` : ""}
+        ${altItems ? `
+          <div class="rk-decision__alternatives">
+            <h4>Alternatives Considered</h4>
+            <ul>${altItems}</ul>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-decision", RkDecision);
+
+// packages/components/src/elements/rk-checklist.ts
+var RkChecklist = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const items = this.querySelectorAll("rk-item");
+    const itemHtml = Array.from(items).map((item) => {
+      const checked = item.hasAttribute("checked");
+      const note = item.getAttribute("note") || "";
+      const text = item.textContent || "";
+      const checkedClass = checked ? " is-checked" : "";
+      const checkMark = checked ? "\u2713" : "";
+      return (
+        /* html */
+        `
+          <li class="rk-checklist__item${checkedClass}">
+            <span class="rk-checklist__check">${checkMark}</span>
+            <span class="rk-checklist__text">
+              ${this._escape(text)}
+              ${note ? `<span class="rk-checklist__note">${this._escape(note)}</span>` : ""}
+            </span>
+          </li>
+        `
+      );
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-checklist">
+        ${title ? `<div class="rk-checklist__title">${this._escape(title)}</div>` : ""}
+        <ul class="rk-checklist__list">${itemHtml}</ul>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-checklist", RkChecklist);
+
+// packages/components/src/elements/rk-comparison.ts
 function parsePipeTable2(raw) {
+  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+  const rows = [];
+  for (const line of lines) {
+    if (/^\|?\s*[-:]+[\s|:-]*$/.test(line)) continue;
+    const cells = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+  return rows;
+}
+var RkComparison = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title", "variant"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.textContent || "";
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const variant = this.getAttribute("variant") || "proscons";
+    const rows = parsePipeTable2(this._raw);
+    if (rows.length === 0) {
+      this.innerHTML = `<div class="rk-comparison"><div class="rk-comparison__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">No comparison data</p></div>`;
+      return;
+    }
+    if (variant === "matrix") {
+      this._renderMatrix(title, rows);
+    } else {
+      this._renderProsCons(title, rows);
+    }
+  }
+  _renderProsCons(title, rows) {
+    const header = rows[0];
+    const prosTitle = header[0] || "Pros";
+    const consTitle = header[1] || "Cons";
+    const body = rows.slice(1);
+    const pros = body.map((r) => r[0] || "").filter(Boolean);
+    const cons = body.map((r) => r[1] || "").filter(Boolean);
+    this.innerHTML = /* html */
+    `
+      <div class="rk-comparison rk-comparison--proscons">
+        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-comparison__table">
+          <div class="rk-comparison__column">
+            <div class="rk-comparison__column-title">${this._escape(prosTitle)}</div>
+            <ul>${pros.map((p) => `<li>${this._escape(p)}</li>`).join("")}</ul>
+          </div>
+          <div class="rk-comparison__column">
+            <div class="rk-comparison__column-title">${this._escape(consTitle)}</div>
+            <ul>${cons.map((c) => `<li>${this._escape(c)}</li>`).join("")}</ul>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  _renderMatrix(title, rows) {
+    const header = rows[0];
+    const body = rows.slice(1);
+    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join("");
+    const bodyHtml = body.map((row) => {
+      const cells = row.map((c) => `<td>${this._escape(c)}</td>`).join("");
+      return `<tr>${cells}</tr>`;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-comparison rk-comparison--matrix">
+        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
+        <div class="rk-comparison__table">
+          <table>
+            <thead><tr>${headerHtml}</tr></thead>
+            <tbody>${bodyHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-comparison", RkComparison);
+
+// packages/components/src/elements/rk-timeline.ts
+var RkTimeline = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    const steps = this.querySelectorAll("rk-step");
+    const stepHtml = Array.from(steps).map((step, i) => {
+      const status = step.getAttribute("status") || "next";
+      const tags = step.getAttribute("tags") || "";
+      const text = step.textContent || "";
+      let statusClass = "next";
+      if (["done", "active", "next"].includes(status)) {
+        statusClass = status;
+      }
+      const tagHtml = tags ? `<div class="rk-timeline__tags">${tags.split(",").map((t) => `<span>${this._escape(t.trim())}</span>`).join("")}</div>` : "";
+      return (
+        /* html */
+        `
+          <li class="rk-timeline__step rk-timeline__step--${statusClass}">
+            <span class="rk-timeline__num">${i + 1}</span>
+            <div class="rk-timeline__body">
+              <div class="rk-timeline__body-label">${this._escape(`Step ${i + 1}`)}</div>
+              <p class="rk-timeline__body-desc">${this._escape(text)}</p>
+              ${tagHtml}
+            </div>
+          </li>
+        `
+      );
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-timeline">
+        ${title ? `<div class="rk-timeline__title">${this._escape(title)}</div>` : ""}
+        <ol class="rk-timeline__steps">${stepHtml}</ol>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-timeline", RkTimeline);
+
+// packages/components/src/elements/rk-image.ts
+var RkImage = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["src", "alt", "caption", "credit", "width"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const src = this.getAttribute("src") || "";
+    const alt = this.getAttribute("alt") || "";
+    const caption = this.getAttribute("caption") || "";
+    const credit = this.getAttribute("credit") || "";
+    const width = this.getAttribute("width") || "normal";
+    if (!src) {
+      this.innerHTML = `<div class="rk-image rk-image--${width}"><p style="color:var(--rk-muted)">rk-image requires a src attribute.</p></div>`;
+      return;
+    }
+    const figcaption = caption || credit ? `<figcaption class="rk-image__caption">
+          ${caption ? `<span>${this._escape(caption)}</span>` : ""}
+          ${credit ? `<span class="rk-image__credit">${this._escape(credit)}</span>` : ""}
+        </figcaption>` : "";
+    this.innerHTML = /* html */
+    `
+      <figure class="rk-image rk-image--${width}">
+        <div class="rk-image__wrap">
+          <img src="${this._escapeAttr(src)}" alt="${this._escapeAttr(alt)}" loading="lazy">
+        </div>
+        ${figcaption}
+      </figure>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  _escapeAttr(s) {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+};
+customElements.define("rk-image", RkImage);
+
+// packages/components/src/elements/rk-quote.ts
+var RkQuote = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["attribution", "source", "source-url"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const attribution = this.getAttribute("attribution") || "";
+    const source = this.getAttribute("source") || "";
+    const sourceUrl = this.getAttribute("source-url") || "";
+    const sourceHtml = source ? sourceUrl ? ` <cite><a href="${this._escapeAttr(sourceUrl)}" target="_blank" rel="noopener">${this._escape(source)}</a></cite>` : ` <cite>${this._escape(source)}</cite>` : "";
+    const figcaption = attribution || source ? `<figcaption class="rk-quote__attribution">
+          ${attribution ? `\u2014 ${this._escape(attribution)}` : ""}${sourceHtml}
+        </figcaption>` : "";
+    this.innerHTML = /* html */
+    `
+      <figure class="rk-quote">
+        <blockquote class="rk-quote__body">${this._raw}</blockquote>
+        ${figcaption}
+      </figure>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  _escapeAttr(s) {
+    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+};
+customElements.define("rk-quote", RkQuote);
+
+// packages/components/src/elements/rk-highlight.ts
+var RkHighlight = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["label"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const label = this.getAttribute("label") || "\u8981\u70B9";
+    this.innerHTML = /* html */
+    `
+      <div class="rk-highlight">
+        <span class="rk-highlight__label">${this._escape(label)}</span>
+        <div class="rk-highlight__body">${this._raw}</div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-highlight", RkHighlight);
+
+// packages/components/src/elements/rk-progress.ts
+var RkProgress = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["label", "value", "max", "tone"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const label = this.getAttribute("label") || "";
+    const rawValue = parseFloat(this.getAttribute("value") || "0");
+    const max = parseFloat(this.getAttribute("max") || "100");
+    const tone = this.getAttribute("tone") || "default";
+    const pct = Math.min(100, Math.max(0, rawValue / max * 100));
+    const displayValue = Math.round(rawValue);
+    this.innerHTML = /* html */
+    `
+      <div class="rk-progress">
+        <div class="rk-progress__header">
+          ${label ? `<span class="rk-progress__label">${this._escape(label)}</span>` : ""}
+          <span class="rk-progress__value">${displayValue}%</span>
+        </div>
+        <div class="rk-progress__track">
+          <div class="rk-progress__fill rk-progress__fill--${tone}" style="width:${pct}%"></div>
+        </div>
+        ${this._raw ? `<div class="rk-progress__extra">${this._raw}</div>` : ""}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-progress", RkProgress);
+
+// packages/components/src/elements/rk-steps.ts
+var RkSteps = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["current"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.innerHTML;
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const current = parseInt(this.getAttribute("current") || "1", 10);
+    const steps = Array.from(this.querySelectorAll("rk-step"));
+    if (steps.length === 0) {
+      this.innerHTML = `<div class="rk-steps"><p style="color:var(--rk-muted)">No steps found. Use &lt;rk-step&gt; inside.</p></div>`;
+      return;
+    }
+    const items = steps.map((step, i) => {
+      const n = i + 1;
+      const label = step.getAttribute("label") || step.textContent?.trim() || `Step ${n}`;
+      let status = "next";
+      if (n < current) status = "done";
+      else if (n === current) status = "active";
+      const circle = status === "done" ? "\u2713" : `${n}`;
+      const itemHtml = `
+          <div class="rk-steps__item rk-steps__item--${status}">
+            <div class="rk-steps__circle">${circle}</div>
+            <div class="rk-steps__label">${this._escape(label)}</div>
+          </div>`;
+      const connector = i < steps.length - 1 ? '<div class="rk-steps__connector"></div>' : "";
+      return itemHtml + connector;
+    }).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-steps">
+        <div class="rk-steps__track">${items}</div>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-steps", RkSteps);
+
+// packages/components/src/elements/rk-badge.ts
+var RkBadge = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["color", "icon"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const color = this.getAttribute("color") || "accent";
+    const icon = this.getAttribute("icon") || "";
+    const text = this._raw;
+    const colorMap = {
+      blue: {
+        bg: "var(--rk-tone-info-bg, #eff6ff)",
+        text: "var(--rk-tone-info-border, #2563eb)",
+        border: "var(--rk-tone-info-border, #2563eb)"
+      },
+      green: {
+        bg: "var(--rk-tone-success-bg, #f0fdf4)",
+        text: "var(--rk-tone-success-border, #16a34a)",
+        border: "var(--rk-tone-success-border, #16a34a)"
+      },
+      red: {
+        bg: "var(--rk-tone-danger-bg, #fef2f2)",
+        text: "var(--rk-tone-danger-border, #dc2626)",
+        border: "var(--rk-tone-danger-border, #dc2626)"
+      },
+      orange: {
+        bg: "var(--rk-tone-warning-bg, #fffbeb)",
+        text: "var(--rk-tone-warning-border, #d97706)",
+        border: "var(--rk-tone-warning-border, #d97706)"
+      },
+      purple: { bg: "rgba(139,92,246,0.1)", text: "#7c3aed", border: "#7c3aed" },
+      gray: {
+        bg: "var(--rk-surface, #f5f5f4)",
+        text: "var(--rk-text-tertiary, #6b6b66)",
+        border: "var(--rk-border, #e5e4dc)"
+      },
+      accent: {
+        bg: "var(--rk-accent-muted, rgba(2,103,165,0.1))",
+        text: "var(--rk-accent, #0267a5)",
+        border: "var(--rk-accent, #0267a5)"
+      }
+    };
+    const c = colorMap[color] || colorMap.accent;
+    this.innerHTML = `<span class="rk-badge rk-badge--${color}" style="
+      display:inline-flex;align-items:center;gap:4px;
+      padding:2px 8px;border-radius:var(--rk-radius-full,9999px);
+      font:var(--rk-weight-medium,500) var(--rk-text-xs,11px)/1.6 var(--rk-font-sans,sans-serif);
+      letter-spacing:var(--rk-tracking-wide,0.02em);
+      background:${c.bg};color:${c.text};
+      border:1px solid ${c.border};
+      white-space:nowrap;
+    ">${icon ? `<span>${icon}</span>` : ""}<span>${this._escape(text)}</span></span>`;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkBadgeGroup = class extends HTMLElement {
+  connectedCallback() {
+    if (!this.style.display) {
+      this.style.cssText = `
+        display:flex;flex-wrap:wrap;gap:var(--rk-space-2,8px);
+        align-items:center;
+      `;
+    }
+  }
+};
+customElements.define("rk-badge", RkBadge);
+customElements.define("rk-badge-group", RkBadgeGroup);
+
+// packages/components/src/elements/rk-kanban.ts
+var RkKanbanCard = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["priority", "tag", "assignee", "due"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = (this.textContent || "").trim();
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const priority = this.getAttribute("priority") || "";
+    const tag = this.getAttribute("tag") || "";
+    const assignee = this.getAttribute("assignee") || "";
+    const due = this.getAttribute("due") || "";
+    const text = this._raw;
+    const priorityColors = {
+      high: "var(--rk-tone-danger-border, #dc2626)",
+      medium: "var(--rk-tone-warning-border, #d97706)",
+      low: "var(--rk-tone-info-border, #2563eb)"
+    };
+    const priorityBg = {
+      high: "var(--rk-tone-danger-bg, #fef2f2)",
+      medium: "var(--rk-tone-warning-bg, #fffbeb)",
+      low: "var(--rk-tone-info-bg, #eff6ff)"
+    };
+    const borderColor = priority ? priorityColors[priority] || "var(--rk-border)" : "var(--rk-border)";
+    this.innerHTML = `
+      <div class="rk-kanban-card" style="
+        background:var(--rk-surface,#fff);
+        border:1px solid var(--rk-border,#e5e4dc);
+        border-left:3px solid ${borderColor};
+        border-radius:var(--rk-radius-md,10px);
+        padding:var(--rk-space-3,12px) var(--rk-space-4,16px);
+        margin-bottom:var(--rk-space-2,8px);
+        box-shadow:var(--rk-shadow-xs,0 1px 2px rgba(0,0,0,0.06));
+        cursor:default;
+      ">
+        ${tag || priority ? `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            ${tag ? `<span style="
+              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
+              text-transform:uppercase;letter-spacing:0.05em;
+              padding:2px 6px;border-radius:4px;
+              background:var(--rk-accent-muted,rgba(2,103,165,0.1));
+              color:var(--rk-accent,#0267a5);
+            ">${this._escape(tag)}</span>` : ""}
+            ${priority ? `<span style="
+              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
+              text-transform:uppercase;letter-spacing:0.05em;
+              padding:2px 6px;border-radius:4px;
+              background:${priorityBg[priority] || "var(--rk-surface-2)"};
+              color:${priorityColors[priority] || "var(--rk-text-muted)"};
+            ">${priority === "high" ? "\u2191 \u9AD8\u4F18" : priority === "medium" ? "\u2192 \u4E2D" : "\u2193 \u4F4E"}</span>` : ""}
+          </div>
+        ` : ""}
+        <div style="
+          font:var(--rk-weight-normal,400) var(--rk-text-sm,13px)/1.6 var(--rk-font-sans,sans-serif);
+          color:var(--rk-text,#1a1a1a);
+        ">${this._escape(text)}</div>
+        ${assignee || due ? `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            ${assignee ? `<span style="
+              font:500 11px/1 var(--rk-font-sans,sans-serif);
+              color:var(--rk-text-tertiary,#6b6b66);
+            ">@${this._escape(assignee)}</span>` : "<span></span>"}
+            ${due ? `<span style="
+              font:400 11px/1 var(--rk-font-sans,sans-serif);
+              color:var(--rk-muted,#a0a0a0);
+            ">${this._escape(due)}</span>` : ""}
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkKanbanCol = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["title", "accent", "done"];
+  }
+  connectedCallback() {
+    this._upgradeCards();
+    this._renderShell();
+  }
+  attributeChangedCallback() {
+    this._renderShell();
+  }
+  _upgradeCards() {
+  }
+  _renderShell() {
+    const title = this.getAttribute("title") || "Column";
+    const done = this.hasAttribute("done");
+    const accent = this.getAttribute("accent") || (done ? "green" : "");
+    const accentColor = accent === "green" ? "var(--rk-tone-success-border,#16a34a)" : accent === "blue" ? "var(--rk-tone-info-border,#2563eb)" : accent === "orange" ? "var(--rk-tone-warning-border,#d97706)" : accent === "red" ? "var(--rk-tone-danger-border,#dc2626)" : "var(--rk-border,#e5e4dc)";
+    const existingCards = Array.from(this.querySelectorAll("rk-kanban-card"));
+    const cardCount = existingCards.length;
+    this.style.cssText = `
+      display:flex;flex-direction:column;
+      min-width:220px;flex:1;
+      background:var(--rk-surface,#fafafa);
+      border:1px solid var(--rk-border,#e5e4dc);
+      border-top:3px solid ${accentColor};
+      border-radius:var(--rk-radius-lg,14px);
+      padding:var(--rk-space-4,16px);
+      min-height:200px;
+    `;
+    let header = this.querySelector(".rk-kanban-col__header");
+    if (!header) {
+      header = document.createElement("div");
+      header.className = "rk-kanban-col__header";
+      this.insertBefore(header, this.firstChild);
+    }
+    header.style.cssText = `
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:var(--rk-space-3,12px);
+    `;
+    header.innerHTML = `
+      <span style="
+        font:600 13px/1.4 var(--rk-font-sans,sans-serif);
+        color:var(--rk-text,#1a1a1a);
+        letter-spacing:0.01em;
+      ">${this._escape(title)}</span>
+      <span style="
+        font:600 11px/1.4 var(--rk-font-sans,sans-serif);
+        color:var(--rk-text-tertiary,#6b6b66);
+        background:var(--rk-surface-2,#eee);
+        padding:2px 7px;border-radius:9999px;
+      ">${cardCount}</span>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkKanban = class extends HTMLElement {
+  connectedCallback() {
+    this.style.cssText = `
+      display:flex;gap:var(--rk-space-4,16px);
+      overflow-x:auto;
+      padding-bottom:var(--rk-space-2,8px);
+    `;
+    if (!this.querySelector(".rk-kanban__scroll-hint")) {
+      const hint = document.createElement("style");
+      hint.textContent = `.rk-kanban { scrollbar-width:thin; }`;
+      this.appendChild(hint);
+    }
+  }
+};
+customElements.define("rk-kanban-card", RkKanbanCard);
+customElements.define("rk-kanban-col", RkKanbanCol);
+customElements.define("rk-kanban", RkKanban);
+
+// packages/components/src/elements/rk-form.ts
+var RkField = class extends HTMLElement {
+  static get observedAttributes() {
+    return ["label", "type", "max", "placeholder", "options", "required", "name", "value"];
+  }
+  connectedCallback() {
+    this._render();
+  }
+  attributeChangedCallback() {
+    this._render();
+  }
+  getValue() {
+    const input = this.querySelector("input,textarea,select");
+    const type = this.getAttribute("type") || "text";
+    if (type === "rating") {
+      const checked = this.querySelector(
+        ".rk-field__star--active:last-of-type"
+      );
+      return checked ? Number(checked.dataset.value) : 0;
+    }
+    if (type === "checkbox") {
+      return input?.checked ?? false;
+    }
+    return input?.value ?? "";
+  }
+  _render() {
+    const label = this.getAttribute("label") || "";
+    const type = this.getAttribute("type") || "text";
+    const max = Number(this.getAttribute("max") || 5);
+    const placeholder = this.getAttribute("placeholder") || "";
+    const options = (this.getAttribute("options") || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const required = this.hasAttribute("required");
+    const name = this.getAttribute("name") || label.toLowerCase().replace(/\s+/g, "_");
+    const fieldId = `rk-field-${Math.random().toString(36).slice(2, 8)}`;
+    const sharedStyle = `
+      font:400 var(--rk-text-base,15px)/1.5 var(--rk-font-sans,sans-serif);
+      color:var(--rk-text,#1a1a1a);
+      background:var(--rk-surface,#fff);
+      border:1px solid var(--rk-border,#e5e4dc);
+      border-radius:var(--rk-radius-sm,6px);
+      padding:var(--rk-space-2,8px) var(--rk-space-3,12px);
+      width:100%;box-sizing:border-box;
+      outline:none;transition:border-color 150ms;
+    `;
+    let control = "";
+    if (type === "textarea") {
+      control = `<textarea id="${fieldId}" name="${name}" placeholder="${this._escape(placeholder)}" rows="4"
+        style="${sharedStyle}min-height:96px;resize:vertical;"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      ></textarea>`;
+    } else if (type === "select") {
+      const opts = options.map((o) => `<option value="${this._escape(o)}">${this._escape(o)}</option>`).join("");
+      control = `<select id="${fieldId}" name="${name}" style="${sharedStyle}cursor:pointer;"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      ><option value="">\u8BF7\u9009\u62E9...</option>${opts}</select>`;
+    } else if (type === "rating") {
+      const stars = Array.from({ length: max }, (_, i) => {
+        const v = i + 1;
+        return `<button type="button" class="rk-field__star" data-value="${v}"
+          style="background:none;border:none;cursor:pointer;padding:2px;font-size:22px;line-height:1;
+            color:var(--rk-border-hover,#ccc);transition:color 150ms;outline:none;"
+          onclick="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            stars.forEach((s,idx)=>{
+              s.style.color=idx<${v}?'#f59e0b':'var(--rk-border-hover,#ccc)';
+              s.classList.toggle('rk-field__star--active',idx<${v});
+              if(idx===${v}-1)s.classList.add('rk-field__star--active');
+            });
+          })(this)"
+          onmouseover="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            stars.forEach((s,idx)=>{s.style.color=idx<${v}?'#fbbf24':'var(--rk-border-hover,#ccc)';});
+          })(this)"
+          onmouseout="(function(el){
+            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
+            const active=parseInt(el.closest('.rk-field__stars').dataset.rating||'0');
+            stars.forEach((s,idx)=>{s.style.color=idx<active?'#f59e0b':'var(--rk-border-hover,#ccc)';});
+          })(this)"
+        >\u2605</button>`;
+      }).join("");
+      control = `<div class="rk-field__stars" data-rating="0" style="display:flex;gap:2px;">${stars}</div>`;
+    } else if (type === "checkbox") {
+      control = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="${fieldId}" name="${name}"
+          style="width:16px;height:16px;accent-color:var(--rk-accent,#0267a5);cursor:pointer;">
+        <span style="font:400 var(--rk-text-sm,13px)/1.5 var(--rk-font-sans);color:var(--rk-text);">
+          ${this._escape(placeholder || label)}
+        </span>
+      </label>`;
+    } else {
+      control = `<input type="${type === "number" ? "number" : "text"}" id="${fieldId}" name="${name}"
+        placeholder="${this._escape(placeholder)}"
+        style="${sharedStyle}"
+        onfocus="this.style.borderColor='var(--rk-accent)'"
+        onblur="this.style.borderColor='var(--rk-border)'"
+      >`;
+    }
+    this.innerHTML = `
+      <div class="rk-field" style="margin-bottom:var(--rk-space-4,16px);">
+        ${type !== "checkbox" ? `
+          <label for="${fieldId}" style="
+            display:block;margin-bottom:6px;
+            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
+            color:var(--rk-text,#1a1a1a);
+          ">${this._escape(label)}${required ? ' <span style="color:var(--rk-tone-danger-border,#dc2626)">*</span>' : ""}</label>
+        ` : ""}
+        ${control}
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+var RkForm = class extends HTMLElement {
+  _fieldsHTML = "";
+  static get observedAttributes() {
+    return ["title", "submit-label", "description"];
+  }
+  connectedCallback() {
+    if (!this._fieldsHTML) {
+      this._fieldsHTML = Array.from(this.querySelectorAll("rk-field")).map((f) => f.outerHTML).join("") || this.innerHTML;
+    }
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._fieldsHTML) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "\u8868\u5355";
+    const submitLabel = this.getAttribute("submit-label") || "\u63D0\u4EA4";
+    const description = this.getAttribute("description") || "";
+    const fieldHTML = this._fieldsHTML;
+    this.innerHTML = `
+      <div class="rk-form" style="
+        background:var(--rk-surface,#fff);
+        border:1px solid var(--rk-border,#e5e4dc);
+        border-radius:var(--rk-radius-lg,14px);
+        padding:var(--rk-space-6,24px);
+        max-width:560px;
+      ">
+        <h3 style="
+          margin:0 0 var(--rk-space-2,8px);
+          font:700 var(--rk-text-lg,20px)/1.3 var(--rk-font-sans,sans-serif);
+          color:var(--rk-text,#1a1a1a);
+        ">${this._escape(title)}</h3>
+        ${description ? `<p style="
+          margin:0 0 var(--rk-space-4,16px);
+          font:400 var(--rk-text-sm,13px)/1.6 var(--rk-font-sans);
+          color:var(--rk-text-tertiary,#6b6b66);
+        ">${this._escape(description)}</p>` : `<div style="margin-bottom:var(--rk-space-4,16px)"></div>`}
+        <div class="rk-form__fields">${fieldHTML}</div>
+        <button type="button" class="rk-form__submit"
+          onclick="(function(btn){
+            const form = btn.closest('.rk-form');
+            const fields = form.querySelectorAll('rk-field');
+            const result = [];
+            fields.forEach(f => {
+              const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
+              const name = f.getAttribute('name') || label.toLowerCase().replace(/s+/g, '_');
+              const type = f.getAttribute('type') || 'text';
+              let val;
+              if(type==='rating'){
+                const lastActive = f.querySelector('.rk-field__star--active');
+                val = lastActive ? Number(lastActive.dataset.value) : 0;
+              } else if(type==='checkbox'){
+                val = f.querySelector('input')?.checked ?? false;
+              } else {
+                val = f.querySelector('input,textarea,select')?.value ?? '';
+              }
+              result.push({ name, label, value: val });
+            });
+
+            const artifactId = document.documentElement.dataset.rkArtifactId;
+            if (artifactId) {
+              btn.disabled = true; btn.textContent = '\u63D0\u4EA4\u4E2D\u2026';
+              const formTitle = form.closest('rk-form')?.getAttribute('title') || '';
+              fetch('/api/artifacts/' + artifactId + '/submissions', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ formTitle, fields: result }),
+              }).then(r => r.json()).then(data => {
+                if (data.ok) {
+                  btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4';
+                  btn.style.background = 'var(--rk-tone-success-bg)';
+                  btn.style.color = 'var(--rk-tone-success-border)';
+                  btn.style.borderColor = 'var(--rk-tone-success-border)';
+                  btn.disabled = true;
+                  form.classList.add('rk-form--submitted');
+                } else {
+                  btn.disabled = false; btn.textContent = '\u63D0\u4EA4\u5931\u8D25\uFF0C\u91CD\u8BD5';
+                }
+              }).catch(() => {
+                btn.disabled = false; btn.textContent = '\u7F51\u7EDC\u9519\u8BEF\uFF0C\u91CD\u8BD5';
+              });
+            } else {
+              console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
+              btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4\uFF08\u9884\u89C8\u6A21\u5F0F\uFF09';
+              btn.style.background = 'var(--rk-tone-success-bg)';
+              btn.style.color = 'var(--rk-tone-success-border)';
+              btn.style.borderColor = 'var(--rk-tone-success-border)';
+              btn.disabled = true;
+            }
+          })(this)"
+          style="
+            display:inline-flex;align-items:center;gap:6px;
+            padding:var(--rk-space-2,8px) var(--rk-space-6,24px);
+            background:var(--rk-accent,#0267a5);color:white;
+            border:1px solid var(--rk-accent,#0267a5);
+            border-radius:var(--rk-radius-sm,6px);
+            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
+            cursor:pointer;transition:all 150ms;
+          "
+          onmouseover="if(!this.disabled)this.style.background='var(--rk-accent-hover)'"
+          onmouseout="if(!this.disabled)this.style.background='var(--rk-accent)'"
+        >${this._escape(submitLabel)}</button>
+      </div>
+    `;
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-field", RkField);
+customElements.define("rk-form", RkForm);
+
+// packages/components/src/elements/rk-diff.ts
+var RkDiff = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["lang", "title", "from", "to", "compact"];
+  }
+  connectedCallback() {
+    this._raw = this.textContent || "";
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const lang = this.getAttribute("lang") || "";
+    const title = this.getAttribute("title") || "";
+    const from = this.getAttribute("from") || "";
+    const to = this.getAttribute("to") || "";
+    const lines = this._raw.split("\n");
+    const parsed = this._parseLines(lines);
+    const stats = this._stats(parsed);
+    let headerTitle = title;
+    if (!headerTitle && (from || to)) {
+      headerTitle = from && to ? `${from} \u2192 ${to}` : from || to;
+    }
+    const langBadge = lang ? `<span class="rk-diff__lang">${this._escape(lang)}</span>` : "";
+    const statsBadge = `
+      ${stats.added > 0 ? `<span class="rk-diff__stat rk-diff__stat--add">+${stats.added}</span>` : ""}
+      ${stats.removed > 0 ? `<span class="rk-diff__stat rk-diff__stat--del">-${stats.removed}</span>` : ""}
+    `;
+    const headerHtml = (
+      /* html */
+      `
+      <div class="rk-diff__header">
+        <div class="rk-diff__header-left">
+          <svg class="rk-diff__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg>
+          ${headerTitle ? `<span class="rk-diff__title">${this._escape(headerTitle)}</span>` : ""}
+          ${langBadge}
+        </div>
+        <div class="rk-diff__header-right">${statsBadge}</div>
+      </div>
+    `
+    );
+    const bodyHtml = this._renderLines(parsed);
+    this.innerHTML = /* html */
+    `
+      <div class="rk-diff">
+        ${headerHtml}
+        <div class="rk-diff__body">
+          <table class="rk-diff__table" aria-label="Code diff">
+            <tbody>${bodyHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+  _parseLines(lines) {
+    const result = [];
+    let lineOld = 0;
+    let lineNew = 0;
+    for (const line of lines) {
+      if (line.startsWith("@@")) {
+        const match = line.match(/@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+        if (match) {
+          lineOld = parseInt(match[1], 10);
+          lineNew = parseInt(match[2], 10);
+        }
+        result.push({ type: "hunk", text: line });
+      } else if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("diff ") || line.startsWith("index ")) {
+        result.push({ type: "meta", text: line });
+      } else if (line.startsWith("+")) {
+        result.push({ type: "add", text: line.slice(1), lineOld: void 0, lineNew: lineNew++ });
+      } else if (line.startsWith("-")) {
+        result.push({ type: "del", text: line.slice(1), lineOld: lineOld++, lineNew: void 0 });
+      } else if (line.startsWith(" ") || line === "") {
+        const txt = line.startsWith(" ") ? line.slice(1) : line;
+        result.push({ type: "ctx", text: txt, lineOld: lineOld++, lineNew: lineNew++ });
+      } else {
+        result.push({ type: "ctx", text: line, lineOld: lineOld++, lineNew: lineNew++ });
+      }
+    }
+    return result;
+  }
+  _stats(parsed) {
+    let added = 0;
+    let removed = 0;
+    for (const l of parsed) {
+      if (l.type === "add") added++;
+      else if (l.type === "del") removed++;
+    }
+    return { added, removed };
+  }
+  _renderLines(parsed) {
+    const rows = [];
+    for (const line of parsed) {
+      if (line.type === "meta") continue;
+      if (line.type === "hunk") {
+        rows.push(`
+          <tr class="rk-diff__row rk-diff__row--hunk">
+            <td class="rk-diff__gutter rk-diff__gutter--hunk" colspan="2"></td>
+            <td class="rk-diff__code rk-diff__code--hunk">${this._escape(line.text)}</td>
+          </tr>
+        `);
+        continue;
+      }
+      const typeClass = `rk-diff__row--${line.type}`;
+      const oldNum = line.lineOld !== void 0 ? String(line.lineOld) : "";
+      const newNum = line.lineNew !== void 0 ? String(line.lineNew) : "";
+      const prefix = line.type === "add" ? "+" : line.type === "del" ? "\u2212" : " ";
+      rows.push(`
+        <tr class="rk-diff__row ${typeClass}">
+          <td class="rk-diff__gutter rk-diff__gutter--old">${oldNum}</td>
+          <td class="rk-diff__gutter rk-diff__gutter--new">${newNum}</td>
+          <td class="rk-diff__code"><span class="rk-diff__prefix">${prefix}</span><span class="rk-diff__text">${this._escape(line.text)}</span></td>
+        </tr>
+      `);
+    }
+    return rows.join("");
+  }
+  _escape(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-diff", RkDiff);
+
+// packages/components/src/elements/rk-narrative.ts
+var RkNarrative = class extends HTMLElement {
+  _raw = "";
+  static get observedAttributes() {
+    return ["title"];
+  }
+  connectedCallback() {
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
+    this._render();
+  }
+  attributeChangedCallback() {
+    if (this._raw) this._render();
+  }
+  _render() {
+    const title = this.getAttribute("title") || "";
+    let phrases;
+    try {
+      phrases = JSON.parse(this._raw).phrases;
+      if (!Array.isArray(phrases)) throw new Error("phrases must be an array");
+    } catch (e) {
+      this.innerHTML = `<div class="rk-narrative"><div class="rk-narrative__error">Invalid JSON: ${this._esc(e.message)}</div></div>`;
+      return;
+    }
+    const titleHtml = title ? `<div class="rk-narrative__title">${this._esc(title)}</div>` : "";
+    const body = phrases.map((p) => this._renderPhrase(p)).join("");
+    this.innerHTML = /* html */
+    `
+      <div class="rk-narrative">
+        ${titleHtml}
+        <div class="rk-narrative__body">${body}</div>
+      </div>
+    `;
+  }
+  _renderPhrase(p) {
+    if ("text" in p) {
+      return this._esc(p.text);
+    }
+    if ("value" in p) {
+      const v = p;
+      const arrow = v.trend === "up" ? "\u2191" : v.trend === "down" ? "\u2193" : v.trend === "flat" ? "\u2192" : "";
+      const colorCls = v.color ? ` rk-narrative__value--${v.color}` : "";
+      const deltaHtml = v.delta ? `<span class="rk-narrative__delta${v.trend === "up" ? " rk-narrative__delta--up" : v.trend === "down" ? " rk-narrative__delta--down" : ""}">${this._esc(v.delta)}</span>` : "";
+      const arrowHtml = arrow ? `<span class="rk-narrative__arrow${v.trend === "up" ? " rk-narrative__arrow--up" : v.trend === "down" ? " rk-narrative__arrow--down" : ""}">${arrow}</span>` : "";
+      return `<span class="rk-narrative__value${colorCls}">${arrowHtml}${this._esc(v.value)}</span>${deltaHtml}`;
+    }
+    if ("sparkline" in p) {
+      const s = p;
+      return this._renderSparkline(s.sparkline, s.color || "accent", s.height || 20);
+    }
+    if ("bar" in p) {
+      const b = p;
+      const pct = Math.min(100, Math.max(0, b.bar / b.max * 100));
+      const colorCls = b.color ? ` rk-narrative__minibar--${b.color}` : "";
+      return `<span class="rk-narrative__minibar${colorCls}"><span class="rk-narrative__minibar-fill" style="width:${pct}%"></span></span>`;
+    }
+    if ("badge" in p) {
+      const bd = p;
+      const colorCls = bd.color ? ` rk-narrative__badge--${bd.color}` : "";
+      return `<span class="rk-narrative__badge${colorCls}">${this._esc(bd.badge)}</span>`;
+    }
+    return "";
+  }
+  _renderSparkline(data, color, height) {
+    if (!data || data.length < 2) return "";
+    const width = 60;
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    const pad = 2;
+    const h = height - pad * 2;
+    const points = data.map((v, i) => {
+      const x = i / (data.length - 1) * width;
+      const y = pad + h - (v - min) / range * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const colorVar = color === "accent" ? "var(--rk-accent)" : `var(--rk-tone-${color}-border, var(--rk-accent))`;
+    return `<span class="rk-narrative__sparkline"><svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><polyline points="${points}" fill="none" stroke="${colorVar}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+  }
+  _esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+};
+customElements.define("rk-narrative", RkNarrative);
+
+// packages/components/src/elements/rk-chart.ts
+function parsePipeTable3(raw) {
   const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
   const rows = [];
   for (const line of lines) {
@@ -350,7 +1859,7 @@ var RkChart = class extends HTMLElement {
     this._renderEcharts(type, title, caption);
   }
   _renderKpi(title, caption) {
-    const rows = parsePipeTable2(this._raw);
+    const rows = parsePipeTable3(this._raw);
     if (rows.length === 0) {
       this.innerHTML = `<div class="rk-chart rk-chart-kpi"><div class="rk-chart__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">No data</p></div>`;
       return;
@@ -391,7 +1900,7 @@ var RkChart = class extends HTMLElement {
       } catch {
       }
     }
-    const rows = parsePipeTable2(raw);
+    const rows = parsePipeTable3(raw);
     if (rows.length < 2) return null;
     return { header: rows[0], body: rows.slice(1) };
   }
@@ -901,655 +2410,6 @@ ${prelude}`);
 };
 customElements.define("rk-diagram", RkDiagram);
 
-// packages/components/src/elements/rk-decision.ts
-var RkDecision = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["question", "chosen", "status"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const question = this.getAttribute("question") || "";
-    const chosen = this.getAttribute("chosen") || "";
-    const status = this.getAttribute("status") || "proposed";
-    const reasons = this.querySelectorAll("rk-reason li");
-    const rationaleItems = Array.from(reasons).map((li) => `<li>${li.textContent || ""}</li>`).join("");
-    const alternatives = this.querySelectorAll("rk-alternative");
-    const altItems = Array.from(alternatives).map((alt) => `<li>${alt.textContent || ""}</li>`).join("");
-    let statusClass = "proposed";
-    if (["approved", "draft", "blocked", "resolved"].includes(status)) {
-      statusClass = status;
-    }
-    this.innerHTML = /* html */
-    `
-      <div class="rk-decision">
-        <div class="rk-decision__eyebrow">Decision</div>
-        ${question ? `<h3 class="rk-decision__question">${this._escape(question)}</h3>` : ""}
-        ${chosen ? `
-          <div class="rk-decision__chosen">
-            <span>Chosen: <strong>${this._escape(chosen)}</strong></span>
-            <span class="rk-decision__status rk-decision__status--${statusClass}">${this._escape(status)}</span>
-          </div>
-        ` : ""}
-        ${rationaleItems ? `
-          <div class="rk-decision__rationale">
-            <h4>Rationale</h4>
-            <ul>${rationaleItems}</ul>
-          </div>
-        ` : ""}
-        ${altItems ? `
-          <div class="rk-decision__alternatives">
-            <h4>Alternatives Considered</h4>
-            <ul>${altItems}</ul>
-          </div>
-        ` : ""}
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-decision", RkDecision);
-
-// packages/components/src/elements/rk-checklist.ts
-var RkChecklist = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const items = this.querySelectorAll("rk-item");
-    const itemHtml = Array.from(items).map((item) => {
-      const checked = item.hasAttribute("checked");
-      const note = item.getAttribute("note") || "";
-      const text = item.textContent || "";
-      const checkedClass = checked ? " is-checked" : "";
-      const checkMark = checked ? "\u2713" : "";
-      return (
-        /* html */
-        `
-          <li class="rk-checklist__item${checkedClass}">
-            <span class="rk-checklist__check">${checkMark}</span>
-            <span class="rk-checklist__text">
-              ${this._escape(text)}
-              ${note ? `<span class="rk-checklist__note">${this._escape(note)}</span>` : ""}
-            </span>
-          </li>
-        `
-      );
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-checklist">
-        ${title ? `<div class="rk-checklist__title">${this._escape(title)}</div>` : ""}
-        <ul class="rk-checklist__list">${itemHtml}</ul>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-checklist", RkChecklist);
-
-// packages/components/src/elements/rk-comparison.ts
-function parsePipeTable3(raw) {
-  const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-  const rows = [];
-  for (const line of lines) {
-    if (/^\|?\s*[-:]+[\s|:-]*$/.test(line)) continue;
-    const cells = line.split("|").map((c) => c.trim()).filter((c) => c.length > 0);
-    if (cells.length > 0) {
-      rows.push(cells);
-    }
-  }
-  return rows;
-}
-var RkComparison = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title", "variant"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.textContent || "";
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const variant = this.getAttribute("variant") || "proscons";
-    const rows = parsePipeTable3(this._raw);
-    if (rows.length === 0) {
-      this.innerHTML = `<div class="rk-comparison"><div class="rk-comparison__title">${this._escape(title)}</div><p style="color:var(--rk-muted)">No comparison data</p></div>`;
-      return;
-    }
-    if (variant === "matrix") {
-      this._renderMatrix(title, rows);
-    } else {
-      this._renderProsCons(title, rows);
-    }
-  }
-  _renderProsCons(title, rows) {
-    const header = rows[0];
-    const prosTitle = header[0] || "Pros";
-    const consTitle = header[1] || "Cons";
-    const body = rows.slice(1);
-    const pros = body.map((r) => r[0] || "").filter(Boolean);
-    const cons = body.map((r) => r[1] || "").filter(Boolean);
-    this.innerHTML = /* html */
-    `
-      <div class="rk-comparison rk-comparison--proscons">
-        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
-        <div class="rk-comparison__table">
-          <div class="rk-comparison__column">
-            <div class="rk-comparison__column-title">${this._escape(prosTitle)}</div>
-            <ul>${pros.map((p) => `<li>${this._escape(p)}</li>`).join("")}</ul>
-          </div>
-          <div class="rk-comparison__column">
-            <div class="rk-comparison__column-title">${this._escape(consTitle)}</div>
-            <ul>${cons.map((c) => `<li>${this._escape(c)}</li>`).join("")}</ul>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  _renderMatrix(title, rows) {
-    const header = rows[0];
-    const body = rows.slice(1);
-    const headerHtml = header.map((h) => `<th>${this._escape(h)}</th>`).join("");
-    const bodyHtml = body.map((row) => {
-      const cells = row.map((c) => `<td>${this._escape(c)}</td>`).join("");
-      return `<tr>${cells}</tr>`;
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-comparison rk-comparison--matrix">
-        ${title ? `<div class="rk-comparison__title">${this._escape(title)}</div>` : ""}
-        <div class="rk-comparison__table">
-          <table>
-            <thead><tr>${headerHtml}</tr></thead>
-            <tbody>${bodyHtml}</tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-comparison", RkComparison);
-
-// packages/components/src/elements/rk-timeline.ts
-var RkTimeline = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const steps = this.querySelectorAll("rk-step");
-    const stepHtml = Array.from(steps).map((step, i) => {
-      const status = step.getAttribute("status") || "next";
-      const tags = step.getAttribute("tags") || "";
-      const text = step.textContent || "";
-      let statusClass = "next";
-      if (["done", "active", "next"].includes(status)) {
-        statusClass = status;
-      }
-      const tagHtml = tags ? `<div class="rk-timeline__tags">${tags.split(",").map((t) => `<span>${this._escape(t.trim())}</span>`).join("")}</div>` : "";
-      return (
-        /* html */
-        `
-          <li class="rk-timeline__step rk-timeline__step--${statusClass}">
-            <span class="rk-timeline__num">${i + 1}</span>
-            <div class="rk-timeline__body">
-              <div class="rk-timeline__body-label">${this._escape(`Step ${i + 1}`)}</div>
-              <p class="rk-timeline__body-desc">${this._escape(text)}</p>
-              ${tagHtml}
-            </div>
-          </li>
-        `
-      );
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-timeline">
-        ${title ? `<div class="rk-timeline__title">${this._escape(title)}</div>` : ""}
-        <ol class="rk-timeline__steps">${stepHtml}</ol>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-timeline", RkTimeline);
-
-// packages/components/src/elements/rk-tabs.ts
-var RkTabs = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const tabs = Array.from(this.querySelectorAll("rk-tab"));
-    if (tabs.length === 0) {
-      this.innerHTML = `<div class="rk-tabs"><p style="color:var(--rk-muted)">No tabs found. Use &lt;rk-tab label="\u2026"&gt; inside.</p></div>`;
-      return;
-    }
-    const navBtns = tabs.map((tab, i) => {
-      const label = tab.getAttribute("label") || `Tab ${i + 1}`;
-      const id = tab.getAttribute("id") || `tab-${i}`;
-      const active = i === 0 ? " is-active" : "";
-      return `<button class="rk-tabs__btn${active}" data-tab="${id}" role="tab" aria-selected="${i === 0}">${this._escape(label)}</button>`;
-    }).join("");
-    const panels = tabs.map((tab, i) => {
-      const id = tab.getAttribute("id") || `tab-${i}`;
-      const active = i === 0 ? " is-active" : "";
-      return `<div class="rk-tabs__panel${active}" data-tab="${id}" role="tabpanel">${tab.innerHTML}</div>`;
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-tabs">
-        ${title ? `<div class="rk-tabs__title">${this._escape(title)}</div>` : ""}
-        <div class="rk-tabs__nav" role="tablist">${navBtns}</div>
-        <div class="rk-tabs__panels">${panels}</div>
-      </div>
-    `;
-    this.querySelectorAll(".rk-tabs__btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetId = btn.dataset.tab;
-        this.querySelectorAll(".rk-tabs__btn").forEach((b) => {
-          b.classList.remove("is-active");
-          b.setAttribute("aria-selected", "false");
-        });
-        this.querySelectorAll(".rk-tabs__panel").forEach((p) => {
-          p.classList.remove("is-active");
-        });
-        btn.classList.add("is-active");
-        btn.setAttribute("aria-selected", "true");
-        this.querySelector(`.rk-tabs__panel[data-tab="${targetId}"]`)?.classList.add("is-active");
-      });
-    });
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-tabs", RkTabs);
-
-// packages/components/src/elements/rk-grid.ts
-var RkGrid = class extends HTMLElement {
-  _rendered = false;
-  static get observedAttributes() {
-    return ["cols", "gap"];
-  }
-  connectedCallback() {
-    if (this._rendered) return;
-    this._rendered = true;
-    this._build();
-  }
-  _build() {
-    const cols = this.getAttribute("cols") || "2";
-    const gap = this.getAttribute("gap") || "md";
-    const colCount = ["2", "3", "4"].includes(cols) ? cols : "2";
-    const children = Array.from(this.children);
-    const isColBased = children.some((c) => c.tagName.toLowerCase() === "rk-col");
-    const cells = isColBased ? children.filter((c) => c.tagName.toLowerCase() === "rk-col") : children;
-    const grid = document.createElement("div");
-    grid.className = `rk-grid rk-grid--cols-${colCount} rk-grid--gap-${gap}`;
-    for (const cell of cells) {
-      const wrapper = document.createElement("div");
-      wrapper.className = "rk-grid__cell";
-      wrapper.appendChild(cell);
-      grid.appendChild(wrapper);
-    }
-    this.innerHTML = "";
-    this.appendChild(grid);
-  }
-};
-customElements.define("rk-grid", RkGrid);
-
-// packages/components/src/elements/rk-image.ts
-var RkImage = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["src", "alt", "caption", "credit", "width"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const src = this.getAttribute("src") || "";
-    const alt = this.getAttribute("alt") || "";
-    const caption = this.getAttribute("caption") || "";
-    const credit = this.getAttribute("credit") || "";
-    const width = this.getAttribute("width") || "normal";
-    if (!src) {
-      this.innerHTML = `<div class="rk-image rk-image--${width}"><p style="color:var(--rk-muted)">rk-image requires a src attribute.</p></div>`;
-      return;
-    }
-    const figcaption = caption || credit ? `<figcaption class="rk-image__caption">
-          ${caption ? `<span>${this._escape(caption)}</span>` : ""}
-          ${credit ? `<span class="rk-image__credit">${this._escape(credit)}</span>` : ""}
-        </figcaption>` : "";
-    this.innerHTML = /* html */
-    `
-      <figure class="rk-image rk-image--${width}">
-        <div class="rk-image__wrap">
-          <img src="${this._escapeAttr(src)}" alt="${this._escapeAttr(alt)}" loading="lazy">
-        </div>
-        ${figcaption}
-      </figure>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-  _escapeAttr(s) {
-    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-};
-customElements.define("rk-image", RkImage);
-
-// packages/components/src/elements/rk-quote.ts
-var RkQuote = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["attribution", "source", "source-url"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const attribution = this.getAttribute("attribution") || "";
-    const source = this.getAttribute("source") || "";
-    const sourceUrl = this.getAttribute("source-url") || "";
-    const sourceHtml = source ? sourceUrl ? ` <cite><a href="${this._escapeAttr(sourceUrl)}" target="_blank" rel="noopener">${this._escape(source)}</a></cite>` : ` <cite>${this._escape(source)}</cite>` : "";
-    const figcaption = attribution || source ? `<figcaption class="rk-quote__attribution">
-          ${attribution ? `\u2014 ${this._escape(attribution)}` : ""}${sourceHtml}
-        </figcaption>` : "";
-    this.innerHTML = /* html */
-    `
-      <figure class="rk-quote">
-        <blockquote class="rk-quote__body">${this._raw}</blockquote>
-        ${figcaption}
-      </figure>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-  _escapeAttr(s) {
-    return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-};
-customElements.define("rk-quote", RkQuote);
-
-// packages/components/src/elements/rk-collapsible.ts
-var RkCollapsible = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["summary", "open"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const summary = this.getAttribute("summary") || "Details";
-    const isOpen = this.hasAttribute("open");
-    this.innerHTML = /* html */
-    `
-      <details class="rk-collapsible"${isOpen ? " open" : ""}>
-        <summary class="rk-collapsible__summary">
-          <span class="rk-collapsible__icon">\u25B6</span>
-          <span>${this._escape(summary)}</span>
-        </summary>
-        <div class="rk-collapsible__body">${this._raw}</div>
-      </details>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-collapsible", RkCollapsible);
-
-// packages/components/src/elements/rk-highlight.ts
-var RkHighlight = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["label"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const label = this.getAttribute("label") || "\u8981\u70B9";
-    this.innerHTML = /* html */
-    `
-      <div class="rk-highlight">
-        <span class="rk-highlight__label">${this._escape(label)}</span>
-        <div class="rk-highlight__body">${this._raw}</div>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-highlight", RkHighlight);
-
-// packages/components/src/elements/rk-progress.ts
-var RkProgress = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["label", "value", "max", "tone"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const label = this.getAttribute("label") || "";
-    const rawValue = parseFloat(this.getAttribute("value") || "0");
-    const max = parseFloat(this.getAttribute("max") || "100");
-    const tone = this.getAttribute("tone") || "default";
-    const pct = Math.min(100, Math.max(0, rawValue / max * 100));
-    const displayValue = Math.round(rawValue);
-    this.innerHTML = /* html */
-    `
-      <div class="rk-progress">
-        <div class="rk-progress__header">
-          ${label ? `<span class="rk-progress__label">${this._escape(label)}</span>` : ""}
-          <span class="rk-progress__value">${displayValue}%</span>
-        </div>
-        <div class="rk-progress__track">
-          <div class="rk-progress__fill rk-progress__fill--${tone}" style="width:${pct}%"></div>
-        </div>
-        ${this._raw ? `<div class="rk-progress__extra">${this._raw}</div>` : ""}
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-progress", RkProgress);
-
-// packages/components/src/elements/rk-steps.ts
-var RkSteps = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["current"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const current = parseInt(this.getAttribute("current") || "1", 10);
-    const steps = Array.from(this.querySelectorAll("rk-step"));
-    if (steps.length === 0) {
-      this.innerHTML = `<div class="rk-steps"><p style="color:var(--rk-muted)">No steps found. Use &lt;rk-step&gt; inside.</p></div>`;
-      return;
-    }
-    const items = steps.map((step, i) => {
-      const n = i + 1;
-      const label = step.getAttribute("label") || step.textContent?.trim() || `Step ${n}`;
-      let status = "next";
-      if (n < current) status = "done";
-      else if (n === current) status = "active";
-      const circle = status === "done" ? "\u2713" : `${n}`;
-      const itemHtml = `
-          <div class="rk-steps__item rk-steps__item--${status}">
-            <div class="rk-steps__circle">${circle}</div>
-            <div class="rk-steps__label">${this._escape(label)}</div>
-          </div>`;
-      const connector = i < steps.length - 1 ? '<div class="rk-steps__connector"></div>' : "";
-      return itemHtml + connector;
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-steps">
-        <div class="rk-steps__track">${items}</div>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-steps", RkSteps);
-
-// packages/components/src/elements/rk-metric.ts
-var RkMetric = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["cols"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const rawCols = this.getAttribute("cols") || "4";
-    const cols = ["2", "3", "4"].includes(rawCols) ? rawCols : "4";
-    const items = Array.from(this.querySelectorAll("rk-metric-item"));
-    if (items.length === 0) {
-      this.innerHTML = `<div class="rk-metric"><p style="color:var(--rk-muted)">No metric items found. Use &lt;rk-metric-item label="\u2026" value="\u2026"&gt; inside.</p></div>`;
-      return;
-    }
-    const cards = items.map((item) => {
-      const label = item.getAttribute("label") || "";
-      const value = item.getAttribute("value") || "\u2014";
-      const delta = item.getAttribute("delta") || "";
-      const tone = item.getAttribute("tone") || "";
-      const deltaHtml = delta ? `<span class="rk-metric__delta${tone ? ` rk-metric__delta--${tone}` : ""}">${this._escape(delta)}</span>` : "";
-      return `
-          <div class="rk-metric__card">
-            <div class="rk-metric__value-row">
-              <span class="rk-metric__value">${this._escape(value)}</span>
-              ${deltaHtml}
-            </div>
-            <div class="rk-metric__label">${this._escape(label)}</div>
-          </div>`;
-    }).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-metric rk-metric--cols-${cols}">
-        ${cards}
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-metric", RkMetric);
-
 // packages/components/src/elements/rk-3d.ts
 var RkThreeD = class extends HTMLElement {
   _rendered = false;
@@ -1701,687 +2561,6 @@ var RkThreeD = class extends HTMLElement {
 };
 customElements.define("rk-3d", RkThreeD);
 
-// packages/components/src/elements/rk-badge.ts
-var RkBadge = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["color", "icon"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.textContent?.trim() || "";
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const color = this.getAttribute("color") || "accent";
-    const icon = this.getAttribute("icon") || "";
-    const text = this._raw;
-    const colorMap = {
-      blue: {
-        bg: "var(--rk-tone-info-bg, #eff6ff)",
-        text: "var(--rk-tone-info-border, #2563eb)",
-        border: "var(--rk-tone-info-border, #2563eb)"
-      },
-      green: {
-        bg: "var(--rk-tone-success-bg, #f0fdf4)",
-        text: "var(--rk-tone-success-border, #16a34a)",
-        border: "var(--rk-tone-success-border, #16a34a)"
-      },
-      red: {
-        bg: "var(--rk-tone-danger-bg, #fef2f2)",
-        text: "var(--rk-tone-danger-border, #dc2626)",
-        border: "var(--rk-tone-danger-border, #dc2626)"
-      },
-      orange: {
-        bg: "var(--rk-tone-warning-bg, #fffbeb)",
-        text: "var(--rk-tone-warning-border, #d97706)",
-        border: "var(--rk-tone-warning-border, #d97706)"
-      },
-      purple: { bg: "rgba(139,92,246,0.1)", text: "#7c3aed", border: "#7c3aed" },
-      gray: {
-        bg: "var(--rk-surface, #f5f5f4)",
-        text: "var(--rk-text-tertiary, #6b6b66)",
-        border: "var(--rk-border, #e5e4dc)"
-      },
-      accent: {
-        bg: "var(--rk-accent-muted, rgba(2,103,165,0.1))",
-        text: "var(--rk-accent, #0267a5)",
-        border: "var(--rk-accent, #0267a5)"
-      }
-    };
-    const c = colorMap[color] || colorMap.accent;
-    this.innerHTML = `<span class="rk-badge rk-badge--${color}" style="
-      display:inline-flex;align-items:center;gap:4px;
-      padding:2px 8px;border-radius:var(--rk-radius-full,9999px);
-      font:var(--rk-weight-medium,500) var(--rk-text-xs,11px)/1.6 var(--rk-font-sans,sans-serif);
-      letter-spacing:var(--rk-tracking-wide,0.02em);
-      background:${c.bg};color:${c.text};
-      border:1px solid ${c.border};
-      white-space:nowrap;
-    ">${icon ? `<span>${icon}</span>` : ""}<span>${this._escape(text)}</span></span>`;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-var RkBadgeGroup = class extends HTMLElement {
-  connectedCallback() {
-    if (!this.style.display) {
-      this.style.cssText = `
-        display:flex;flex-wrap:wrap;gap:var(--rk-space-2,8px);
-        align-items:center;
-      `;
-    }
-  }
-};
-customElements.define("rk-badge", RkBadge);
-customElements.define("rk-badge-group", RkBadgeGroup);
-
-// packages/components/src/elements/rk-kanban.ts
-var RkKanbanCard = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["priority", "tag", "assignee", "due"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = (this.textContent || "").trim();
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const priority = this.getAttribute("priority") || "";
-    const tag = this.getAttribute("tag") || "";
-    const assignee = this.getAttribute("assignee") || "";
-    const due = this.getAttribute("due") || "";
-    const text = this._raw;
-    const priorityColors = {
-      high: "var(--rk-tone-danger-border, #dc2626)",
-      medium: "var(--rk-tone-warning-border, #d97706)",
-      low: "var(--rk-tone-info-border, #2563eb)"
-    };
-    const priorityBg = {
-      high: "var(--rk-tone-danger-bg, #fef2f2)",
-      medium: "var(--rk-tone-warning-bg, #fffbeb)",
-      low: "var(--rk-tone-info-bg, #eff6ff)"
-    };
-    const borderColor = priority ? priorityColors[priority] || "var(--rk-border)" : "var(--rk-border)";
-    this.innerHTML = `
-      <div class="rk-kanban-card" style="
-        background:var(--rk-surface,#fff);
-        border:1px solid var(--rk-border,#e5e4dc);
-        border-left:3px solid ${borderColor};
-        border-radius:var(--rk-radius-md,10px);
-        padding:var(--rk-space-3,12px) var(--rk-space-4,16px);
-        margin-bottom:var(--rk-space-2,8px);
-        box-shadow:var(--rk-shadow-xs,0 1px 2px rgba(0,0,0,0.06));
-        cursor:default;
-      ">
-        ${tag || priority ? `
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-            ${tag ? `<span style="
-              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
-              text-transform:uppercase;letter-spacing:0.05em;
-              padding:2px 6px;border-radius:4px;
-              background:var(--rk-accent-muted,rgba(2,103,165,0.1));
-              color:var(--rk-accent,#0267a5);
-            ">${this._escape(tag)}</span>` : ""}
-            ${priority ? `<span style="
-              font:600 10px/1.4 var(--rk-font-sans,sans-serif);
-              text-transform:uppercase;letter-spacing:0.05em;
-              padding:2px 6px;border-radius:4px;
-              background:${priorityBg[priority] || "var(--rk-surface-2)"};
-              color:${priorityColors[priority] || "var(--rk-text-muted)"};
-            ">${priority === "high" ? "\u2191 \u9AD8\u4F18" : priority === "medium" ? "\u2192 \u4E2D" : "\u2193 \u4F4E"}</span>` : ""}
-          </div>
-        ` : ""}
-        <div style="
-          font:var(--rk-weight-normal,400) var(--rk-text-sm,13px)/1.6 var(--rk-font-sans,sans-serif);
-          color:var(--rk-text,#1a1a1a);
-        ">${this._escape(text)}</div>
-        ${assignee || due ? `
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-            ${assignee ? `<span style="
-              font:500 11px/1 var(--rk-font-sans,sans-serif);
-              color:var(--rk-text-tertiary,#6b6b66);
-            ">@${this._escape(assignee)}</span>` : "<span></span>"}
-            ${due ? `<span style="
-              font:400 11px/1 var(--rk-font-sans,sans-serif);
-              color:var(--rk-muted,#a0a0a0);
-            ">${this._escape(due)}</span>` : ""}
-          </div>
-        ` : ""}
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-var RkKanbanCol = class extends HTMLElement {
-  static get observedAttributes() {
-    return ["title", "accent", "done"];
-  }
-  connectedCallback() {
-    this._upgradeCards();
-    this._renderShell();
-  }
-  attributeChangedCallback() {
-    this._renderShell();
-  }
-  _upgradeCards() {
-  }
-  _renderShell() {
-    const title = this.getAttribute("title") || "Column";
-    const done = this.hasAttribute("done");
-    const accent = this.getAttribute("accent") || (done ? "green" : "");
-    const accentColor = accent === "green" ? "var(--rk-tone-success-border,#16a34a)" : accent === "blue" ? "var(--rk-tone-info-border,#2563eb)" : accent === "orange" ? "var(--rk-tone-warning-border,#d97706)" : accent === "red" ? "var(--rk-tone-danger-border,#dc2626)" : "var(--rk-border,#e5e4dc)";
-    const existingCards = Array.from(this.querySelectorAll("rk-kanban-card"));
-    const cardCount = existingCards.length;
-    this.style.cssText = `
-      display:flex;flex-direction:column;
-      min-width:220px;flex:1;
-      background:var(--rk-surface,#fafafa);
-      border:1px solid var(--rk-border,#e5e4dc);
-      border-top:3px solid ${accentColor};
-      border-radius:var(--rk-radius-lg,14px);
-      padding:var(--rk-space-4,16px);
-      min-height:200px;
-    `;
-    let header = this.querySelector(".rk-kanban-col__header");
-    if (!header) {
-      header = document.createElement("div");
-      header.className = "rk-kanban-col__header";
-      this.insertBefore(header, this.firstChild);
-    }
-    header.style.cssText = `
-      display:flex;justify-content:space-between;align-items:center;
-      margin-bottom:var(--rk-space-3,12px);
-    `;
-    header.innerHTML = `
-      <span style="
-        font:600 13px/1.4 var(--rk-font-sans,sans-serif);
-        color:var(--rk-text,#1a1a1a);
-        letter-spacing:0.01em;
-      ">${this._escape(title)}</span>
-      <span style="
-        font:600 11px/1.4 var(--rk-font-sans,sans-serif);
-        color:var(--rk-text-tertiary,#6b6b66);
-        background:var(--rk-surface-2,#eee);
-        padding:2px 7px;border-radius:9999px;
-      ">${cardCount}</span>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-var RkKanban = class extends HTMLElement {
-  connectedCallback() {
-    this.style.cssText = `
-      display:flex;gap:var(--rk-space-4,16px);
-      overflow-x:auto;
-      padding-bottom:var(--rk-space-2,8px);
-    `;
-    if (!this.querySelector(".rk-kanban__scroll-hint")) {
-      const hint = document.createElement("style");
-      hint.textContent = `.rk-kanban { scrollbar-width:thin; }`;
-      this.appendChild(hint);
-    }
-  }
-};
-customElements.define("rk-kanban-card", RkKanbanCard);
-customElements.define("rk-kanban-col", RkKanbanCol);
-customElements.define("rk-kanban", RkKanban);
-
-// packages/components/src/elements/rk-form.ts
-var RkField = class extends HTMLElement {
-  static get observedAttributes() {
-    return ["label", "type", "max", "placeholder", "options", "required", "name", "value"];
-  }
-  connectedCallback() {
-    this._render();
-  }
-  attributeChangedCallback() {
-    this._render();
-  }
-  getValue() {
-    const input = this.querySelector("input,textarea,select");
-    const type = this.getAttribute("type") || "text";
-    if (type === "rating") {
-      const checked = this.querySelector(
-        ".rk-field__star--active:last-of-type"
-      );
-      return checked ? Number(checked.dataset.value) : 0;
-    }
-    if (type === "checkbox") {
-      return input?.checked ?? false;
-    }
-    return input?.value ?? "";
-  }
-  _render() {
-    const label = this.getAttribute("label") || "";
-    const type = this.getAttribute("type") || "text";
-    const max = Number(this.getAttribute("max") || 5);
-    const placeholder = this.getAttribute("placeholder") || "";
-    const options = (this.getAttribute("options") || "").split(",").map((s) => s.trim()).filter(Boolean);
-    const required = this.hasAttribute("required");
-    const name = this.getAttribute("name") || label.toLowerCase().replace(/\s+/g, "_");
-    const fieldId = `rk-field-${Math.random().toString(36).slice(2, 8)}`;
-    const sharedStyle = `
-      font:400 var(--rk-text-base,15px)/1.5 var(--rk-font-sans,sans-serif);
-      color:var(--rk-text,#1a1a1a);
-      background:var(--rk-surface,#fff);
-      border:1px solid var(--rk-border,#e5e4dc);
-      border-radius:var(--rk-radius-sm,6px);
-      padding:var(--rk-space-2,8px) var(--rk-space-3,12px);
-      width:100%;box-sizing:border-box;
-      outline:none;transition:border-color 150ms;
-    `;
-    let control = "";
-    if (type === "textarea") {
-      control = `<textarea id="${fieldId}" name="${name}" placeholder="${this._escape(placeholder)}" rows="4"
-        style="${sharedStyle}min-height:96px;resize:vertical;"
-        onfocus="this.style.borderColor='var(--rk-accent)'"
-        onblur="this.style.borderColor='var(--rk-border)'"
-      ></textarea>`;
-    } else if (type === "select") {
-      const opts = options.map((o) => `<option value="${this._escape(o)}">${this._escape(o)}</option>`).join("");
-      control = `<select id="${fieldId}" name="${name}" style="${sharedStyle}cursor:pointer;"
-        onfocus="this.style.borderColor='var(--rk-accent)'"
-        onblur="this.style.borderColor='var(--rk-border)'"
-      ><option value="">\u8BF7\u9009\u62E9...</option>${opts}</select>`;
-    } else if (type === "rating") {
-      const stars = Array.from({ length: max }, (_, i) => {
-        const v = i + 1;
-        return `<button type="button" class="rk-field__star" data-value="${v}"
-          style="background:none;border:none;cursor:pointer;padding:2px;font-size:22px;line-height:1;
-            color:var(--rk-border-hover,#ccc);transition:color 150ms;outline:none;"
-          onclick="(function(el){
-            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
-            stars.forEach((s,idx)=>{
-              s.style.color=idx<${v}?'#f59e0b':'var(--rk-border-hover,#ccc)';
-              s.classList.toggle('rk-field__star--active',idx<${v});
-              if(idx===${v}-1)s.classList.add('rk-field__star--active');
-            });
-          })(this)"
-          onmouseover="(function(el){
-            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
-            stars.forEach((s,idx)=>{s.style.color=idx<${v}?'#fbbf24':'var(--rk-border-hover,#ccc)';});
-          })(this)"
-          onmouseout="(function(el){
-            const stars=el.closest('.rk-field__stars').querySelectorAll('.rk-field__star');
-            const active=parseInt(el.closest('.rk-field__stars').dataset.rating||'0');
-            stars.forEach((s,idx)=>{s.style.color=idx<active?'#f59e0b':'var(--rk-border-hover,#ccc)';});
-          })(this)"
-        >\u2605</button>`;
-      }).join("");
-      control = `<div class="rk-field__stars" data-rating="0" style="display:flex;gap:2px;">${stars}</div>`;
-    } else if (type === "checkbox") {
-      control = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <input type="checkbox" id="${fieldId}" name="${name}"
-          style="width:16px;height:16px;accent-color:var(--rk-accent,#0267a5);cursor:pointer;">
-        <span style="font:400 var(--rk-text-sm,13px)/1.5 var(--rk-font-sans);color:var(--rk-text);">
-          ${this._escape(placeholder || label)}
-        </span>
-      </label>`;
-    } else {
-      control = `<input type="${type === "number" ? "number" : "text"}" id="${fieldId}" name="${name}"
-        placeholder="${this._escape(placeholder)}"
-        style="${sharedStyle}"
-        onfocus="this.style.borderColor='var(--rk-accent)'"
-        onblur="this.style.borderColor='var(--rk-border)'"
-      >`;
-    }
-    this.innerHTML = `
-      <div class="rk-field" style="margin-bottom:var(--rk-space-4,16px);">
-        ${type !== "checkbox" ? `
-          <label for="${fieldId}" style="
-            display:block;margin-bottom:6px;
-            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
-            color:var(--rk-text,#1a1a1a);
-          ">${this._escape(label)}${required ? ' <span style="color:var(--rk-tone-danger-border,#dc2626)">*</span>' : ""}</label>
-        ` : ""}
-        ${control}
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-var RkForm = class extends HTMLElement {
-  _fieldsHTML = "";
-  static get observedAttributes() {
-    return ["title", "submit-label", "description"];
-  }
-  connectedCallback() {
-    if (!this._fieldsHTML) {
-      this._fieldsHTML = Array.from(this.querySelectorAll("rk-field")).map((f) => f.outerHTML).join("") || this.innerHTML;
-    }
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._fieldsHTML) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "\u8868\u5355";
-    const submitLabel = this.getAttribute("submit-label") || "\u63D0\u4EA4";
-    const description = this.getAttribute("description") || "";
-    const fieldHTML = this._fieldsHTML;
-    this.innerHTML = `
-      <div class="rk-form" style="
-        background:var(--rk-surface,#fff);
-        border:1px solid var(--rk-border,#e5e4dc);
-        border-radius:var(--rk-radius-lg,14px);
-        padding:var(--rk-space-6,24px);
-        max-width:560px;
-      ">
-        <h3 style="
-          margin:0 0 var(--rk-space-2,8px);
-          font:700 var(--rk-text-lg,20px)/1.3 var(--rk-font-sans,sans-serif);
-          color:var(--rk-text,#1a1a1a);
-        ">${this._escape(title)}</h3>
-        ${description ? `<p style="
-          margin:0 0 var(--rk-space-4,16px);
-          font:400 var(--rk-text-sm,13px)/1.6 var(--rk-font-sans);
-          color:var(--rk-text-tertiary,#6b6b66);
-        ">${this._escape(description)}</p>` : `<div style="margin-bottom:var(--rk-space-4,16px)"></div>`}
-        <div class="rk-form__fields">${fieldHTML}</div>
-        <button type="button" class="rk-form__submit"
-          onclick="(function(btn){
-            const form = btn.closest('.rk-form');
-            const fields = form.querySelectorAll('rk-field');
-            const result = [];
-            fields.forEach(f => {
-              const label = f.getAttribute('label') || f.getAttribute('name') || 'field';
-              const name = f.getAttribute('name') || label.toLowerCase().replace(/s+/g, '_');
-              const type = f.getAttribute('type') || 'text';
-              let val;
-              if(type==='rating'){
-                const lastActive = f.querySelector('.rk-field__star--active');
-                val = lastActive ? Number(lastActive.dataset.value) : 0;
-              } else if(type==='checkbox'){
-                val = f.querySelector('input')?.checked ?? false;
-              } else {
-                val = f.querySelector('input,textarea,select')?.value ?? '';
-              }
-              result.push({ name, label, value: val });
-            });
-
-            const artifactId = document.documentElement.dataset.rkArtifactId;
-            if (artifactId) {
-              btn.disabled = true; btn.textContent = '\u63D0\u4EA4\u4E2D\u2026';
-              const formTitle = form.closest('rk-form')?.getAttribute('title') || '';
-              fetch('/api/artifacts/' + artifactId + '/submissions', {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ formTitle, fields: result }),
-              }).then(r => r.json()).then(data => {
-                if (data.ok) {
-                  btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4';
-                  btn.style.background = 'var(--rk-tone-success-bg)';
-                  btn.style.color = 'var(--rk-tone-success-border)';
-                  btn.style.borderColor = 'var(--rk-tone-success-border)';
-                  btn.disabled = true;
-                  form.classList.add('rk-form--submitted');
-                } else {
-                  btn.disabled = false; btn.textContent = '\u63D0\u4EA4\u5931\u8D25\uFF0C\u91CD\u8BD5';
-                }
-              }).catch(() => {
-                btn.disabled = false; btn.textContent = '\u7F51\u7EDC\u9519\u8BEF\uFF0C\u91CD\u8BD5';
-              });
-            } else {
-              console.log('[RenderKit Form Submission]', JSON.stringify(result, null, 2));
-              btn.textContent = '\u2713 \u5DF2\u63D0\u4EA4\uFF08\u9884\u89C8\u6A21\u5F0F\uFF09';
-              btn.style.background = 'var(--rk-tone-success-bg)';
-              btn.style.color = 'var(--rk-tone-success-border)';
-              btn.style.borderColor = 'var(--rk-tone-success-border)';
-              btn.disabled = true;
-            }
-          })(this)"
-          style="
-            display:inline-flex;align-items:center;gap:6px;
-            padding:var(--rk-space-2,8px) var(--rk-space-6,24px);
-            background:var(--rk-accent,#0267a5);color:white;
-            border:1px solid var(--rk-accent,#0267a5);
-            border-radius:var(--rk-radius-sm,6px);
-            font:600 var(--rk-text-sm,13px)/1.4 var(--rk-font-sans,sans-serif);
-            cursor:pointer;transition:all 150ms;
-          "
-          onmouseover="if(!this.disabled)this.style.background='var(--rk-accent-hover)'"
-          onmouseout="if(!this.disabled)this.style.background='var(--rk-accent)'"
-        >${this._escape(submitLabel)}</button>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-field", RkField);
-customElements.define("rk-form", RkForm);
-
-// packages/components/src/elements/rk-card.ts
-var RkCard = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title", "subtitle", "variant", "accent"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const subtitle = this.getAttribute("subtitle") || "";
-    const variant = this.getAttribute("variant") || "default";
-    const accent = this.getAttribute("accent") || "";
-    const variantClass = variant !== "default" ? ` rk-card--${variant}` : "";
-    const accentClass = accent ? ` rk-card--accent-${accent}` : "";
-    this.innerHTML = /* html */
-    `
-      <div class="rk-card${variantClass}${accentClass}">
-        ${title || subtitle ? `
-        <div class="rk-card__header">
-          ${title ? `<div class="rk-card__title">${this._escape(title)}</div>` : ""}
-          ${subtitle ? `<div class="rk-card__subtitle">${this._escape(subtitle)}</div>` : ""}
-        </div>` : ""}
-        <div class="rk-card__body">${this._raw}</div>
-      </div>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-card", RkCard);
-
-// packages/components/src/elements/rk-section.ts
-var RkSection = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title", "subtitle", "level", "divider"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.innerHTML;
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    const subtitle = this.getAttribute("subtitle") || "";
-    const level = this.getAttribute("level") || "h2";
-    const hasDivider = this.hasAttribute("divider");
-    const safeLevel = ["h2", "h3", "h4"].includes(level) ? level : "h2";
-    const dividerClass = hasDivider ? " rk-section--divider" : "";
-    this.innerHTML = /* html */
-    `
-      <section class="rk-section${dividerClass}">
-        ${title ? `
-        <div class="rk-section__header">
-          <${safeLevel} class="rk-section__title">${this._escape(title)}</${safeLevel}>
-          ${subtitle ? `<p class="rk-section__subtitle">${this._escape(subtitle)}</p>` : ""}
-        </div>` : ""}
-        <div class="rk-section__body">${this._raw}</div>
-      </section>
-    `;
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-section", RkSection);
-
-// packages/components/src/elements/rk-diff.ts
-var RkDiff = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["lang", "title", "from", "to", "compact"];
-  }
-  connectedCallback() {
-    this._raw = this.textContent || "";
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const lang = this.getAttribute("lang") || "";
-    const title = this.getAttribute("title") || "";
-    const from = this.getAttribute("from") || "";
-    const to = this.getAttribute("to") || "";
-    const lines = this._raw.split("\n");
-    const parsed = this._parseLines(lines);
-    const stats = this._stats(parsed);
-    let headerTitle = title;
-    if (!headerTitle && (from || to)) {
-      headerTitle = from && to ? `${from} \u2192 ${to}` : from || to;
-    }
-    const langBadge = lang ? `<span class="rk-diff__lang">${this._escape(lang)}</span>` : "";
-    const statsBadge = `
-      ${stats.added > 0 ? `<span class="rk-diff__stat rk-diff__stat--add">+${stats.added}</span>` : ""}
-      ${stats.removed > 0 ? `<span class="rk-diff__stat rk-diff__stat--del">-${stats.removed}</span>` : ""}
-    `;
-    const headerHtml = (
-      /* html */
-      `
-      <div class="rk-diff__header">
-        <div class="rk-diff__header-left">
-          <svg class="rk-diff__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15l3 3 3-3"/></svg>
-          ${headerTitle ? `<span class="rk-diff__title">${this._escape(headerTitle)}</span>` : ""}
-          ${langBadge}
-        </div>
-        <div class="rk-diff__header-right">${statsBadge}</div>
-      </div>
-    `
-    );
-    const bodyHtml = this._renderLines(parsed);
-    this.innerHTML = /* html */
-    `
-      <div class="rk-diff">
-        ${headerHtml}
-        <div class="rk-diff__body">
-          <table class="rk-diff__table" aria-label="Code diff">
-            <tbody>${bodyHtml}</tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-  _parseLines(lines) {
-    const result = [];
-    let lineOld = 0;
-    let lineNew = 0;
-    for (const line of lines) {
-      if (line.startsWith("@@")) {
-        const match = line.match(/@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
-        if (match) {
-          lineOld = parseInt(match[1], 10);
-          lineNew = parseInt(match[2], 10);
-        }
-        result.push({ type: "hunk", text: line });
-      } else if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("diff ") || line.startsWith("index ")) {
-        result.push({ type: "meta", text: line });
-      } else if (line.startsWith("+")) {
-        result.push({ type: "add", text: line.slice(1), lineOld: void 0, lineNew: lineNew++ });
-      } else if (line.startsWith("-")) {
-        result.push({ type: "del", text: line.slice(1), lineOld: lineOld++, lineNew: void 0 });
-      } else if (line.startsWith(" ") || line === "") {
-        const txt = line.startsWith(" ") ? line.slice(1) : line;
-        result.push({ type: "ctx", text: txt, lineOld: lineOld++, lineNew: lineNew++ });
-      } else {
-        result.push({ type: "ctx", text: line, lineOld: lineOld++, lineNew: lineNew++ });
-      }
-    }
-    return result;
-  }
-  _stats(parsed) {
-    let added = 0;
-    let removed = 0;
-    for (const l of parsed) {
-      if (l.type === "add") added++;
-      else if (l.type === "del") removed++;
-    }
-    return { added, removed };
-  }
-  _renderLines(parsed) {
-    const rows = [];
-    for (const line of parsed) {
-      if (line.type === "meta") continue;
-      if (line.type === "hunk") {
-        rows.push(`
-          <tr class="rk-diff__row rk-diff__row--hunk">
-            <td class="rk-diff__gutter rk-diff__gutter--hunk" colspan="2"></td>
-            <td class="rk-diff__code rk-diff__code--hunk">${this._escape(line.text)}</td>
-          </tr>
-        `);
-        continue;
-      }
-      const typeClass = `rk-diff__row--${line.type}`;
-      const oldNum = line.lineOld !== void 0 ? String(line.lineOld) : "";
-      const newNum = line.lineNew !== void 0 ? String(line.lineNew) : "";
-      const prefix = line.type === "add" ? "+" : line.type === "del" ? "\u2212" : " ";
-      rows.push(`
-        <tr class="rk-diff__row ${typeClass}">
-          <td class="rk-diff__gutter rk-diff__gutter--old">${oldNum}</td>
-          <td class="rk-diff__gutter rk-diff__gutter--new">${newNum}</td>
-          <td class="rk-diff__code"><span class="rk-diff__prefix">${prefix}</span><span class="rk-diff__text">${this._escape(line.text)}</span></td>
-        </tr>
-      `);
-    }
-    return rows.join("");
-  }
-  _escape(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-diff", RkDiff);
-
 // packages/components/src/elements/rk-infographic.ts
 var _libLoaded = null;
 function loadLib() {
@@ -2505,6 +2684,7 @@ var RkMap = class extends HTMLElement {
   _map = null;
   _raw = "";
   _uid = Math.random().toString(36).slice(2, 9);
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["center", "zoom", "height", "title", "tiles"];
   }
@@ -2519,6 +2699,7 @@ var RkMap = class extends HTMLElement {
     }
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     if (this._map) {
       this._map.remove();
       this._map = null;
@@ -2558,6 +2739,11 @@ var RkMap = class extends HTMLElement {
     document.head.appendChild(link);
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    if (this._map) {
+      this._map.remove();
+      this._map = null;
+    }
     const center = this._parseCenter();
     const zoom = parseInt(this.getAttribute("zoom") || "4", 10) || 4;
     const height = parseInt(this.getAttribute("height") || "400", 10) || 400;
@@ -2579,6 +2765,7 @@ var RkMap = class extends HTMLElement {
         /* @vite-ignore */
         "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js"
       );
+      if (seq !== this._renderSeq) return;
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;
       const map = L.map(container, {
@@ -2702,11 +2889,12 @@ var RkDatagrid = class extends HTMLElement {
       } catch {
       }
     }
+    const containerStyle = pagination ? `min-height:${height}px` : `height:${height}px`;
     this.innerHTML = /* html */
     `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ""}
-        <div class="rk-datagrid__container" style="height:${height}px"></div>
+        <div class="rk-datagrid__container" style="${containerStyle}"></div>
       </div>
     `;
     const container = this.querySelector(".rk-datagrid__container");
@@ -2924,7 +3112,7 @@ var RkPlot = class extends HTMLElement {
   }
   /** Lazy-load Observable Plot from CDN (ESM dynamic import) */
   async _loadPlot() {
-    const mod = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.esm.min.js");
+    const mod = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/+esm");
     return mod;
   }
   _esc(s) {
@@ -3046,7 +3234,7 @@ var RkSketch = class extends HTMLElement {
         const opts = this._makeOpts(shape, roughness);
         switch (shape.type) {
           case "rect":
-            drawer.rect(shape.x ?? 0, shape.y ?? 0, shape.w ?? 100, shape.h ?? 60, opts);
+            drawer.rectangle(shape.x ?? 0, shape.y ?? 0, shape.w ?? 100, shape.h ?? 60, opts);
             if (shape.label) {
               this._addLabel(
                 svg,
@@ -3191,7 +3379,7 @@ var RkZdog = class extends HTMLElement {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/zdog@1/js/zdog.dist.min.js";
+      script.src = "https://cdn.jsdelivr.net/npm/zdog@1.1.3/dist/zdog.dist.min.js";
       script.setAttribute("data-rk-zdog", "");
       script.onload = () => resolve(window.Zdog);
       script.onerror = () => reject(new Error("Failed to load Zdog"));
@@ -3258,12 +3446,14 @@ var RkZdog = class extends HTMLElement {
               rearFace: shape.rearFace
             });
             break;
-          case "sphere":
-            new Z.Sphere({
+          case "sphere": {
+            const SphereLike = Z.Hemisphere || Z.Ellipse;
+            new SphereLike({
               ...baseOpts,
               diameter: shape.diameter ?? 80
             });
             break;
+          }
           case "cylinder":
             new Z.Cylinder({
               ...baseOpts,
@@ -3304,7 +3494,7 @@ var RkZdog = class extends HTMLElement {
       }
       const animate = () => {
         if (rotate) {
-          illo.rotateGraph();
+          illo.rotate.y = (illo.rotate.y || 0) + 0.02;
         }
         illo.updateRenderGraph();
         this._raf = requestAnimationFrame(animate);
@@ -3428,6 +3618,7 @@ var RkGlobe = class extends HTMLElement {
     this._cleanup();
   }
   attributeChangedCallback() {
+    if (!this.isConnected) return;
     this._cleanup();
     this._render();
   }
@@ -3506,10 +3697,12 @@ var RkGlobe = class extends HTMLElement {
         globe.pointsData(points).pointLat((d) => d.lat).pointLng((d) => d.lng).pointAltitude((d) => d.size || 0.5).pointRadius((d) => (d.size || 0.5) * 0.6).pointColor((d) => d.color || "#6366f1").pointLabel((d) => d.label || `${d.lat.toFixed(2)}, ${d.lng.toFixed(2)}`);
       }
       if (autoRotate) {
-        const controls = globe.controls();
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        controls.enableZoom = true;
+        const controls = globe.controls?.();
+        if (controls) {
+          controls.autoRotate = true;
+          controls.autoRotateSpeed = 0.5;
+          controls.enableZoom = true;
+        }
       }
       this._globe = globe;
       this._ro = new ResizeObserver(() => {
@@ -3530,92 +3723,6 @@ var RkGlobe = class extends HTMLElement {
   }
 };
 customElements.define("rk-globe", RkGlobe);
-
-// packages/components/src/elements/rk-narrative.ts
-var RkNarrative = class extends HTMLElement {
-  _raw = "";
-  static get observedAttributes() {
-    return ["title"];
-  }
-  connectedCallback() {
-    if (!this._raw) this._raw = this.textContent?.trim() || "";
-    this._render();
-  }
-  attributeChangedCallback() {
-    if (this._raw) this._render();
-  }
-  _render() {
-    const title = this.getAttribute("title") || "";
-    let phrases;
-    try {
-      phrases = JSON.parse(this._raw).phrases;
-      if (!Array.isArray(phrases)) throw new Error("phrases must be an array");
-    } catch (e) {
-      this.innerHTML = `<div class="rk-narrative"><div class="rk-narrative__error">Invalid JSON: ${this._esc(e.message)}</div></div>`;
-      return;
-    }
-    const titleHtml = title ? `<div class="rk-narrative__title">${this._esc(title)}</div>` : "";
-    const body = phrases.map((p) => this._renderPhrase(p)).join("");
-    this.innerHTML = /* html */
-    `
-      <div class="rk-narrative">
-        ${titleHtml}
-        <div class="rk-narrative__body">${body}</div>
-      </div>
-    `;
-  }
-  _renderPhrase(p) {
-    if ("text" in p) {
-      return this._esc(p.text);
-    }
-    if ("value" in p) {
-      const v = p;
-      const arrow = v.trend === "up" ? "\u2191" : v.trend === "down" ? "\u2193" : v.trend === "flat" ? "\u2192" : "";
-      const colorCls = v.color ? ` rk-narrative__value--${v.color}` : "";
-      const deltaHtml = v.delta ? `<span class="rk-narrative__delta${v.trend === "up" ? " rk-narrative__delta--up" : v.trend === "down" ? " rk-narrative__delta--down" : ""}">${this._esc(v.delta)}</span>` : "";
-      const arrowHtml = arrow ? `<span class="rk-narrative__arrow${v.trend === "up" ? " rk-narrative__arrow--up" : v.trend === "down" ? " rk-narrative__arrow--down" : ""}">${arrow}</span>` : "";
-      return `<span class="rk-narrative__value${colorCls}">${arrowHtml}${this._esc(v.value)}</span>${deltaHtml}`;
-    }
-    if ("sparkline" in p) {
-      const s = p;
-      return this._renderSparkline(s.sparkline, s.color || "accent", s.height || 20);
-    }
-    if ("bar" in p) {
-      const b = p;
-      const pct = Math.min(100, Math.max(0, b.bar / b.max * 100));
-      const colorCls = b.color ? ` rk-narrative__minibar--${b.color}` : "";
-      return `<span class="rk-narrative__minibar${colorCls}"><span class="rk-narrative__minibar-fill" style="width:${pct}%"></span></span>`;
-    }
-    if ("badge" in p) {
-      const bd = p;
-      const colorCls = bd.color ? ` rk-narrative__badge--${bd.color}` : "";
-      return `<span class="rk-narrative__badge${colorCls}">${this._esc(bd.badge)}</span>`;
-    }
-    return "";
-  }
-  _renderSparkline(data, color, height) {
-    if (!data || data.length < 2) return "";
-    const width = 60;
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
-    const pad = 2;
-    const h = height - pad * 2;
-    const points = data.map((v, i) => {
-      const x = i / (data.length - 1) * width;
-      const y = pad + h - (v - min) / range * h;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(" ");
-    const colorVar = color === "accent" ? "var(--rk-accent)" : `var(--rk-tone-${color}-border, var(--rk-accent))`;
-    return `<span class="rk-narrative__sparkline"><svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg"><polyline points="${points}" fill="none" stroke="${colorVar}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-  }
-  _esc(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-  }
-};
-customElements.define("rk-narrative", RkNarrative);
 
 // packages/components/src/elements/rk-plot3d.ts
 var RkPlot3d = class extends HTMLElement {
@@ -3922,6 +4029,7 @@ var RkGraph = class extends HTMLElement {
     }
   }
   attributeChangedCallback() {
+    if (!this.isConnected || !this._raw) return;
     if (this._cy) {
       this._cy.destroy();
       this._cy = null;
@@ -4081,6 +4189,7 @@ var RkFlow = class extends HTMLElement {
     }
   }
   attributeChangedCallback() {
+    if (!this.isConnected || !this._raw) return;
     if (this._graph) {
       this._graph.dispose();
       this._graph = null;
@@ -4115,7 +4224,7 @@ var RkFlow = class extends HTMLElement {
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/@antv/x6@2/dist/x6.js";
+      script.src = "https://cdn.jsdelivr.net/npm/@antv/x6@2.18.1/dist/index.js";
       script.setAttribute("data-rk-x6", "");
       script.onload = () => resolve();
       script.onerror = () => reject(new Error("X6 CDN load failed"));
@@ -4158,7 +4267,7 @@ var RkFlow = class extends HTMLElement {
         container,
         width: container.clientWidth,
         height,
-        autoResize: true,
+        autoResize: false,
         background: { transparent: true },
         grid: false,
         panning: { enabled: true },
@@ -4247,96 +4356,3 @@ var RkFlow = class extends HTMLElement {
   }
 };
 customElements.define("rk-flow", RkFlow);
-
-// packages/components/src/elements/rk-scroll-story.ts
-var SCROLLAMA_CDN = "https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.module.js";
-function loadScrollama() {
-  if (window.__scrollama__) return Promise.resolve(window.__scrollama__);
-  return import(SCROLLAMA_CDN).then((mod) => {
-    const lib = mod.default || mod;
-    window.__scrollama__ = lib;
-    return lib;
-  });
-}
-var RkScrollStory = class extends HTMLElement {
-  _scroller = null;
-  _loaded = false;
-  static get observedAttributes() {
-    return ["offset"];
-  }
-  connectedCallback() {
-    if (!this._loaded) {
-      this._loaded = true;
-      this._init();
-    }
-  }
-  async _init() {
-    const offset = parseFloat(this.getAttribute("offset") || "0.5");
-    const sticky = this.hasAttribute("sticky");
-    try {
-      const scrollama = await loadScrollama();
-      const steps = this.querySelectorAll("rk-step");
-      if (steps.length === 0) return;
-      if (sticky) {
-        this.classList.add("rk-scroll-story--sticky");
-        const right = this.querySelector(".rk-scroll-story__steps");
-        if (!right) {
-          const stepsDiv = document.createElement("div");
-          stepsDiv.className = "rk-scroll-story__steps";
-          const graphic = document.createElement("div");
-          graphic.className = "rk-scroll-story__graphic";
-          const kids = Array.from(this.childNodes);
-          for (const kid of kids) {
-            if (kid instanceof HTMLElement && kid.tagName === "RK-STEP") {
-              stepsDiv.appendChild(kid);
-            } else if (kid instanceof Text && kid.textContent?.trim() === "") {
-              continue;
-            } else {
-              graphic.appendChild(kid);
-            }
-          }
-          this.appendChild(graphic);
-          this.appendChild(stepsDiv);
-        }
-      }
-      this._scroller = scrollama().setup({
-        step: this.querySelectorAll("rk-step"),
-        offset: Math.max(0, Math.min(1, offset)),
-        once: false,
-        progress: true
-      }).onStepEnter(({ element }) => {
-        element.classList.add("is-active");
-      }).onStepExit(({ element }) => {
-        element.classList.remove("is-active");
-      }).onStepProgress(({ element, progress }) => {
-        element.style.setProperty("--rk-step-progress", String(progress));
-      });
-      window.addEventListener("resize", this._onResize);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      this.innerHTML = `<div class="rk-scroll-story__error">Scrollama load failed: ${msg}</div>`;
-    }
-  }
-  _onResize = () => {
-    if (this._scroller) this._scroller.resize();
-  };
-  disconnectedCallback() {
-    if (this._scroller) {
-      this._scroller.destroy();
-      this._scroller = null;
-    }
-    window.removeEventListener("resize", this._onResize);
-  }
-};
-var RkStep = class extends HTMLElement {
-  static get observedAttributes() {
-    return [];
-  }
-  connectedCallback() {
-    if (!this.classList.contains("rk-step")) {
-      this.classList.add("rk-step");
-    }
-  }
-};
-customElements.define("rk-scroll-story", RkScrollStory);
-customElements.define("rk-step", RkStep);

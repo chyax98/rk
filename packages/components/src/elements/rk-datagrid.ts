@@ -102,11 +102,15 @@ connectedCallback(): void {
       }
     }
 
+    const containerStyle = pagination
+      ? `min-height:${height}px`
+      : `height:${height}px`;
+
     // Build DOM
     this.innerHTML = /* html */ `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ''}
-        <div class="rk-datagrid__container" style="height:${height}px"></div>
+        <div class="rk-datagrid__container" style="${containerStyle}"></div>
       </div>
     `;
 
