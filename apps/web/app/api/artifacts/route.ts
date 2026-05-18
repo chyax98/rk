@@ -2,7 +2,7 @@ import { listArtifacts, pushHTML } from '../../../lib/store';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json() as Record<string, string>;
+    const body = (await req.json()) as Record<string, string>;
     const html = body.html || body.source || '';
     const file = body.file || body.title;
     const result = await pushHTML(html, file);

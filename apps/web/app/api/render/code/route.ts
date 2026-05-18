@@ -1,34 +1,37 @@
 export const runtime = 'nodejs';
 
-let highlighterPromise: Promise<any> | null = null;
+type Highlighter = Awaited<ReturnType<typeof createConfiguredHighlighter>>;
+
+let highlighterPromise: Promise<Highlighter> | null = null;
+
+async function createConfiguredHighlighter() {
+  const { createHighlighter } = await import('shiki');
+  return createHighlighter({
+    themes: ['github-light', 'github-dark'],
+    langs: [
+      'javascript',
+      'typescript',
+      'jsx',
+      'tsx',
+      'python',
+      'bash',
+      'json',
+      'yaml',
+      'css',
+      'html',
+      'markdown',
+      'sql',
+      'rust',
+      'go',
+      'java',
+      'diff',
+    ],
+  });
+}
 
 async function getHighlighter() {
   if (!highlighterPromise) {
-    highlighterPromise = (async () => {
-      const { createHighlighter } = await import('shiki');
-      const highlighter = await createHighlighter({
-        themes: ['github-light', 'github-dark'],
-        langs: [
-          'javascript',
-          'typescript',
-          'jsx',
-          'tsx',
-          'python',
-          'bash',
-          'json',
-          'yaml',
-          'css',
-          'html',
-          'markdown',
-          'sql',
-          'rust',
-          'go',
-          'java',
-          'diff',
-        ],
-      });
-      return highlighter;
-    })();
+    highlighterPromise = createConfiguredHighlighter();
   }
   return highlighterPromise;
 }

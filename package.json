@@ -11,8 +11,8 @@
     "format": "npx @biomejs/biome format --write .",
     "biome:check": "npx @biomejs/biome check .",
     "ci:local": "pnpm biome:check",
-    "test": "node --experimental-strip-types --test tests/html-processor.test.ts tests/wc-render.test.ts",
-    "test:processor": "node --experimental-strip-types --test tests/html-processor.test.ts",
+    "test": "node --experimental-strip-types --test tests/comment-anchor.test.ts tests/html-processor.test.ts tests/wc-render.test.ts tests/cli.test.ts",
+
     "test:wc": "node --experimental-strip-types --test tests/wc-render.test.ts",
     "test:cli": "node --experimental-strip-types --test tests/cli.test.ts",
     "score": "node --experimental-strip-types scripts/score.ts",

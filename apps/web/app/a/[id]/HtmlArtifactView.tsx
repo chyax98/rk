@@ -4,9 +4,16 @@ import Script from 'next/script';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
 
-interface AddingState { anchor: string; text: string }
+interface AddingState {
+  anchor: string;
+  text: string;
+}
 // BtnState removed — button is now ref-driven to avoid React re-renders that break WC charts
-interface RevisionSummary { revisionNumber: number; createdAt: number; title: string }
+interface RevisionSummary {
+  revisionNumber: number;
+  createdAt: number;
+  title: string;
+}
 
 export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactBundle }) {
   const { meta, revision, anchors, comments } = artifact;
@@ -160,7 +167,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     const el = bodyRef.current;
     if (!el) return;
     const onClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('[data-rk-anchor].rk-has-comment') as HTMLElement | null;
+      const target = (e.target as HTMLElement).closest(
+        '[data-rk-anchor].rk-has-comment',
+      ) as HTMLElement | null;
       if (!target) return;
       const rect = target.getBoundingClientRect();
       const clickedBadgeZone = e.clientX >= rect.right - 6;
@@ -198,10 +207,17 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
           ...prev,
           {
             id: c.id,
+            artifactId: c.artifactId || meta.id,
             anchor: c.anchor || adding.anchor,
             text: c.text,
-
+            selector: c.selector || null,
+            status: c.status || 'open',
+            createdAtRevision: c.createdAtRevision ?? meta.currentRevision,
             createdAt: c.createdAt,
+            resolvedAtRevision: c.resolvedAtRevision,
+            resolvedBy: c.resolvedBy,
+            resolvedAt: c.resolvedAt,
+            reopenedAt: c.reopenedAt,
           },
         ]);
         setAdding(null);
@@ -209,7 +225,7 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
     } finally {
       setSubmitting(false);
     }
-  }, [adding, meta.id]);
+  }, [adding, meta.currentRevision, meta.id]);
 
   const startEdit = useCallback((comment: Comment) => {
     setEditingId(comment.id);
@@ -230,7 +246,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         });
         const data = await res.json();
         if (data.ok && data.comment) {
-          setLocalComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, text: data.comment.text } : c)));
+          setLocalComments((prev) =>
+            prev.map((c) => (c.id === commentId ? { ...c, text: data.comment.text } : c)),
+          );
           setEditingId(null);
           setEditText('');
         }
@@ -256,7 +274,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         });
         const data = await res.json();
         if (data.ok && data.comment) {
-          setLocalComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, status: 'resolved' } : c)));
+          setLocalComments((prev) =>
+            prev.map((c) => (c.id === commentId ? { ...c, status: 'resolved' } : c)),
+          );
           if (activeComment === commentId) setActiveComment(null);
           setDeletingId(null);
         }
@@ -309,7 +329,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         type="button"
         className="rk-add-comment-btn"
         style={{ display: 'none', position: 'fixed' }}
-        onMouseEnter={() => { if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }}
+        onMouseEnter={() => {
+          if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        }}
         onMouseLeave={() => {
           hideTimerRef.current = setTimeout(() => {
             if (addBtnRef.current) addBtnRef.current.style.display = 'none';
@@ -330,7 +352,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         aria-label={panelOpen ? '收起评论' : '展开评论'}
       >
         {panelOpen ? '›' : '‹'}
-        {!panelOpen && openComments.length > 0 && <span className="rk-panel-tab__count">{openComments.length}</span>}
+        {!panelOpen && openComments.length > 0 && (
+          <span className="rk-panel-tab__count">{openComments.length}</span>
+        )}
       </button>
 
       <button
@@ -358,8 +382,12 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
               title={r.title}
             >
               <span className="rk-version-item__num">v{r.revisionNumber}</span>
-              <span className="rk-version-item__time">{new Date(r.createdAt).toLocaleDateString('zh-CN')}</span>
-              {r.revisionNumber === meta.currentRevision && <span className="rk-version-item__badge">最新</span>}
+              <span className="rk-version-item__time">
+                {new Date(r.createdAt).toLocaleDateString('zh-CN')}
+              </span>
+              {r.revisionNumber === meta.currentRevision && (
+                <span className="rk-version-item__badge">最新</span>
+              )}
             </button>
           ))}
         </div>
@@ -369,9 +397,16 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         <div className="rk-comment-panel__header">
           <span className="rk-comment-panel__title">
             评论
-            {openComments.length > 0 && <span className="rk-comment-panel__badge">{openComments.length}</span>}
+            {openComments.length > 0 && (
+              <span className="rk-comment-panel__badge">{openComments.length}</span>
+            )}
           </span>
-          <button type="button" className="rk-comment-panel__close" onClick={() => setPanelOpen(false)} aria-label="关闭评论面板">
+          <button
+            type="button"
+            className="rk-comment-panel__close"
+            onClick={() => setPanelOpen(false)}
+            aria-label="关闭评论面板"
+          >
             ×
           </button>
         </div>
@@ -379,7 +414,9 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
         <div className="rk-comment-panel__body">
           {adding && (
             <div className="rk-comment-input">
-              <div className="rk-comment-input__anchor">{anchorLabel.get(adding.anchor) || adding.anchor}</div>
+              <div className="rk-comment-input__anchor">
+                {anchorLabel.get(adding.anchor) || adding.anchor}
+              </div>
               <textarea
                 className="rk-comment-input__textarea"
                 placeholder="写下评论… (Cmd+Enter 提交，Esc 取消)"
@@ -394,33 +431,53 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
                 rows={3}
               />
               <div className="rk-comment-input__actions">
-                <button type="button" className="rk-comment-input__cancel" onClick={() => setAdding(null)}>
+                <button
+                  type="button"
+                  className="rk-comment-input__cancel"
+                  onClick={() => setAdding(null)}
+                >
                   取消
                 </button>
-                <button type="button" className="rk-comment-input__submit" disabled={submitting || !adding.text.trim()} onClick={submitComment}>
+                <button
+                  type="button"
+                  className="rk-comment-input__submit"
+                  disabled={submitting || !adding.text.trim()}
+                  onClick={submitComment}
+                >
                   {submitting ? '…' : '发送'}
                 </button>
               </div>
             </div>
           )}
 
-          {openComments.length === 0 && !adding && <p className="rk-comment-panel__empty">悬停文档块后点击 + 添加评论</p>}
+          {openComments.length === 0 && !adding && (
+            <p className="rk-comment-panel__empty">悬停文档块后点击 + 添加评论</p>
+          )}
 
           {openComments.map((c) => (
+            /* biome-ignore lint/a11y/useSemanticElements: comment card contains nested action buttons; native button would be invalid HTML */
             <div
-              key={c.id}
               className={`rk-comment-card${activeComment === c.id ? ' is-active' : ''}`}
+              role="button"
+              tabIndex={0}
               onClick={() => scrollToAnchor(c.anchor, c.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  scrollToAnchor(c.anchor, c.id);
+                }
+              }}
               onMouseEnter={() => setHoveredComment(c.id)}
               onMouseLeave={() => setHoveredComment(null)}
             >
               <div className="rk-comment-card__quote">{anchorLabel.get(c.anchor) || c.anchor}</div>
 
               {editingId === c.id ? (
-                <div className="rk-comment-edit" onClick={(e) => e.stopPropagation()}>
+                <div className="rk-comment-edit">
                   <textarea
                     className="rk-comment-edit__textarea"
                     value={editText}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => setEditText(e.target.value)}
                     onKeyDown={(e) => {
                       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') saveEdit(c.id);
@@ -429,10 +486,23 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
                     rows={3}
                   />
                   <div className="rk-comment-card__actions is-editing">
-                    <button type="button" onClick={() => saveEdit(c.id)} disabled={submitting || !editText.trim()}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        saveEdit(c.id);
+                      }}
+                      disabled={submitting || !editText.trim()}
+                    >
                       保存
                     </button>
-                    <button type="button" onClick={() => setEditingId(null)}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(null);
+                      }}
+                    >
                       取消
                     </button>
                   </div>
@@ -451,11 +521,25 @@ export default function HtmlArtifactView({ artifact }: { artifact: HtmlArtifactB
               </span>
 
               {hoveredComment === c.id && editingId !== c.id && (
-                <div className="rk-comment-card__actions" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" onClick={() => startEdit(c)}>
+                <div className="rk-comment-card__actions">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(c);
+                    }}
+                  >
                     编辑
                   </button>
-                  <button type="button" className="is-danger" onClick={() => deleteComment(c.id)} disabled={submitting}>
+                  <button
+                    type="button"
+                    className="is-danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteComment(c.id);
+                    }}
+                    disabled={submitting}
+                  >
                     {deletingId === c.id ? '确认删除' : '删除'}
                   </button>
                 </div>

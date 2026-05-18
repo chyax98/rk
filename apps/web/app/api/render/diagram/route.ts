@@ -4,7 +4,7 @@ import { join } from 'node:path';
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  let payload;
+  let payload: { engine?: string; code?: string } | undefined;
   try {
     payload = await req.json();
   } catch {
@@ -17,24 +17,32 @@ export async function POST(req: Request) {
 
   try {
     if (engine === 'd2') return json({ ok: true, engine, svg: sanitizeSvg(await renderD2(code)) });
-    if (engine === 'plantuml')
+    if (engine === 'plantuml') {
       return json({ ok: true, engine, svg: sanitizeSvg(await renderPlantUML(code)) });
+    }
     return json({ ok: false, error: `Unsupported server diagram engine: ${engine}` }, 400);
-  } catch (e: any) {
-    return json({ ok: false, engine, error: String(e?.message || e) }, 200);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json({ ok: false, engine, error: message }, 200);
   }
 }
 
 async function renderD2(code: string) {
   const { D2 } = await import('@terrastruct/d2');
   const d2 = new D2();
-  const result = await d2.compile(code, { layout: 'dagre' } as any);
-  return await d2.render(result.diagram, { ...result.renderOptions, noXMLTag: true, pad: 32 });
+  // @ts-expect-error runtime supports layout option; upstream type is narrower
+  const result = await d2.compile(code, { layout: 'dagre' });
+  const rendered = await d2.render(result.diagram, {
+    ...result.renderOptions,
+    noXMLTag: true,
+    pad: 32,
+  });
+  return typeof rendered === 'string' ? rendered : String(rendered ?? '');
 }
 
 async function renderPlantUML(code: string) {
   const jar = join(process.cwd(), 'node_modules', 'plantuml', 'vendor', 'plantuml.jar');
-  return await new Promise<string>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const child = spawn('java', ['-jar', '-Djava.awt.headless=true', jar, '-tsvg', '-pipe'], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -71,6 +79,6 @@ function sanitizeSvg(svg: string) {
     .replace(/javascript:/gi, '');
 }
 
-function json(data: any, status = 200) {
+function json<T>(data: T, status = 200) {
   return Response.json(data, { status });
 }

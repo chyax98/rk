@@ -108,8 +108,8 @@ const commentRes = await fetch(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      blockId: 'project-summary',
-      text: 'Smoke test quote comment',
+      anchor: 'project-summary',
+
       selector: { type: 'TextQuoteSelector', exact: 'RenderKit', prefix: '', suffix: ' is local' },
     }),
   },

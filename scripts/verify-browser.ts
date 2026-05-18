@@ -172,13 +172,13 @@ async function main() {
   );
   const artifactId = pushed.artifactId;
   const openComment = await postJson(`/api/artifacts/${artifactId}/comments`, {
-    blockId: 'exec-summary',
-    text: '浏览器回归：摘要需要更明确结论',
+    anchor: 'exec-summary',
+
     selector: { type: 'TextQuoteSelector', exact: 'RenderKit', prefix: '', suffix: '' },
   });
   const resolvedComment = await postJson(`/api/artifacts/${artifactId}/comments`, {
-    blockId: 'risk-table',
-    text: '浏览器回归：风险表需要补 owner',
+    anchor: 'risk-table',
+
   });
   await postJson(
     `/api/artifacts/${artifactId}/comments/${resolvedComment.comment.id}`,

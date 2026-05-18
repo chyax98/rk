@@ -3,7 +3,7 @@ import { addComment } from '../../../../../lib/store.ts';
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const body = await req.json() as Record<string, unknown>;
+    const body = (await req.json()) as Record<string, unknown>;
     const anchor = typeof body.anchor === 'string' ? body.anchor.trim() : '';
     const text = typeof body.text === 'string' ? body.text.trim() : '';
 

@@ -112,9 +112,10 @@ export interface RevisionSummary {
 
 /* ── helpers ────────────────────────────────────────────── */
 
-function sha(s: string): string {
+function _sha(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex');
 }
+
 function now(): string {
   return new Date().toISOString();
 }
@@ -122,7 +123,9 @@ function now(): string {
 function normalizeSelector(selector: unknown): TextQuoteSelector | null {
   if (!selector || typeof selector !== 'object') return null;
   const s = selector as Record<string, unknown>;
-  const exact = String(s.exact || '').trim().slice(0, 500);
+  const exact = String(s.exact || '')
+    .trim()
+    .slice(0, 500);
   if (!exact) return null;
   return {
     type: ((s.type as string) || 'TextQuoteSelector') as 'TextQuoteSelector',
@@ -150,13 +153,13 @@ function rowToComment(r: DbComment): Comment {
     id: r.id,
     artifactId: r.artifact_id,
     anchor: r.anchor,
-
+    text: r.text,
     selector: r.selector ? (JSON.parse(r.selector) as TextQuoteSelector) : null,
     status: r.status,
     createdAtRevision: r.created_at_revision,
     createdAt: r.created_at,
   };
-  if (r.resolved_at_revision != null) c.resolvedAtRevision = r.resolved_at_revision;
+
   if (r.resolved_by != null) c.resolvedBy = r.resolved_by;
   if (r.resolved_at != null) c.resolvedAt = r.resolved_at;
   if (r.reopened_at != null) c.reopenedAt = r.reopened_at;
@@ -208,9 +211,14 @@ export async function addComment(
     .get(artifactId) as Pick<DbArtifact, 'id' | 'current_revision'> | undefined;
   if (!artifact) return { ok: false as const, status: 404, error: 'artifact not found' };
 
+  const anchorRow = db
+    .prepare('SELECT 1 FROM anchors WHERE artifact_id = ? AND anchor = ?')
+    .get(artifactId, anchor) as { 1: number } | undefined;
+  if (!anchorRow) return { ok: false as const, status: 400, error: 'anchor not found' };
+
   const currentRev = artifact.current_revision;
   const c: Comment = {
-    id: 'cmt_' + crypto.randomBytes(5).toString('hex'),
+    id: `cmt_${crypto.randomBytes(5).toString('hex')}`,
     artifactId,
     anchor,
     text,
@@ -237,11 +245,7 @@ export async function addComment(
   return { ok: true as const, comment: c };
 }
 
-export async function updateCommentStatus(
-  artifactId: string,
-  commentId: string,
-  status: string,
-) {
+export async function updateCommentStatus(artifactId: string, commentId: string, status: string) {
   const validStatuses = new Set([COMMENT_OPEN, COMMENT_RESOLVED]);
   if (!validStatuses.has(status))
     return { ok: false as const, status: 400, error: 'invalid status' };
@@ -266,11 +270,7 @@ export async function updateCommentStatus(
   return { ok: true as const, comment: rowToComment(updated) };
 }
 
-export async function updateCommentText(
-  artifactId: string,
-  commentId: string,
-  text: string,
-) {
+export async function updateCommentText(artifactId: string, commentId: string, text: string) {
   const nextText = text.trim();
   if (!nextText) return { ok: false as const, status: 400, error: 'text required' };
 
@@ -343,7 +343,12 @@ export async function getFormSubmissions(artifactId: string): Promise<FormSubmis
   const db = getDb();
   const rows = db
     .prepare('SELECT * FROM form_submissions WHERE artifact_id = ? ORDER BY created_at DESC')
-    .all(artifactId) as Array<{ id: string; form_title: string; fields: string; created_at: number }>;
+    .all(artifactId) as Array<{
+    id: string;
+    form_title: string;
+    fields: string;
+    created_at: number;
+  }>;
   return rows.map((r) => ({
     id: r.id,
     formTitle: r.form_title,
@@ -410,7 +415,7 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
 
   const isNew = !artifactId;
   if (isNew) {
-    artifactId = 'art_' + crypto.randomBytes(5).toString('hex');
+    artifactId = `art_${crypto.randomBytes(5).toString('hex')}`;
     currentRev = 0;
   }
 
@@ -471,20 +476,25 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
   });
   txn();
 
+  const finalArtifactId = artifactId || '';
   return {
-    artifactId: artifactId!,
+    artifactId: finalArtifactId,
     revision: nextRev,
-    url: `/a/${artifactId}`,
+    url: `/a/${finalArtifactId}`,
   };
 }
 
 /* ── HTML artifact: revision history ────────────────────── */
 
-function extractRevisionTitle(processedHtml: string | null | undefined, revisionNumber: number): string {
+function extractRevisionTitle(
+  processedHtml: string | null | undefined,
+  revisionNumber: number,
+): string {
   if (!processedHtml) return `版本 ${revisionNumber}`;
   const title = processedHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim();
   if (title) return title;
-  const h1 = processedHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
+  const h1 = processedHtml
+    .match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
     ?.replace(/<[^>]+>/g, '')
     ?.replace(/\s+/g, ' ')
     ?.trim();
@@ -497,7 +507,11 @@ export async function listRevisions(artifactId: string): Promise<RevisionSummary
     .prepare(
       'SELECT number, created_at, processed_html FROM revisions WHERE artifact_id = ? ORDER BY number DESC',
     )
-    .all(artifactId) as Array<{ number: number; created_at: string; processed_html: string | null }>;
+    .all(artifactId) as Array<{
+    number: number;
+    created_at: string;
+    processed_html: string | null;
+  }>;
 
   return rows.map((r) => ({
     revisionNumber: r.number,
@@ -522,9 +536,9 @@ export async function getRevision(
 export async function getHtmlArtifact(id: string): Promise<HtmlArtifactBundle | null> {
   const db = getDb();
 
-  const artRow = db
-    .prepare('SELECT * FROM artifacts WHERE id = ?')
-    .get(id) as DbArtifact | undefined;
+  const artRow = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id) as
+    | DbArtifact
+    | undefined;
   if (!artRow) return null;
 
   const revRow = db
