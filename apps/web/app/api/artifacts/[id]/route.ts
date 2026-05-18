@@ -1,4 +1,4 @@
-import { deleteArtifact, getArtifact } from '../../../../lib/store';
+import { deleteArtifact, getArtifact } from '../../../../lib/store.ts';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

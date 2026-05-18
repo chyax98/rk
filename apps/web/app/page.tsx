@@ -1,5 +1,5 @@
 import type React from 'react';
-import { listArtifacts } from '../lib/store.ts';
+import { listArtifacts } from '@/lib/store.ts';
 
 export default async function Home(): Promise<React.ReactElement> {
   const artifacts = await listArtifacts();

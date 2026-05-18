@@ -2,7 +2,7 @@
 
 import Script from 'next/script';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Comment, HtmlArtifactBundle } from '../../../lib/store.ts';
+import type { Comment, HtmlArtifactBundle } from '@/lib/store.ts';
 
 interface AddingState {
   anchor: string;

@@ -1,4 +1,4 @@
-import { listArtifacts, pushHTML } from '../../../lib/store';
+import { listArtifacts, pushHTML } from '../../../lib/store.ts';
 
 export async function POST(req: Request) {
   try {

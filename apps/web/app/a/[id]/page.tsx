@@ -1,4 +1,4 @@
-import { getHtmlArtifact } from '../../../lib/store.ts';
+import { getHtmlArtifact } from '@/lib/store.ts';
 import HtmlArtifactView from './HtmlArtifactView.tsx';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
