@@ -1,4 +1,13 @@
-import { updateCommentStatus, updateCommentText } from '../../../../../../lib/store.ts';
+import {
+  COMMENT_ADDRESSED,
+  COMMENT_OPEN,
+  COMMENT_RESOLVED,
+  type CommentStatus,
+  updateCommentStatus,
+  updateCommentText,
+} from '../../../../../../lib/store.ts';
+
+const ALLOWED_STATUSES: CommentStatus[] = [COMMENT_OPEN, COMMENT_ADDRESSED, COMMENT_RESOLVED];
 
 export async function PATCH(
   req: Request,
@@ -16,8 +25,14 @@ export async function PATCH(
         return Response.json({ ok: false, error: result.error }, { status: result.status || 400 });
       return Response.json({ ok: true, comment: result.comment });
     }
-    if (body.status) {
-      const result = await updateCommentStatus(id, commentId, body.status);
+    if (body.status && (ALLOWED_STATUSES as string[]).includes(body.status)) {
+      const actor = body.actor === 'agent' ? 'agent' : 'human';
+      const result = await updateCommentStatus(
+        id,
+        commentId,
+        body.status as CommentStatus,
+        actor,
+      );
       if (!result.ok)
         return Response.json({ ok: false, error: result.error }, { status: result.status || 400 });
       return Response.json({ ok: true, comment: result.comment });

@@ -107,6 +107,43 @@ function migrate(db: Database.Database): void {
     db.exec(`ALTER TABLE artifacts ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`);
   } catch {}
 
+  // v1-ux: test isolation + soft delete
+  try {
+    db.exec(`ALTER TABLE artifacts ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE artifacts ADD COLUMN deleted_at TEXT`);
+  } catch {}
+  // Backfill is_test for existing rows whose title looks like a test push.
+  try {
+    db.exec(`UPDATE artifacts SET is_test = 1 WHERE is_test = 0 AND title LIKE 'rk-test-%'`);
+  } catch {}
+  // Useful indices for list filters/sort
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_artifacts_active
+      ON artifacts(archived, is_test, deleted_at);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_updated
+      ON artifacts(updated_at DESC);
+  `);
+
+  // v1-ux: comment thread + addressed status
+  try {
+    db.exec(`ALTER TABLE comments ADD COLUMN parent_id TEXT`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE comments ADD COLUMN addressed_at TEXT`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE comments ADD COLUMN addressed_by TEXT`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE comments ADD COLUMN author TEXT NOT NULL DEFAULT 'human'`);
+  } catch {}
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_id);
+    CREATE INDEX IF NOT EXISTS idx_comments_anchor ON comments(artifact_id, anchor);
+  `);
+
   // render errors (client-side diagram/chart failures)
   db.exec(`
     CREATE TABLE IF NOT EXISTS render_errors (

@@ -89,18 +89,36 @@ describe('store: artifact lifecycle', () => {
     assert.ok((artifact?.revision.processedHtml || '').includes('V2'));
   });
 
-  it('deleteArtifact 删除全部关联数据', async () => {
+  it('softDeleteArtifact 标记 deleted_at，restoreArtifact 恢复，purgeArtifact 彻底清除', async () => {
     const { pushed, artifact } = await makeArtifact();
     const anchor = artifact.anchors[0].anchor;
     const c = await store.addComment(pushed.artifactId, anchor, 'delete me');
     assert.equal(c.ok, true);
     await store.addFormSubmission(pushed.artifactId, 'Form', [{ name: 'n', label: 'N', value: 1 }]);
 
-    assert.equal(await store.deleteArtifact(pushed.artifactId), true);
+    // soft delete keeps related rows
+    assert.equal(await store.softDeleteArtifact(pushed.artifactId), true);
+    const softDeleted = await store.getArtifactMeta(pushed.artifactId);
+    assert.ok(softDeleted?.deletedAt);
+    assert.equal((await store.getComments(pushed.artifactId)).length, 1);
+
+    // listArtifacts default view hides deleted
+    const activeList = await store.listArtifacts({ view: 'active' });
+    assert.equal(activeList.length, 0);
+    const deletedList = await store.listArtifacts({ view: 'deleted' });
+    assert.equal(deletedList.length, 1);
+
+    // restore
+    assert.equal(await store.restoreArtifact(pushed.artifactId), true);
+    const restored = await store.getArtifactMeta(pushed.artifactId);
+    assert.equal(restored?.deletedAt, null);
+
+    // purge wipes everything
+    assert.equal(await store.purgeArtifact(pushed.artifactId), true);
     assert.equal(await store.getArtifact(pushed.artifactId), null);
     assert.deepEqual(await store.getComments(pushed.artifactId), []);
     assert.deepEqual(await store.getFormSubmissions(pushed.artifactId), []);
-    assert.equal(await store.deleteArtifact(pushed.artifactId), false);
+    assert.equal(await store.purgeArtifact(pushed.artifactId), false);
   });
 });
 
@@ -134,7 +152,7 @@ describe('store: comments / feedback / submissions', () => {
       prefix: 'p'.repeat(100),
       suffix: 's'.repeat(100),
     };
-    const result = await store.addComment(pushed.artifactId, anchor, 'hello', selector);
+    const result = await store.addComment(pushed.artifactId, anchor, 'hello', { selector });
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.comment.selector?.exact.length, 500);
@@ -169,11 +187,17 @@ describe('store: comments / feedback / submissions', () => {
     assert.equal(edited.ok, true);
     if (edited.ok) assert.equal(edited.comment.text, 'edited');
 
-    assert.deepEqual(await store.updateCommentStatus(pushed.artifactId, add.comment.id, 'bad'), {
-      ok: false,
-      status: 400,
-      error: 'invalid status',
-    });
+    const badStatus = await store.updateCommentStatus(
+      pushed.artifactId,
+      add.comment.id,
+      // @ts-expect-error: deliberate bad value
+      'bad',
+    );
+    assert.equal(badStatus.ok, false);
+    if (!badStatus.ok) {
+      assert.equal(badStatus.status, 400);
+      assert.match(badStatus.error, /invalid transition/);
+    }
     assert.deepEqual(await store.updateCommentStatus(pushed.artifactId, 'missing', 'resolved'), {
       ok: false,
       status: 404,
@@ -240,10 +264,13 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     const created = await jsonOf(createRes);
     assert.equal(created.ok, true);
 
-    const listRes = await artifactsRoute.GET();
+    const listRes = await artifactsRoute.GET(
+      new Request('http://localhost/api/artifacts'),
+    );
     const listed = await jsonOf(listRes);
     assert.equal(listed.ok, true);
     assert.equal(listed.artifacts.length, 1);
+    assert.equal(listed.counts.active, 1);
 
     const detailRes = await artifactRoute.GET(new Request('http://localhost'), {
       params: Promise.resolve({ id: created.artifactId }),
@@ -252,16 +279,31 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
     assert.equal(detail.ok, true);
     assert.equal(detail.revision, 1);
     assert.equal(detail.anchors.length, 2);
-    assert.deepEqual(detail.comments, { open: 0, resolved: 0, orphaned: 0 });
+    assert.deepEqual(detail.comments, { open: 0, addressed: 0, resolved: 0, orphaned: 0 });
 
-    const delRes = await artifactRoute.DELETE(new Request('http://localhost'), {
-      params: Promise.resolve({ id: created.artifactId }),
-    });
-    assert.equal(delRes.status, 200);
-    assert.deepEqual(await jsonOf(delRes), {
+    // soft delete (default)
+    const softRes = await artifactRoute.DELETE(
+      new Request(`http://localhost/api/artifacts/${created.artifactId}`),
+      { params: Promise.resolve({ id: created.artifactId }) },
+    );
+    assert.equal(softRes.status, 200);
+    assert.deepEqual(await jsonOf(softRes), {
       ok: true,
       artifactId: created.artifactId,
+      purged: false,
     });
+
+    // soft-deleted artifact still readable via GET (page handles deletedAt)
+    const stillThere = await store.getArtifactMeta(created.artifactId);
+    assert.ok(stillThere?.deletedAt);
+
+    // purge query
+    const purgeRes = await artifactRoute.DELETE(
+      new Request(`http://localhost/api/artifacts/${created.artifactId}?purge=1`),
+      { params: Promise.resolve({ id: created.artifactId }) },
+    );
+    assert.equal(purgeRes.status, 200);
+    assert.equal((await jsonOf(purgeRes)).purged, true);
 
     const missingRes = await artifactRoute.GET(new Request('http://localhost'), {
       params: Promise.resolve({ id: created.artifactId }),

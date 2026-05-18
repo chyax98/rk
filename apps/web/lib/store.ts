@@ -3,13 +3,27 @@ import { diffAnchors } from './anchor-diff.ts';
 import { getDb } from './db.ts';
 import { type ProcessedAnchor, processHTML, type RenderWarning } from './html-processor.ts';
 
-// All tables use CREATE TABLE IF NOT EXISTS (see db.ts): artifacts, revisions, comments, anchors, form_submissions
+/* ── Comment status enum ─────────────────────────────────── */
 
-const COMMENT_OPEN = 'open';
-const COMMENT_RESOLVED = 'resolved';
-const COMMENT_ORPHANED = 'orphaned';
+export const COMMENT_OPEN = 'open';
+export const COMMENT_ADDRESSED = 'addressed';
+export const COMMENT_RESOLVED = 'resolved';
+export const COMMENT_ORPHANED = 'orphaned';
 
-/* ── DB row shapes (SQLite returns loosely-typed rows) ───── */
+export type CommentStatus =
+  | typeof COMMENT_OPEN
+  | typeof COMMENT_ADDRESSED
+  | typeof COMMENT_RESOLVED
+  | typeof COMMENT_ORPHANED;
+
+const VALID_STATUS_TRANSITIONS: Record<CommentStatus, CommentStatus[]> = {
+  open: ['addressed', 'resolved'],
+  addressed: ['resolved', 'open'],
+  resolved: ['open'],
+  orphaned: ['resolved'],
+};
+
+/* ── DB row shapes ────────────────────────────────────────── */
 
 interface DbArtifact {
   id: string;
@@ -20,6 +34,8 @@ interface DbArtifact {
   updated_at: string;
   tags?: string;
   archived?: number;
+  is_test?: number;
+  deleted_at?: string | null;
 }
 
 interface DbRevision {
@@ -48,6 +64,10 @@ interface DbComment {
   resolved_at: string | null;
   reopened_at: string | null;
   created_at: string;
+  parent_id: string | null;
+  addressed_at: string | null;
+  addressed_by: string | null;
+  author: string;
 }
 
 interface DbAnchor {
@@ -75,9 +95,13 @@ export interface Comment {
   anchor: string;
   text: string;
   selector: TextQuoteSelector | null;
-  status: string;
+  status: CommentStatus;
+  parentId: string | null;
+  author: 'human' | 'agent';
   createdAtRevision: number;
   createdAt: string;
+  addressedAt?: string;
+  addressedBy?: string;
   resolvedAtRevision?: number;
   resolvedBy?: string;
   resolvedAt?: string;
@@ -93,6 +117,8 @@ export interface ArtifactMeta {
   updatedAt: string;
   tags: string[];
   archived: boolean;
+  isTest: boolean;
+  deletedAt: string | null;
 }
 
 export interface HtmlArtifactBundle {
@@ -112,6 +138,16 @@ export interface RevisionSummary {
   revisionNumber: number;
   createdAt: number;
   title: string;
+}
+
+export type ArtifactView = 'active' | 'archived' | 'test' | 'deleted' | 'all';
+export type ArtifactSort = 'updated' | 'title';
+
+export interface ListArtifactsOptions {
+  view?: ArtifactView;
+  sort?: ArtifactSort;
+  q?: string;
+  tag?: string;
 }
 
 /* ── helpers ────────────────────────────────────────────── */
@@ -139,6 +175,11 @@ function normalizeSelector(selector: unknown): TextQuoteSelector | null {
   };
 }
 
+function isTestTitle(title: string | null | undefined): boolean {
+  if (!title) return false;
+  return /^rk-test-/i.test(title);
+}
+
 /* ── row mappers ────────────────────────────────────────── */
 
 function rowToArtifact(r: DbArtifact): ArtifactMeta {
@@ -151,6 +192,8 @@ function rowToArtifact(r: DbArtifact): ArtifactMeta {
     updatedAt: r.updated_at,
     tags: JSON.parse(r.tags ?? '[]') as string[],
     archived: Boolean(r.archived),
+    isTest: Boolean(r.is_test),
+    deletedAt: r.deleted_at ?? null,
   };
 }
 
@@ -161,30 +204,102 @@ function rowToComment(r: DbComment): Comment {
     anchor: r.anchor,
     text: r.text,
     selector: r.selector ? (JSON.parse(r.selector) as TextQuoteSelector) : null,
-    status: r.status,
+    status: (r.status as CommentStatus) || COMMENT_OPEN,
+    parentId: r.parent_id ?? null,
+    author: (r.author as 'human' | 'agent') || 'human',
     createdAtRevision: r.created_at_revision,
     createdAt: r.created_at,
   };
 
-  if (r.resolved_by != null) c.resolvedBy = r.resolved_by;
+  if (r.addressed_at != null) c.addressedAt = r.addressed_at;
+  if (r.addressed_by != null) c.addressedBy = r.addressed_by;
   if (r.resolved_at != null) c.resolvedAt = r.resolved_at;
+  if (r.resolved_by != null) c.resolvedBy = r.resolved_by;
+  if (r.resolved_at_revision != null) c.resolvedAtRevision = r.resolved_at_revision;
   if (r.reopened_at != null) c.reopenedAt = r.reopened_at;
   return c;
 }
 
-/* ── public API ─────────────────────────────────────────── */
+/* ── public API: artifacts ──────────────────────────────── */
 
 export async function ensureStore(): Promise<void> {
   getDb();
 }
 
-export async function listArtifacts(includeArchived = false): Promise<ArtifactMeta[]> {
+export async function listArtifacts(opts: ListArtifactsOptions = {}): Promise<ArtifactMeta[]> {
   const db = getDb();
-  const sql = includeArchived
-    ? 'SELECT * FROM artifacts ORDER BY updated_at DESC'
-    : 'SELECT * FROM artifacts WHERE archived = 0 ORDER BY updated_at DESC';
-  const rows = db.prepare(sql).all() as DbArtifact[];
+  const view: ArtifactView = opts.view ?? 'active';
+  const sort: ArtifactSort = opts.sort ?? 'updated';
+
+  const where: string[] = [];
+  const params: unknown[] = [];
+
+  switch (view) {
+    case 'active':
+      where.push('deleted_at IS NULL');
+      where.push('archived = 0');
+      where.push('is_test = 0');
+      break;
+    case 'archived':
+      where.push('deleted_at IS NULL');
+      where.push('archived = 1');
+      break;
+    case 'test':
+      where.push('deleted_at IS NULL');
+      where.push('is_test = 1');
+      break;
+    case 'deleted':
+      where.push('deleted_at IS NOT NULL');
+      break;
+    case 'all':
+      // no filters; show everything
+      break;
+  }
+
+  if (opts.q && opts.q.trim()) {
+    where.push('(LOWER(title) LIKE ? OR LOWER(tags) LIKE ?)');
+    const needle = `%${opts.q.trim().toLowerCase()}%`;
+    params.push(needle, needle);
+  }
+
+  if (opts.tag) {
+    // tags is JSON array stored as TEXT; cheap LIKE match on JSON encoded value
+    where.push(`tags LIKE ?`);
+    params.push(`%${JSON.stringify(opts.tag).slice(1, -1)}%`);
+  }
+
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+  const orderSql =
+    sort === 'title'
+      ? 'ORDER BY LOWER(title) ASC'
+      : 'ORDER BY updated_at DESC';
+
+  const sql = `SELECT * FROM artifacts ${whereSql} ${orderSql}`;
+  const rows = db.prepare(sql).all(...params) as DbArtifact[];
   return rows.map(rowToArtifact);
+}
+
+/** Aggregate counts per view for sidebar/tabs */
+export async function getArtifactViewCounts(): Promise<Record<ArtifactView, number>> {
+  const db = getDb();
+  const row = db
+    .prepare(`
+      SELECT
+        SUM(CASE WHEN deleted_at IS NULL AND archived = 0 AND is_test = 0 THEN 1 ELSE 0 END) AS active,
+        SUM(CASE WHEN deleted_at IS NULL AND archived = 1 THEN 1 ELSE 0 END) AS archived,
+        SUM(CASE WHEN deleted_at IS NULL AND is_test = 1 THEN 1 ELSE 0 END) AS test,
+        SUM(CASE WHEN deleted_at IS NOT NULL THEN 1 ELSE 0 END) AS deleted,
+        COUNT(*) AS all_
+      FROM artifacts
+    `)
+    .get() as Record<string, number | null>;
+  return {
+    active: Number(row.active ?? 0),
+    archived: Number(row.archived ?? 0),
+    test: Number(row.test ?? 0),
+    deleted: Number(row.deleted ?? 0),
+    all: Number(row.all_ ?? 0),
+  };
 }
 
 export async function getArtifactMeta(id: string): Promise<ArtifactMeta | null> {
@@ -203,7 +318,7 @@ export async function getArtifact(id: string): Promise<HtmlArtifactBundle | null
 export async function getComments(artifactId: string): Promise<Comment[]> {
   const db = getDb();
   const rows = db
-    .prepare('SELECT * FROM comments WHERE artifact_id = ?')
+    .prepare('SELECT * FROM comments WHERE artifact_id = ? ORDER BY created_at ASC')
     .all(artifactId) as DbComment[];
   return rows.map(rowToComment);
 }
@@ -212,7 +327,11 @@ export async function addComment(
   artifactId: string,
   anchor: string,
   text: string,
-  selector: unknown = null,
+  opts: {
+    selector?: unknown;
+    parentId?: string | null;
+    author?: 'human' | 'agent';
+  } = {},
 ) {
   const db = getDb();
   const artifact = db
@@ -220,10 +339,27 @@ export async function addComment(
     .get(artifactId) as Pick<DbArtifact, 'id' | 'current_revision'> | undefined;
   if (!artifact) return { ok: false as const, status: 404, error: 'artifact not found' };
 
-  const anchorRow = db
-    .prepare('SELECT 1 FROM anchors WHERE artifact_id = ? AND anchor = ?')
-    .get(artifactId, anchor) as { 1: number } | undefined;
-  if (!anchorRow) return { ok: false as const, status: 400, error: 'anchor not found' };
+  const author = opts.author ?? 'human';
+  let parentId: string | null = null;
+
+  if (opts.parentId) {
+    const parent = db
+      .prepare('SELECT id, anchor, artifact_id FROM comments WHERE id = ?')
+      .get(opts.parentId) as DbComment | undefined;
+    if (!parent || parent.artifact_id !== artifactId) {
+      return { ok: false as const, status: 400, error: 'parent not found' };
+    }
+    parentId = parent.id;
+    // Force reply to inherit parent anchor for consistency
+    if (parent.anchor) {
+      anchor = parent.anchor;
+    }
+  } else {
+    const anchorRow = db
+      .prepare('SELECT 1 FROM anchors WHERE artifact_id = ? AND anchor = ?')
+      .get(artifactId, anchor) as { 1: number } | undefined;
+    if (!anchorRow) return { ok: false as const, status: 400, error: 'anchor not found' };
+  }
 
   const currentRev = artifact.current_revision;
   const c: Comment = {
@@ -231,15 +367,20 @@ export async function addComment(
     artifactId,
     anchor,
     text,
-    selector: normalizeSelector(selector),
+    selector: normalizeSelector(opts.selector),
     status: COMMENT_OPEN,
+    parentId,
+    author,
     createdAtRevision: currentRev,
     createdAt: now(),
   };
 
   db.prepare(`
-    INSERT INTO comments (id, artifact_id, anchor, text, selector, status, created_at_revision, block_snapshot, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
+    INSERT INTO comments
+      (id, artifact_id, anchor, text, selector, status,
+       created_at_revision, block_snapshot, created_at,
+       parent_id, author)
+    VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
   `).run(
     c.id,
     artifactId,
@@ -249,30 +390,56 @@ export async function addComment(
     COMMENT_OPEN,
     currentRev,
     c.createdAt,
+    parentId,
+    author,
   );
 
   return { ok: true as const, comment: c };
 }
 
-export async function updateCommentStatus(artifactId: string, commentId: string, status: string) {
-  const validStatuses = new Set([COMMENT_OPEN, COMMENT_RESOLVED]);
-  if (!validStatuses.has(status))
-    return { ok: false as const, status: 400, error: 'invalid status' };
-
+export async function updateCommentStatus(
+  artifactId: string,
+  commentId: string,
+  nextStatus: CommentStatus,
+  actor: 'human' | 'agent' = 'human',
+) {
   const db = getDb();
   const row = db
     .prepare('SELECT * FROM comments WHERE id = ? AND artifact_id = ?')
     .get(commentId, artifactId) as DbComment | undefined;
   if (!row) return { ok: false as const, status: 404, error: 'comment not found' };
 
-  if (status === COMMENT_RESOLVED) {
+  const currStatus = (row.status as CommentStatus) || COMMENT_OPEN;
+  const allowed = VALID_STATUS_TRANSITIONS[currStatus] ?? [];
+  if (!allowed.includes(nextStatus)) {
+    return {
+      ok: false as const,
+      status: 400,
+      error: `invalid transition ${currStatus} → ${nextStatus}`,
+    };
+  }
+
+  const ts = now();
+
+  if (nextStatus === COMMENT_ADDRESSED) {
     db.prepare(
-      `UPDATE comments SET status = ?, resolved_at_revision = ?, resolved_by = 'human', resolved_at = ?, reopened_at = NULL WHERE id = ?`,
-    ).run(COMMENT_RESOLVED, row.created_at_revision, now(), commentId);
-  } else {
+      `UPDATE comments
+         SET status = ?, addressed_at = ?, addressed_by = ?
+       WHERE id = ?`,
+    ).run(COMMENT_ADDRESSED, ts, actor, commentId);
+  } else if (nextStatus === COMMENT_RESOLVED) {
     db.prepare(
-      `UPDATE comments SET status = ?, resolved_at_revision = NULL, resolved_by = NULL, resolved_at = NULL, reopened_at = ? WHERE id = ?`,
-    ).run(COMMENT_OPEN, now(), commentId);
+      `UPDATE comments
+         SET status = ?, resolved_at_revision = ?, resolved_by = ?, resolved_at = ?, reopened_at = NULL
+       WHERE id = ?`,
+    ).run(COMMENT_RESOLVED, row.created_at_revision, actor, ts, commentId);
+  } else if (nextStatus === COMMENT_OPEN) {
+    db.prepare(
+      `UPDATE comments
+         SET status = ?, resolved_at_revision = NULL, resolved_by = NULL, resolved_at = NULL,
+             addressed_at = NULL, addressed_by = NULL, reopened_at = ?
+       WHERE id = ?`,
+    ).run(COMMENT_OPEN, ts, commentId);
   }
 
   const updated = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId) as DbComment;
@@ -299,21 +466,29 @@ export async function updateCommentText(artifactId: string, commentId: string, t
   return { ok: true as const, comment: rowToComment(updated) };
 }
 
-export async function resolveComment(commentId: string) {
+/* ── Soft delete / restore / hard purge ─────────────────── */
+
+export async function softDeleteArtifact(id: string): Promise<boolean> {
   const db = getDb();
-  const row = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId) as
-    | DbComment
-    | undefined;
+  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as { id: string } | undefined;
   if (!row) return false;
-  db.prepare(
-    `UPDATE comments SET status = ?, resolved_by = 'human', resolved_at = ? WHERE id = ?`,
-  ).run(COMMENT_RESOLVED, now(), commentId);
+  db.prepare('UPDATE artifacts SET deleted_at = ?, updated_at = ? WHERE id = ?').run(
+    now(),
+    now(),
+    id,
+  );
   return true;
 }
 
-/* ── Delete ─────────────────────────────────────────────── */
+export async function restoreArtifact(id: string): Promise<boolean> {
+  const db = getDb();
+  const row = db.prepare('SELECT id FROM artifacts WHERE id = ?').get(id) as { id: string } | undefined;
+  if (!row) return false;
+  db.prepare('UPDATE artifacts SET deleted_at = NULL, updated_at = ? WHERE id = ?').run(now(), id);
+  return true;
+}
 
-export async function deleteArtifact(id: string): Promise<boolean> {
+export async function purgeArtifact(id: string): Promise<boolean> {
   const db = getDb();
   const row = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id) as DbArtifact | undefined;
   if (!row) return false;
@@ -367,7 +542,7 @@ export async function getFormSubmissions(artifactId: string): Promise<FormSubmis
   }));
 }
 
-/* ── Render Errors (client-side) ──────────────────────── */
+/* ── Render Errors ────────────────────────────────────── */
 
 export interface RenderErrorEntry {
   id: string;
@@ -425,6 +600,11 @@ export async function getRenderErrors(artifactId: string): Promise<RenderErrorEn
   }));
 }
 
+export async function clearRenderErrors(artifactId: string): Promise<void> {
+  const db = getDb();
+  db.prepare('DELETE FROM render_errors WHERE artifact_id = ?').run(artifactId);
+}
+
 /* ── Feedback (CLI) ─────────────────────────────────────── */
 
 export async function getFeedback(id: string) {
@@ -436,7 +616,6 @@ export async function getFeedback(id: string) {
   );
 
   const submissions = await getFormSubmissions(id);
-
   const renderErrors = await getRenderErrors(id);
 
   return {
@@ -449,6 +628,8 @@ export async function getFeedback(id: string) {
       status: c.status,
       text: c.text,
       selector: c.selector || null,
+      parentId: c.parentId,
+      author: c.author,
       createdAtRevision: c.createdAtRevision,
       createdAt: c.createdAt,
     })),
@@ -470,14 +651,18 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
   const db = getDb();
   const { processedHtml, anchors, title, warnings } = await processHTML(rawHtml);
   const _now = now();
+  const finalTitle = file || title;
+  const isTest = isTestTitle(finalTitle) ? 1 : 0;
 
-  // Check for existing artifact by file name
+  // Check for existing artifact by file name (ignore soft-deleted ones; restore not auto)
   let artifactId: string | null = null;
   let currentRev = 0;
 
   if (file) {
     const existing = db
-      .prepare('SELECT id, current_revision, title FROM artifacts WHERE title = ? AND format = ?')
+      .prepare(
+        'SELECT id, current_revision, title FROM artifacts WHERE title = ? AND format = ? AND deleted_at IS NULL',
+      )
       .get(file, 'html') as DbArtifact | undefined;
     if (existing) {
       artifactId = existing.id;
@@ -495,7 +680,6 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
   const revId = `${artifactId}_rev_${nextRev}`;
   const anchorIds = anchors.map((a) => a.anchor);
 
-  // Get previous anchors for diff (only on update)
   let prevAnchorIds: string[] = [];
   if (!isNew) {
     const prevAnchors = db
@@ -507,13 +691,14 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
   const txn = db.transaction(() => {
     if (isNew) {
       db.prepare(`
-        INSERT INTO artifacts (id, title, current_revision, format, created_at, updated_at)
-        VALUES (?, ?, ?, 'html', ?, ?)
-      `).run(artifactId, file || title, 1, _now, _now);
+        INSERT INTO artifacts
+          (id, title, current_revision, format, created_at, updated_at, is_test)
+        VALUES (?, ?, ?, 'html', ?, ?, ?)
+      `).run(artifactId, finalTitle, 1, _now, _now, isTest);
     } else {
       db.prepare(
-        `UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ? WHERE id = ?`,
-      ).run(nextRev, file || title, _now, artifactId);
+        `UPDATE artifacts SET current_revision = ?, title = ?, updated_at = ?, is_test = ? WHERE id = ?`,
+      ).run(nextRev, finalTitle, _now, isTest, artifactId);
     }
 
     db.prepare(`
@@ -521,7 +706,6 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
       VALUES (?, ?, ?, '', '', '{}', ?, ?, ?)
     `).run(revId, artifactId, nextRev, rawHtml, processedHtml, _now);
 
-    // Delete old anchors for this artifact and insert new ones
     db.prepare('DELETE FROM anchors WHERE artifact_id = ?').run(artifactId);
     const insertAnchor = db.prepare(`
       INSERT INTO anchors (id, revision_id, artifact_id, anchor, element_tag, position, text_preview)
@@ -531,7 +715,6 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
       insertAnchor.run(a.id, revId, artifactId, a.anchor, a.elementTag, a.position, a.textPreview);
     }
 
-    // Mark orphaned comments for removed anchors
     if (!isNew) {
       const diff = diffAnchors(prevAnchorIds, anchorIds);
       if (diff.removed.length > 0) {
@@ -604,7 +787,7 @@ export async function getRevision(
   return { processedHtml: row?.processed_html || null };
 }
 
-/* ── HTML artifact: read ────────────────────────────────── */
+/* ── HTML artifact: meta update ─────────────────────────── */
 
 export async function updateArtifactMeta(
   id: string,
@@ -638,6 +821,8 @@ export async function updateArtifactMeta(
   return true;
 }
 
+/* ── HTML artifact: read ────────────────────────────────── */
+
 export async function getHtmlArtifact(id: string): Promise<HtmlArtifactBundle | null> {
   const db = getDb();
 
@@ -656,7 +841,7 @@ export async function getHtmlArtifact(id: string): Promise<HtmlArtifactBundle | 
     .all(id) as DbAnchor[];
 
   const commentRows = db
-    .prepare('SELECT * FROM comments WHERE artifact_id = ?')
+    .prepare('SELECT * FROM comments WHERE artifact_id = ? ORDER BY created_at ASC')
     .all(id) as DbComment[];
 
   return {

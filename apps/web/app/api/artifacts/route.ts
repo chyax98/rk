@@ -1,4 +1,13 @@
-import { listArtifacts, pushHTML } from '../../../lib/store.ts';
+import {
+  type ArtifactSort,
+  type ArtifactView,
+  getArtifactViewCounts,
+  listArtifacts,
+  pushHTML,
+} from '../../../lib/store.ts';
+
+const VIEWS: ArtifactView[] = ['active', 'archived', 'test', 'deleted', 'all'];
+const SORTS: ArtifactSort[] = ['updated', 'title'];
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +21,6 @@ export async function POST(req: Request) {
       revision: result.revision,
       url: absolute(req, result.url),
       format: 'html',
-      // Surface diagram render failures so CLI/agents can act on them
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
     });
   } catch (e: unknown) {
@@ -20,11 +28,25 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req?: Request) {
+export async function GET(req: Request) {
   try {
-    const includeArchived = req ? new URL(req.url).searchParams.get('archived') === '1' : false;
-    const artifacts = await listArtifacts(includeArchived);
-    return Response.json({ ok: true, artifacts });
+    const url = new URL(req.url);
+    const rawView = url.searchParams.get('view') ?? 'active';
+    const rawSort = url.searchParams.get('sort') ?? 'updated';
+    const view: ArtifactView = (VIEWS as string[]).includes(rawView)
+      ? (rawView as ArtifactView)
+      : 'active';
+    const sort: ArtifactSort = (SORTS as string[]).includes(rawSort)
+      ? (rawSort as ArtifactSort)
+      : 'updated';
+    const q = url.searchParams.get('q') ?? undefined;
+    const tag = url.searchParams.get('tag') ?? undefined;
+
+    const [artifacts, counts] = await Promise.all([
+      listArtifacts({ view, sort, q: q ?? undefined, tag: tag ?? undefined }),
+      getArtifactViewCounts(),
+    ]);
+    return Response.json({ ok: true, artifacts, counts, view, sort });
   } catch (e: unknown) {
     return Response.json({ ok: false, error: String(e) }, { status: 500 });
   }
