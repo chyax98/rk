@@ -241,8 +241,8 @@ describe('store: comments / feedback / submissions', () => {
 
     const feedback = await store.getFeedback(first.artifactId);
     assert.ok(feedback);
-    assert.equal(feedback.openComments.length, 1);
-    assert.equal(feedback.openComments[0].status, 'orphaned');
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'orphaned');
     assert.equal(feedback.submissions.length, 1);
     assert.equal(feedback.submissions[0].formTitle, 'Survey');
   });
@@ -534,5 +534,143 @@ describe('routes: artifacts/comments/revisions/submissions/feedback', () => {
 
     const comments = await store.getComments(pushed.artifactId);
     assert.equal(comments[0].status, 'orphaned');
+  });
+});
+
+describe('store: feedback thread folding + waitingFor', () => {
+  it('getFeedback returns thread-folded comments with waitingFor', async () => {
+    const { pushed, artifact } = await makeArtifact('<h1>Thread</h1><p>Body</p>', 'thread.html');
+    const anchor = artifact.anchors[0].anchor;
+
+    // Root comment by human
+    const root = await store.addComment(pushed.artifactId, anchor, 'root comment', {
+      author: 'human',
+      selector: { type: 'TextQuoteSelector', exact: 'Thread', prefix: '', suffix: '' },
+    });
+    assert.equal(root.ok, true);
+    if (!root.ok) return;
+
+    // Reply by agent
+    const reply1 = await store.addComment(pushed.artifactId, anchor, 'agent reply', {
+      parentId: root.comment.id,
+      author: 'agent',
+    });
+    assert.equal(reply1.ok, true);
+
+    const feedback = await store.getFeedback(pushed.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].id, root.comment.id);
+    assert.equal(feedback.comments[0].replies.length, 1);
+    assert.equal(feedback.comments[0].replies[0].author, 'agent');
+    assert.equal(feedback.comments[0].replies[0].text, 'agent reply');
+    // Last author = agent → waitingFor = human
+    assert.equal(feedback.comments[0].waitingFor, 'human');
+
+    // Reply by human
+    const reply2 = await store.addComment(pushed.artifactId, anchor, 'human reply', {
+      parentId: root.comment.id,
+      author: 'human',
+    });
+    assert.equal(reply2.ok, true);
+
+    const feedback2 = await store.getFeedback(pushed.artifactId);
+    assert.ok(feedback2);
+    assert.equal(feedback2.comments[0].replies.length, 2);
+    // Last author = human → waitingFor = agent
+    assert.equal(feedback2.comments[0].waitingFor, 'agent');
+  });
+});
+
+describe('store: anchor fuzzy rebind', () => {
+  it('exact match: comment rebinds when text unchanged but anchor ID shifts', async () => {
+    // Push v1 with <p>Hello World</p>
+    const first = await store.pushHTML('<h1>Title</h1><p>Hello World</p>', 'rebind-exact.html');
+    const art1 = await store.getArtifact(first.artifactId);
+    assert.ok(art1);
+    const anchor = art1.anchors[1].anchor;
+
+    // Comment with selector exact matching the text
+    const add = await store.addComment(first.artifactId, anchor, 'watch', {
+      selector: { type: 'TextQuoteSelector', exact: 'Hello World', prefix: '', suffix: '' },
+    });
+    assert.equal(add.ok, true);
+
+    // Push v2 where the text is slightly different (anchor ID changes) but exact still matches
+    const second = await store.pushHTML('<h1>Title</h1><p>Hello World!</p>', 'rebind-exact.html');
+    assert.equal(second.revision, 2);
+
+    const feedback = await store.getFeedback(first.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'open');
+    // Should have been rebound to new anchor
+    const art2 = await store.getArtifact(first.artifactId);
+    assert.ok(art2);
+    const newAnchors = art2.anchors.map(a => a.anchor);
+    assert.ok(newAnchors.includes(feedback.comments[0].anchor));
+  });
+
+  it('normalize match: comment rebinds after case/whitespace change', async () => {
+    const first = await store.pushHTML('<h1>Title</h1><p>Q2 revenue</p>', 'rebind-norm.html');
+    const art1 = await store.getArtifact(first.artifactId);
+    assert.ok(art1);
+    const anchor = art1.anchors[1].anchor;
+
+    const add = await store.addComment(first.artifactId, anchor, 'check', {
+      selector: { type: 'TextQuoteSelector', exact: 'Q2 revenue', prefix: '', suffix: '' },
+    });
+    assert.equal(add.ok, true);
+
+    // Change casing → exact won't match, but normalized should
+    const second = await store.pushHTML('<h1>Title</h1><p>Q2 Revenue</p>', 'rebind-norm.html');
+
+    const feedback = await store.getFeedback(first.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'open');
+  });
+
+  it('selector NULL: comment becomes orphaned when anchor removed', async () => {
+    const first = await store.pushHTML('<h1>Title</h1><p>Gone</p>', 'rebind-null.html');
+    const art1 = await store.getArtifact(first.artifactId);
+    assert.ok(art1);
+    const anchor = art1.anchors[1].anchor;
+
+    // addComment with no selector (simulating old comment)
+    const add = await store.addComment(first.artifactId, anchor, 'no sel', {
+      selector: null,
+    });
+    assert.equal(add.ok, true);
+    // Manually clear selector in DB since normalizeSelector would strip it
+    // Actually normalizeSelector(null) → null, so selector is already null
+
+    // Remove the anchor
+    const second = await store.pushHTML('<h1>Title</h1>', 'rebind-null.html');
+
+    const feedback = await store.getFeedback(first.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'orphaned');
+  });
+
+  it('text completely deleted: comment becomes orphaned', async () => {
+    const first = await store.pushHTML('<h1>Title</h1><h2>Drop</h2>', 'rebind-drop.html');
+    const art1 = await store.getArtifact(first.artifactId);
+    assert.ok(art1);
+    const anchor = art1.anchors[1].anchor;
+
+    const add = await store.addComment(first.artifactId, anchor, 'will drop', {
+      selector: { type: 'TextQuoteSelector', exact: 'Drop', prefix: '', suffix: '' },
+    });
+    assert.equal(add.ok, true);
+
+    // Completely remove the <h2>
+    const second = await store.pushHTML('<h1>Title</h1>', 'rebind-drop.html');
+
+    const feedback = await store.getFeedback(first.artifactId);
+    assert.ok(feedback);
+    assert.equal(feedback.comments.length, 1);
+    assert.equal(feedback.comments[0].status, 'orphaned');
   });
 });

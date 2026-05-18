@@ -1,0 +1,687 @@
+/* ─── Artifact view (v1-ux) ────────────────────────────────────────────────── */
+
+.rk-doc-app {
+  --rk-panel-w: 360px;
+  --rk-gutter-w: 22px;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  grid-template-columns: 1fr 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  gap: 0;
+  overflow: hidden;
+  background: var(--rk-bg);
+  transition: grid-template-columns 0.22s ease;
+}
+.rk-doc-app.is-panel-open {
+  grid-template-columns: 1fr var(--rk-panel-w);
+}
+
+/* ── Topbar ── */
+.rk-doc-topbar {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  z-index: 50;
+}
+.rk-doc-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 16px;
+}
+.rk-doc-back:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+.rk-doc-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.rk-doc-title-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 36ch;
+}
+.rk-doc-id {
+  font-size: 10px;
+  color: #9ca3af;
+  font-family: "JetBrains Mono", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-doc-topbar-spacer {
+  flex: 1;
+}
+
+/* ── Render error badge ── */
+.rk-error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rk-error-badge:hover {
+  background: #fee2e2;
+}
+.rk-error-panel {
+  position: fixed;
+  top: 48px;
+  right: 12px;
+  width: 420px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 60;
+}
+.rk-error-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #fecaca;
+  background: #fef2f2;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #991b1b;
+}
+.rk-error-panel-clear {
+  border: none;
+  background: transparent;
+  color: #991b1b;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.rk-error-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #fee2e2;
+  cursor: pointer;
+  font-size: 12px;
+}
+.rk-error-row:hover {
+  background: #fef9f9;
+}
+.rk-error-row-engine {
+  flex-shrink: 0;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", monospace;
+}
+.rk-error-row-msg {
+  color: #374151;
+  word-break: break-word;
+}
+
+/* ── Revision/Compare menus ── */
+.rk-rev-menu {
+  position: relative;
+}
+.rk-rev-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+.rk-rev-trigger:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+.rk-rev-trigger.is-old {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+.rk-rev-trigger.is-active {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  color: #5b21b6;
+}
+.rk-rev-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 60;
+  padding: 4px;
+}
+.rk-rev-dropdown-header {
+  padding: 8px 10px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+}
+.rk-rev-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: #374151;
+  text-align: left;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.rk-rev-item:hover {
+  background: #f3f4f6;
+}
+.rk-rev-item.is-current {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+.rk-rev-item-num {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 600;
+}
+.rk-rev-item-time {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-left: auto;
+}
+.rk-rev-item-badge {
+  background: #6366f1;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+}
+
+/* ── Panel toggle ── */
+.rk-panel-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+}
+.rk-panel-toggle:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+.rk-panel-toggle-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 14px;
+  padding: 1px 4px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Stage / doc frame / gutter ── */
+.rk-doc-stage {
+  grid-row: 2;
+  grid-column: 1;
+  overflow: hidden;
+  background: var(--rk-bg);
+  position: relative;
+}
+.rk-doc-frame {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--rk-gutter-w) 1fr;
+  overflow-y: auto;
+}
+.rk-doc-frame .rk-html-body {
+  grid-column: 2;
+  position: relative;
+  /* Reset standalone-artifact constraints; review surface uses full panel width */
+  max-width: none;
+  margin: 0;
+  padding: 28px clamp(24px, 4vw, 72px) 96px;
+}
+.rk-doc-frame .rk-html-body > * {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Wide content (charts/grids/3d) should override the readable cap */
+.rk-doc-frame .rk-html-body > rk-chart,
+.rk-doc-frame .rk-html-body > rk-diagram,
+.rk-doc-frame .rk-html-body > rk-3d,
+.rk-doc-frame .rk-html-body > rk-table,
+.rk-doc-frame .rk-html-body > rk-grid,
+.rk-doc-frame .rk-html-body > rk-comparison,
+.rk-doc-frame .rk-html-body > rk-timeline,
+.rk-doc-frame .rk-html-body > rk-metric,
+.rk-doc-frame .rk-html-body > rk-tabs,
+.rk-doc-frame .rk-html-body > rk-steps {
+  max-width: none;
+}
+/* On compare mode, each pane is narrow; let inner content fit */
+.rk-compare-pane .rk-html-body > * {
+  max-width: none;
+}
+.rk-gutter {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+.rk-gutter-mark {
+  position: absolute;
+  left: 6px;
+  width: 8px;
+  min-height: 18px;
+  border-radius: 4px;
+  background: #f59e0b;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+  transition: background 0.15s, transform 0.12s;
+}
+.rk-gutter-mark:hover {
+  background: #d97706;
+  transform: scaleX(1.4);
+}
+.rk-gutter-mark.is-active {
+  background: #d97706;
+  transform: scaleX(1.5);
+}
+.rk-gutter-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* ── Anchor highlight when a comment is clicked ── */
+[data-rk-anchor] {
+  position: relative;
+  border-radius: 4px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+[data-rk-anchor]:hover {
+  background: var(--rk-bg-hover, rgba(0, 0, 0, 0.03));
+}
+[data-rk-anchor].rk-has-comment {
+  box-shadow: inset 2px 0 0 #f59e0b;
+}
+[data-rk-anchor].rk-anchor-flash {
+  animation: rk-flash 1.2s ease;
+}
+@keyframes rk-flash {
+  0%, 100% { background: transparent; }
+  25%, 60% { background: rgba(99, 102, 241, 0.12); }
+}
+
+/* ── Floating "+" buttons ── */
+.rk-add-anchor-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #6366f1;
+  background: #fff;
+  color: #6366f1;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  z-index: 70;
+}
+.rk-add-anchor-btn:hover {
+  background: #6366f1;
+  color: #fff;
+}
+.rk-add-selection-btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: #111827;
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  z-index: 70;
+}
+
+/* ── Thread panel ── */
+.rk-thread-panel {
+  grid-row: 2;
+  grid-column: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.22s, opacity 0.22s;
+}
+.rk-doc-app.is-panel-open .rk-thread-panel {
+  visibility: visible;
+  opacity: 1;
+}
+.rk-thread-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+.rk-thread-panel-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #111827;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rk-thread-panel-count {
+  background: #f59e0b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.rk-thread-panel-close {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rk-thread-panel-close:hover { color: #111827; background: #f3f4f6; border-radius: 4px; }
+.rk-thread-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0 12px;
+}
+.rk-thread-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 32px 16px;
+  line-height: 1.7;
+}
+.rk-thread-empty kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  margin: 0 1px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-family: "JetBrains Mono", monospace;
+  color: #374151;
+}
+
+/* ── Thread card ── */
+.rk-thread {
+  margin: 6px 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.rk-thread:hover {
+  border-color: #d1d5db;
+}
+.rk-thread.is-active {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+.rk-thread.is-open { border-left-color: #f59e0b; }
+.rk-thread.is-addressed { border-left-color: #3b82f6; }
+.rk-thread.is-resolved { border-left-color: #10b981; opacity: 0.7; }
+.rk-thread.is-orphaned { border-left-color: #9ca3af; opacity: 0.6; }
+
+.rk-thread-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.rk-thread-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rk-thread-quote {
+  flex: 1;
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-thread-author {
+  font-size: 11px;
+}
+.rk-thread-text {
+  margin: 0;
+  font-size: 13px;
+  color: #1f2937;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.rk-thread-reply {
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 2px solid #f3f4f6;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.rk-thread-reply-author { font-size: 11px; }
+.rk-thread-reply-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: #374151;
+  white-space: pre-wrap;
+}
+.rk-thread-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #f3f4f6;
+}
+.rk-thread-time {
+  font-size: 10.5px;
+  color: #9ca3af;
+  font-family: "JetBrains Mono", monospace;
+}
+.rk-thread-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.rk-thread-actions button {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-thread-actions button:hover { border-color: #6366f1; color: #6366f1; }
+.rk-thread-actions button.is-primary {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+.rk-thread-actions button.is-primary:hover { background: #4f46e5; }
+
+/* ── Draft / reply editor ── */
+.rk-thread-draft,
+.rk-thread-reply-draft {
+  margin: 8px 10px;
+  padding: 8px;
+  border: 1.5px solid #6366f1;
+  border-radius: 8px;
+  background: #fff;
+}
+.rk-thread-draft-anchor {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 5px 8px;
+  margin: -8px -8px 6px;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-thread-draft-text,
+.rk-thread-reply-draft textarea,
+.rk-thread-edit-text {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px;
+  color: #111827;
+  background: transparent;
+  box-sizing: border-box;
+}
+.rk-thread-draft-actions,
+.rk-thread-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+.rk-thread-draft-actions button,
+.rk-thread-edit-actions button {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-thread-draft-actions button.is-primary,
+.rk-thread-edit-actions button.is-primary {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+.rk-thread-draft-actions button.is-primary:hover,
+.rk-thread-edit-actions button.is-primary:hover { background: #4f46e5; }
+.rk-thread-draft-actions button:disabled,
+.rk-thread-edit-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.rk-thread-edit { margin-top: 4px; }
+
+
+/* ── Narrow screens ── */
+@media (max-width: 900px) {
+  .rk-doc-app {
+    --rk-panel-w: 100vw;
+  }
+  .rk-doc-app.is-panel-open .rk-doc-stage {
+    visibility: hidden;
+  }
+  .rk-doc-frame {
+    grid-template-columns: var(--rk-gutter-w) 1fr;
+  }
+}

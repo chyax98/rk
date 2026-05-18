@@ -1,3 +1,11 @@
+/* DEPRECATED ─ legacy web app shell (.rk-shell / .rk-artifact / .rk-rail / .rk-sidebar-left / .rk-content / .rk-primary-btn).
+   New code should use .rk-doc-* namespace from apps/web/app/style/doc-app.css.
+   The .rk-artifact class in this file collided with the new web app's root container,
+   causing a layout bug (max-width + padding injected into a full-viewport grid).
+   This file is kept for historical reference only. Web review app must NOT import it.
+   For details see packages/design/README.md.
+ */
+
 /* ─── App chrome layout system ─── */
 
 /* ── Shell (full app frame) ── */

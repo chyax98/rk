@@ -1,0 +1,724 @@
+/* ─── Studio Layout ─────────────────────────────────────────────────────────── */
+.rk-studio {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f5f6fa;
+  color: #111827;
+}
+
+/* ─── Topbar ─────────────────────────────────────────────────────────────────── */
+.rk-topbar {
+  height: 52px;
+  min-height: 52px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.rk-topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.rk-logo-mark {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+.rk-logo-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.3px;
+}
+
+.rk-topbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
+.rk-topbar-tagline {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.rk-topbar-spacer {
+  flex: 1;
+}
+
+.rk-server-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 5px 10px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
+}
+
+.rk-status-dot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: rk-pulse-dot 2.5s ease-in-out infinite;
+}
+
+@keyframes rk-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0);
+  }
+}
+
+/* ─── App Shell ──────────────────────────────────────────────────────────────── */
+.rk-app-shell {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────────────────────── */
+.rk-sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.rk-sidebar-section {
+  padding: 16px 10px 6px;
+}
+
+.rk-sidebar-section + .rk-sidebar-section {
+  padding-top: 8px;
+}
+
+.rk-sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 0 8px;
+  margin-bottom: 4px;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.rk-sidebar-rule {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 4px 12px;
+}
+
+.rk-sidebar-footer {
+  margin-top: auto;
+  padding: 12px 18px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.rk-sidebar-hint {
+  font-size: 10.5px;
+  color: #9ca3af;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.rk-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  position: relative;
+}
+
+.rk-nav-item:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
+.rk-nav-item.is-active {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.rk-nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  border-radius: 0 2px 2px 0;
+}
+
+.rk-nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.rk-nav-label {
+  flex: 1;
+}
+
+.rk-nav-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-family: "JetBrains Mono", monospace;
+  min-width: 20px;
+  text-align: center;
+}
+
+.rk-nav-item.is-active .rk-nav-count {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+
+.rk-tag-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 12.5px;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.rk-tag-nav-item:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
+.rk-tag-nav-item.is-active {
+  color: #4f46e5;
+}
+
+.rk-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.rk-tag-nav-item.is-active .rk-tag-dot,
+.rk-tag-nav-item:hover .rk-tag-dot {
+  opacity: 1;
+}
+
+.rk-tag-nav-name {
+  flex: 1;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+}
+
+.rk-tag-nav-count {
+  font-size: 11px;
+  color: #9ca3af;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* ─── Main ───────────────────────────────────────────────────────────────────── */
+.rk-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f5f6fa;
+}
+
+/* ─── Top toolbar: search + sort (v1-ux) ────────────────────────────────────── */
+.rk-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 440px;
+  display: flex;
+  align-items: center;
+}
+.rk-search-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 30px 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.rk-search-input:focus {
+  border-color: #6366f1;
+  background: #fff;
+  outline: 2px solid rgba(99, 102, 241, 0.18);
+  outline-offset: 0;
+}
+.rk-search-input::placeholder {
+  color: #9ca3af;
+}
+.rk-search-clear {
+  position: absolute;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rk-search-clear:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.rk-sort-select {
+  height: 30px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ─── Sidebar view nav ───────────────────────────────────────────────────────── */
+.rk-tag-nav-item.is-clear {
+  color: #6366f1;
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+/* ─── Main toolbar (bulk bar) ────────────────────────────────────────────────── */
+.rk-main-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px 8px;
+  flex-shrink: 0;
+}
+.rk-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rk-bulk-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+}
+.rk-bulk-toggle input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+.rk-bulk-toggle-label {
+  font-variant-numeric: tabular-nums;
+}
+.rk-bulk-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+  border-left: 1px solid #e5e7eb;
+}
+.rk-bulk-actions button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-bulk-actions button:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+.rk-bulk-actions button.is-danger:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.04);
+}
+.rk-toolbar-spinner {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+/* ─── Time grouping ──────────────────────────────────────────────────────────── */
+.rk-grid-container {
+  padding: 8px 24px 32px;
+  flex: 1;
+  overflow-y: auto;
+}
+.rk-time-group + .rk-time-group {
+  margin-top: 22px;
+}
+.rk-time-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin: 0 0 10px;
+  padding: 0 2px;
+}
+
+/* ─── Card grid ──────────────────────────────────────────────────────────────── */
+.rk-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* ─── Card (single <a> wrapping body + actions; fixes click-through bug) ────── */
+.rk-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+.rk-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+.rk-card.is-selected {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.04);
+}
+.rk-card--archived {
+  opacity: 0.65;
+}
+.rk-card--deleted {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.rk-card-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.rk-card:hover .rk-card-select,
+.rk-card.is-selected .rk-card-select {
+  opacity: 1;
+}
+.rk-card-select input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+
+.rk-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.rk-card:hover .rk-card-actions {
+  opacity: 1;
+}
+.rk-card-action-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  border-radius: 5px;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.rk-card-action-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+}
+.rk-card-action-btn.is-danger:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.rk-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* Reserve top padding so action/checkbox overlays don't collide with title */
+  padding-right: 56px;
+  padding-left: 26px;
+  min-height: 60px;
+}
+.rk-card:not(:hover):not(.is-selected) .rk-card-body {
+  padding-left: 0;
+}
+.rk-card:not(:hover) .rk-card-body {
+  padding-right: 0;
+}
+.rk-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.4;
+  letter-spacing: -0.2px;
+  margin: 0;
+  word-break: break-word;
+}
+.rk-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.rk-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: "JetBrains Mono", monospace;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+.rk-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.rk-card-time {
+  font-size: 11.5px;
+  color: #9ca3af;
+  font-family: "JetBrains Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+.rk-card-rev-badge {
+  font-size: 11px;
+  font-family: "JetBrains Mono", monospace;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* ─── Toast ──────────────────────────────────────────────────────────────────── */
+.rk-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 300;
+  font-size: 13px;
+  max-width: 90vw;
+  animation: rk-toast-in 0.18s ease;
+}
+@keyframes rk-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+.rk-toast-msg {
+  font-weight: 500;
+}
+.rk-toast-undo {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fbbf24;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-toast-undo:hover {
+  background: rgba(251, 191, 36, 0.12);
+}
+.rk-toast-close {
+  background: transparent;
+  border: none;
+  color: rgba(249, 250, 251, 0.6);
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.rk-toast-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+/* ─── Empty state ────────────────────────────────────────────────────────────── */
+.rk-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.rk-empty-icon {
+  margin-bottom: 20px;
+  color: #6366f1;
+  opacity: 0.4;
+}
+
+.rk-empty-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.rk-empty-desc {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0 0 16px;
+}
+
+.rk-empty-code {
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .rk-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .rk-sidebar {
+    display: none;
+  }
+  .rk-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

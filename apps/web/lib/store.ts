@@ -180,6 +180,13 @@ function isTestTitle(title: string | null | undefined): boolean {
   return /^rk-test-/i.test(title);
 }
 
+function normalizeText(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[\p{P}\p{S}]/gu, '')
+    .trim();
+}
 /* ── row mappers ────────────────────────────────────────── */
 
 function rowToArtifact(r: DbArtifact): ArtifactMeta {
@@ -611,28 +618,57 @@ export async function getFeedback(id: string) {
   const artifact = await getHtmlArtifact(id);
   if (!artifact) return null;
 
-  const openComments = artifact.comments.filter(
-    (c) => c.status === COMMENT_OPEN || c.status === COMMENT_ORPHANED,
-  );
-
   const submissions = await getFormSubmissions(id);
   const renderErrors = await getRenderErrors(id);
+
+  // Only return root comments (parent_id = null) with status open/addressed/orphaned
+  const roots = artifact.comments.filter(
+    (c) => c.parentId === null && (c.status === COMMENT_OPEN || c.status === COMMENT_ADDRESSED || c.status === COMMENT_ORPHANED),
+  );
+
+  // Build reply index: parent_id → replies sorted by createdAt
+  const repliesByParent = new Map<string, Comment[]>();
+  for (const c of artifact.comments) {
+    if (c.parentId) {
+      const arr = repliesByParent.get(c.parentId) ?? repliesByParent.set(c.parentId, []).get(c.parentId)!;
+      arr.push(c);
+    }
+  }
+
+  const comments = roots.map((root) => {
+    const replies = (repliesByParent.get(root.id) ?? []).map((r) => ({
+      id: r.id,
+      author: r.author,
+      text: r.text,
+      status: r.status,
+      createdAt: r.createdAt,
+      createdAtRevision: r.createdAtRevision,
+    }));
+
+    // Derive waitingFor from last event author in thread
+    const allEvents = [root, ...replies];
+    const lastAuthor = allEvents[allEvents.length - 1].author;
+    const waitingFor: 'human' | 'agent' = lastAuthor === 'agent' ? 'human' : 'agent';
+
+    return {
+      id: root.id,
+      anchor: root.anchor,
+      text: root.text,
+      author: root.author,
+      status: root.status,
+      createdAt: root.createdAt,
+      createdAtRevision: root.createdAtRevision,
+      selector: root.selector || null,
+      replies,
+      waitingFor,
+    };
+  });
 
   return {
     artifactId: id,
     currentRevision: artifact.meta.currentRevision,
     url: `/a/${id}`,
-    openComments: openComments.map((c) => ({
-      id: c.id,
-      anchor: c.anchor,
-      status: c.status,
-      text: c.text,
-      selector: c.selector || null,
-      parentId: c.parentId,
-      author: c.author,
-      createdAtRevision: c.createdAtRevision,
-      createdAt: c.createdAt,
-    })),
+    comments,
     submissions,
     renderErrors,
   };
@@ -647,12 +683,17 @@ export interface HtmlArtifactResult {
   warnings: RenderWarning[];
 }
 
-export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArtifactResult> {
+export async function pushHTML(
+  rawHtml: string,
+  file?: string,
+  opts: { isTest?: boolean; author?: 'human' | 'agent' } = {},
+): Promise<HtmlArtifactResult> {
   const db = getDb();
   const { processedHtml, anchors, title, warnings } = await processHTML(rawHtml);
   const _now = now();
   const finalTitle = file || title;
-  const isTest = isTestTitle(finalTitle) ? 1 : 0;
+  // TODO: persist push.author once artifacts.author column exists
+  const isTest = opts.isTest === true ? 1 : opts.isTest === false ? 0 : (isTestTitle(finalTitle) ? 1 : 0);
 
   // Check for existing artifact by file name (ignore soft-deleted ones; restore not auto)
   let artifactId: string | null = null;
@@ -718,13 +759,74 @@ export async function pushHTML(rawHtml: string, file?: string): Promise<HtmlArti
     if (!isNew) {
       const diff = diffAnchors(prevAnchorIds, anchorIds);
       if (diff.removed.length > 0) {
-        const commentRows = db
-          .prepare('SELECT id, anchor FROM comments WHERE artifact_id = ? AND status = ?')
-          .all(artifactId, COMMENT_OPEN) as DbComment[];
-        for (const c of commentRows) {
-          if (diff.removed.includes(c.anchor)) {
-            db.prepare('UPDATE comments SET status = ? WHERE id = ?').run(COMMENT_ORPHANED, c.id);
+        const openComments = db
+          .prepare('SELECT id, anchor, selector FROM comments WHERE artifact_id = ? AND status = ?')
+          .all(artifactId, COMMENT_OPEN) as Array<{ id: string; anchor: string; selector: string | null }>;
+
+        // Build lookup indices from new anchors' textPreview
+        const byExact = new Map<string, string[]>();
+        const byNormalized = new Map<string, string[]>();
+        for (const a of anchors) {
+          if (!a.textPreview) continue;
+          const k = a.textPreview.slice(0, 200);
+          const exactArr = byExact.get(k) ?? byExact.set(k, []).get(k)!;
+          if (!exactArr.includes(a.anchor)) exactArr.push(a.anchor);
+          const nk = normalizeText(k);
+          if (nk) {
+            const normArr = byNormalized.get(nk) ?? byNormalized.set(nk, []).get(nk)!;
+            if (!normArr.includes(a.anchor)) normArr.push(a.anchor);
           }
+        }
+
+        const updateAnchor = db.prepare(
+          'UPDATE comments SET anchor = ?, rebound_at = ? WHERE id = ?',
+        );
+        const markOrphan = db.prepare(
+          'UPDATE comments SET status = ? WHERE id = ?',
+        );
+
+        for (const c of openComments) {
+          if (!diff.removed.includes(c.anchor)) continue;
+          const sel = c.selector ? JSON.parse(c.selector) : null;
+          const exact = (sel?.exact as string | undefined);
+          if (!exact) {
+            markOrphan.run(COMMENT_ORPHANED, c.id);
+            continue;
+          }
+
+          // Strategy 1: exact match
+          let cand = byExact.get(exact.slice(0, 200)) ?? [];
+          if (cand.length === 1) { updateAnchor.run(cand[0], _now, c.id); continue; }
+
+          // Strategy 2: normalized match
+          if (cand.length === 0) {
+            const nk = normalizeText(exact.slice(0, 200));
+            cand = nk ? (byNormalized.get(nk) ?? []) : [];
+          }
+          if (cand.length === 1) { updateAnchor.run(cand[0], _now, c.id); continue; }
+
+          // Strategy 3: prefix/suffix disambiguation
+          if (cand.length > 1) {
+            const prefixHint = ((sel.prefix as string | undefined) ?? '').toLowerCase().slice(-40);
+            const suffixHint = ((sel.suffix as string | undefined) ?? '').toLowerCase().slice(0, 40);
+            const scored = cand.map(anchorId => {
+              const ix = anchors.findIndex(a => a.anchor === anchorId);
+              const prevText = (anchors[ix - 1]?.textPreview ?? '').toLowerCase();
+              const nextText = (anchors[ix + 1]?.textPreview ?? '').toLowerCase();
+              let score = 0;
+              if (prefixHint && prevText.endsWith(prefixHint)) score += 2;
+              if (suffixHint && nextText.startsWith(suffixHint)) score += 2;
+              return { anchorId, score };
+            });
+            scored.sort((a, b) => b.score - a.score);
+            if (scored[0].score > 0 && (scored.length === 1 || scored[0].score > scored[1].score)) {
+              updateAnchor.run(scored[0].anchorId, _now, c.id);
+              continue;
+            }
+          }
+
+          // Failed → orphan
+          markOrphan.run(COMMENT_ORPHANED, c.id);
         }
       }
     }

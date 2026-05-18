@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Comment, CommentStatus, HtmlArtifactBundle } from '@/lib/store.ts';
+import type { Comment, CommentStatus, HtmlArtifactBundle, TextQuoteSelector } from '@/lib/store.ts';
 
 interface RevisionSummary {
   revisionNumber: number;
@@ -429,6 +429,18 @@ export default function HtmlArtifactView(props: Props) {
     setDraftText('');
   }, []);
 
+  /* ── Build TextQuoteSelector from DOM anchor element ── */
+  const buildSelector = useCallback((anchorId: string): TextQuoteSelector | null => {
+    if (!bodyRef.current) return null;
+    const el = bodyRef.current.querySelector(`[data-rk-anchor="${anchorId}"]`) as HTMLElement | null;
+    if (!el) return null;
+    const exact = (el.textContent || '').trim().slice(0, 500);
+    if (!exact) return null;
+    const prev = el.previousElementSibling?.textContent?.trim().slice(-80) ?? '';
+    const next = el.nextElementSibling?.textContent?.trim().slice(0, 80) ?? '';
+    return { type: 'TextQuoteSelector', exact, prefix: prev, suffix: next };
+  }, []);
+
   const submitDraft = useCallback(async () => {
     const text = draftText.trim();
     if (!text) return;
@@ -441,6 +453,8 @@ export default function HtmlArtifactView(props: Props) {
         body.anchor = root?.anchor ?? '';
       } else if (addingForAnchor) {
         body.anchor = addingForAnchor;
+        const sel = buildSelector(addingForAnchor);
+        if (sel) body.selector = sel;
       }
       const res = await fetch(`/api/artifacts/${meta.id}/comments`, {
         method: 'POST',
@@ -455,7 +469,7 @@ export default function HtmlArtifactView(props: Props) {
     } finally {
       setSubmitting(false);
     }
-  }, [addingForAnchor, cancelDraft, draftText, localComments, meta.id, replyingToId]);
+}, [addingForAnchor, buildSelector, cancelDraft, draftText, localComments, meta.id, replyingToId]);
 
   const transitionStatus = useCallback(
     async (commentId: string, next: CommentStatus) => {

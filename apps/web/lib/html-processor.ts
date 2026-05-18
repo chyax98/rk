@@ -245,13 +245,17 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
     };
   }
 
+  const seenAnchors = new Map<string, number>();
   const children = Array.from(body.children);
   for (const child of children as unknown as HTMLElement[]) {
     const tag = child.tagName?.toLowerCase();
     if (!tag || !TOP_LEVEL_TAGS.has(tag)) continue;
 
     const textPreview = (child.textContent || '').trim().slice(0, 200) || null;
-    const anchor = generateAnchorId(tag, position, textPreview || '');
+    const baseAnchor = generateAnchorId(tag, position, textPreview || '');
+    const seenCount = (seenAnchors.get(baseAnchor) ?? 0) + 1;
+    seenAnchors.set(baseAnchor, seenCount);
+    const anchor = seenCount === 1 ? baseAnchor : `${baseAnchor}-${seenCount}`;
 
     child.setAttribute('data-rk-anchor', anchor);
 

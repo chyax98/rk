@@ -11,10 +11,12 @@ const SORTS: ArtifactSort[] = ['updated', 'title'];
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as Record<string, string>;
-    const html = body.html || body.source || '';
-    const file = body.file || body.title;
-    const result = await pushHTML(html, file);
+    const body = (await req.json()) as Record<string, unknown>;
+    const html = (body.html as string) || (body.source as string) || '';
+    const file = (body.file as string) || (body.title as string);
+    const isTest = body.isTest === true ? true : body.isTest === false ? false : undefined;
+    const author = body.author === 'agent' ? 'agent' : body.author === 'human' ? 'human' : undefined;
+    const result = await pushHTML(html, file, { isTest, author });
     return Response.json({
       ok: true,
       artifactId: result.artifactId,

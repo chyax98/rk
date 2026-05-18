@@ -11,7 +11,7 @@
     "push:example": "pnpm renderkit push examples/hello.html --open",
     "format": "pnpm exec biome format --write apps/web/app apps/web/lib packages/components/src packages/design/src tests package.json biome.json",
     "biome:check": "pnpm exec biome check apps/web/app apps/web/lib packages/components/src packages/design/src tests package.json biome.json",
-    "test": "node --experimental-strip-types --test tests/comment-anchor.test.ts tests/store-routes.test.ts tests/html-processor.test.ts tests/wc-render.test.ts tests/cli.test.ts",
+    "test": "node --experimental-strip-types --test tests/comment-anchor.test.ts tests/store-routes.test.ts tests/html-processor.test.ts tests/wc-render.test.ts tests/cli.test.ts tests/anchor-dedup.test.ts",
     "test:wc": "node --experimental-strip-types --test tests/wc-render.test.ts",
     "test:cli": "node --experimental-strip-types --test tests/cli.test.ts",
     "scan:render": "node scripts/render-scan.mjs",

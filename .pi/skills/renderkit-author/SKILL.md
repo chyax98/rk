@@ -35,7 +35,24 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 </html>
 ```
 
-推送：`rk push doc.html` · 获取反馈：`rk feedback doc.html` · 校验：`rk validate doc.html`
+推送：`rk push doc.html --author agent` · 获取反馈：`rk feedback doc.html` · 校验：`rk validate doc.html`
+
+## 闭环命令（agent ↔ 人）
+
+```bash
+rk push doc.html --author agent       # 推送（agent 标记自己来源）
+rk push doc.html --test               # 测试 artifact 自动进沙盒
+rk feedback doc.html                  # 拉评论，看每条 thread 的 waitingFor 判断是否要处理
+rk reply doc.html <cmt_id> "已修"     # 回复评论（默认 author=agent）
+rk address doc.html <cmt_id>          # 标 addressed，等人验收
+rk resolve doc.html <cmt_id>          # 解决（如果人没必要再验收）
+rk reopen doc.html <cmt_id>           # 重新打开
+```
+
+`rk feedback` 返回 thread 折叠结构：
+- `waitingFor: 'agent'` → 人新评论 / 人 reopen，需要 agent 处理
+- `waitingFor: 'human'` → agent 已回复，跳过等人验收
+- 不返回 status='resolved' 的
 
 ---
 

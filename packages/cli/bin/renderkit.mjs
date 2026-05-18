@@ -116,6 +116,8 @@ program
   .description('Upload or update an HTML artifact')
   .option('--open', 'Open in browser after push')
   .option('--tag <tags>', 'Comma-separated tags (e.g. "project:alpha,type:report")')
+  .option('--test', 'Mark as test artifact (isolated from main list)')
+  .option('--author <name>', 'Author of this push (human or agent)', 'human')
   .option('--endpoint <url>', 'Server endpoint', getEndpoint())
   .option('--json', 'Force JSON output (default: true)')
   .action(async (file, opts) => {
@@ -179,7 +181,7 @@ program
           res = await fetch(`${endpoint}/api/artifacts`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ html, title }),
+          body: JSON.stringify({ html, title, isTest: opts.test === true, author: opts.author }),
           });
         }
       }
@@ -187,7 +189,7 @@ program
       res = await fetch(`${endpoint}/api/artifacts`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ html, title }),
+        body: JSON.stringify({ html, title, isTest: opts.test === true, author: opts.author }),
       });
     }
 
@@ -263,14 +265,16 @@ program
     if (opts.format === 'md') {
       console.log(formatFeedbackMarkdown(json));
     } else {
+      // v2: getFeedback returns thread-folded `comments` with `replies` + `waitingFor`.
       output({
         ok: true,
         artifactId: json.artifactId,
         url: `${endpoint}${json.url}`,
         revision: json.currentRevision,
-        openCount: json.openComments?.length ?? 0,
-        comments: json.openComments ?? [],
-        submissions: json.submissions ?? [],  // form submissions from rk-form WC
+        openCount: json.comments?.length ?? 0,
+        comments: json.comments ?? [],
+        submissions: json.submissions ?? [],
+        renderErrors: json.renderErrors ?? [],
       });
     }
   });
@@ -532,6 +536,114 @@ program
     });
     const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
     output(json);
+  });
+
+// rk reply <file> <commentId> <text>
+program
+  .command('reply <file> <commentId> <text>')
+  .description('Reply to a comment as agent')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, commentId, text, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/comments`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ parentId: commentId, text, author: 'agent' }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
+    output({ ok: true, comment: json.comment });
+  });
+
+// rk address <file> <commentId>
+program
+  .command('address <file> <commentId>')
+  .description('Mark a comment as addressed (ready for human review)')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, commentId, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/comments/${commentId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'addressed', actor: 'agent' }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
+    output({ ok: true, comment: json.comment });
+  });
+
+// rk resolve <file> <commentId>
+program
+  .command('resolve <file> <commentId>')
+  .description('Resolve a comment (agent confirms review passed)')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, commentId, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/comments/${commentId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'resolved', actor: 'agent' }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
+    output({ ok: true, comment: json.comment });
+  });
+
+// rk reopen <file> <commentId>
+program
+  .command('reopen <file> <commentId>')
+  .description('Reopen a comment (agent requests further review)')
+  .option('--endpoint <url>', 'Server endpoint', getEndpoint())
+  .action(async (file, commentId, opts) => {
+    const endpoint = opts.endpoint || getEndpoint();
+    const lock = await readLock(file);
+    if (!lock?.artifactId) {
+      output({ ok: false, error: `No lock file found for ${file}. Run: rk push ${file} first.` });
+      process.exit(1);
+    }
+
+    const res = await fetch(`${endpoint}/api/artifacts/${lock.artifactId}/comments/${commentId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'open', actor: 'agent' }),
+    });
+    const json = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+
+    if (!res.ok || !json.ok) {
+      output(json);
+      process.exit(1);
+    }
+    output({ ok: true, comment: json.comment });
   });
 
 program
