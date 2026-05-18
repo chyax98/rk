@@ -34,6 +34,7 @@ class RkGraph extends HTMLElement {
   _cy: CyInstance | null = null;
   _raw = '';
   _uid = Math.random().toString(36).slice(2, 9);
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'layout'];
@@ -46,6 +47,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     if (this._cy) {
       this._cy.destroy();
       this._cy = null;
@@ -79,6 +81,8 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+
     const height = parseInt(this.getAttribute('height') || '400', 10) || 400;
     const title = this.getAttribute('title') || '';
     const layoutName = this.getAttribute('layout') || 'cose';
@@ -102,6 +106,7 @@ connectedCallback(): void {
         /* @vite-ignore */
         'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.esm.min.js'
       )) as unknown as CytoscapeModule;
+      if (seq !== this._renderSeq) return;
 
       const container = this.querySelector(`#${containerId}`) as HTMLElement;
       if (!container) return;

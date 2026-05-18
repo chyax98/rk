@@ -2658,6 +2658,7 @@ var RkInfographic = class extends HTMLElement {
   _raw = "";
   _instance = null;
   _ro = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "theme"];
   }
@@ -2666,6 +2667,7 @@ var RkInfographic = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._cleanup();
   }
   attributeChangedCallback() {
@@ -2691,6 +2693,8 @@ var RkInfographic = class extends HTMLElement {
     return d.innerHTML;
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    this._cleanup();
     const title = this.getAttribute("title") || "";
     const height = this.getAttribute("height") || "400";
     const theme = this.getAttribute("theme") || "";
@@ -2712,6 +2716,7 @@ var RkInfographic = class extends HTMLElement {
     container.style.height = `${parseInt(height, 10) || 400}px`;
     try {
       const lib = await loadLib();
+      if (seq !== this._renderSeq) return;
       this._cleanup();
       const opts = {
         container,
@@ -2725,6 +2730,7 @@ var RkInfographic = class extends HTMLElement {
       this._instance = new lib.Infographic(opts);
       this._instance.render(syntax);
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         const svg = container.querySelector("svg");
         if (svg) {
           svg.setAttribute("width", "100%");
@@ -2890,6 +2896,7 @@ var RkDatagrid = class extends HTMLElement {
   _raw = "";
   _gridApi = null;
   _resizeObserver = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "theme", "pagination", "page-size"];
   }
@@ -2898,6 +2905,7 @@ var RkDatagrid = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._destroy();
   }
   attributeChangedCallback() {
@@ -2915,6 +2923,8 @@ var RkDatagrid = class extends HTMLElement {
     }
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    this._destroy();
     const title = this.getAttribute("title") || "";
     const height = parseInt(this.getAttribute("height") || "400", 10);
     const rawTheme = this.getAttribute("theme") || "alpine";
@@ -2976,10 +2986,13 @@ var RkDatagrid = class extends HTMLElement {
       await this._loadStylesheet(
         "https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-grid.css"
       );
+      if (seq !== this._renderSeq) return;
       await this._loadStylesheet(
         `https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-theme-${theme}.css`
       );
+      if (seq !== this._renderSeq) return;
       const agGrid = await this._loadAgGrid();
+      if (seq !== this._renderSeq) return;
       const gridOptions = {
         columnDefs,
         rowData,
@@ -3074,6 +3087,7 @@ var RkPlot = class extends HTMLElement {
   _raw = "";
   _ro = null;
   _plotEl = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "caption", "height"];
   }
@@ -3082,6 +3096,7 @@ var RkPlot = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._ro?.disconnect();
     this._ro = null;
   }
@@ -3090,6 +3105,9 @@ var RkPlot = class extends HTMLElement {
     if (this._raw) this._render();
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    this._ro?.disconnect();
+    this._ro = null;
     const title = this.getAttribute("title") || "";
     const caption = this.getAttribute("caption") || "";
     const height = parseInt(this.getAttribute("height") || "300", 10);
@@ -3114,6 +3132,7 @@ var RkPlot = class extends HTMLElement {
     let Plot;
     try {
       Plot = await this._loadPlot();
+      if (seq !== this._renderSeq) return;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       canvas.innerHTML = `<div class="rk-plot__error">Plot library load failed: ${this._esc(msg)}</div>`;
@@ -3126,6 +3145,7 @@ var RkPlot = class extends HTMLElement {
       this._plotEl = svg;
       this._ro?.disconnect();
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         const newWidth = canvas.offsetWidth || 600;
         try {
           const updated = this._buildPlot(Plot, spec, newWidth, height);
@@ -3385,6 +3405,7 @@ var RkZdog = class extends HTMLElement {
   _illo = null;
   _raf = null;
   _Zdog = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["width", "height", "rotate", "zoom", "title"];
   }
@@ -3393,6 +3414,7 @@ var RkZdog = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._cleanup();
   }
   attributeChangedCallback() {
@@ -3461,6 +3483,8 @@ var RkZdog = class extends HTMLElement {
     });
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    this._cleanup();
     const width = parseInt(this.getAttribute("width") || "300", 10) || 300;
     const height = parseInt(this.getAttribute("height") || "300", 10) || 300;
     const rotate = this.hasAttribute("rotate");
@@ -3490,6 +3514,7 @@ var RkZdog = class extends HTMLElement {
     this.appendChild(wrapper);
     try {
       const Z = await this._loadScript();
+      if (seq !== this._renderSeq) return;
       this._Zdog = Z;
       const illo = new Z.Illustration({
         element: `#${canvasId}`,
@@ -3567,6 +3592,7 @@ var RkZdog = class extends HTMLElement {
         }
       }
       const animate = () => {
+        if (seq !== this._renderSeq) return;
         if (rotate) {
           illo.rotate.y = (illo.rotate.y || 0) + 0.02;
         }
@@ -3587,6 +3613,7 @@ customElements.define("rk-zdog", RkZdog);
 // packages/components/src/elements/rk-model.ts
 var RkModel = class extends HTMLElement {
   _uid = Math.random().toString(36).slice(2, 9);
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["src", "poster", "title", "height", "ar", "auto-rotate", "camera-controls", "shadow-intensity", "exposure"];
   }
@@ -3594,6 +3621,7 @@ var RkModel = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
   }
   attributeChangedCallback() {
     if (!this.isConnected) return;
@@ -3626,6 +3654,7 @@ var RkModel = class extends HTMLElement {
     });
   }
   async _render() {
+    const seq = ++this._renderSeq;
     const src = this.getAttribute("src") || "";
     const poster = this.getAttribute("poster") || "";
     const title = this.getAttribute("title") || "";
@@ -3663,6 +3692,7 @@ var RkModel = class extends HTMLElement {
       </div>`;
     try {
       await this._injectModelViewer();
+      if (seq !== this._renderSeq) return;
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;
       container.innerHTML = `<model-viewer ${mvAttrs.join(" ")}></model-viewer>`;
@@ -3682,6 +3712,7 @@ var RkGlobe = class extends HTMLElement {
   _raw = "";
   _uid = Math.random().toString(36).slice(2, 9);
   _ro = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["height", "title", "auto-rotate"];
   }
@@ -3690,11 +3721,11 @@ var RkGlobe = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._cleanup();
   }
   attributeChangedCallback() {
     if (!this.isConnected) return;
-    this._cleanup();
     this._render();
   }
   _cleanup() {
@@ -3752,6 +3783,8 @@ var RkGlobe = class extends HTMLElement {
     });
   }
   async _render() {
+    const seq = ++this._renderSeq;
+    this._cleanup();
     const height = parseInt(this.getAttribute("height") || "500", 10) || 500;
     const title = this.getAttribute("title") || "";
     const autoRotate = this.hasAttribute("auto-rotate");
@@ -3765,6 +3798,7 @@ var RkGlobe = class extends HTMLElement {
       </div>`;
     try {
       const Globe = await this._loadGlobeLib();
+      if (seq !== this._renderSeq) return;
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;
       const globe = Globe(container).globeImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg").backgroundColor("rgba(0,0,0,0)").atmosphereColor("#6366f1").atmosphereAltitude(0.15).width(container.clientWidth || 600).height(height);
@@ -3781,6 +3815,7 @@ var RkGlobe = class extends HTMLElement {
       }
       this._globe = globe;
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         if (this._globe && container) {
           try {
             this._globe.width(container.clientWidth || 600).height(height);
@@ -3805,6 +3840,7 @@ var RkPlot3d = class extends HTMLElement {
   _plotly = null;
   _container = null;
   _ro = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "caption"];
   }
@@ -3813,6 +3849,7 @@ var RkPlot3d = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._cleanup();
   }
   attributeChangedCallback() {
@@ -3834,6 +3871,7 @@ var RkPlot3d = class extends HTMLElement {
     this._container = null;
   }
   async _render() {
+    const seq = ++this._renderSeq;
     this._cleanup();
     const title = this.getAttribute("title") || "";
     const height = parseInt(this.getAttribute("height") || "450", 10);
@@ -3873,6 +3911,7 @@ var RkPlot3d = class extends HTMLElement {
     this._container = container;
     try {
       this._plotly = await this._loadPlotly();
+      if (seq !== this._renderSeq) return;
     } catch {
       this.innerHTML = `<div class="rk-plot3d"><div class="rk-plot3d__error">Failed to load Plotly.js from CDN.</div></div>`;
       return;
@@ -3892,10 +3931,12 @@ var RkPlot3d = class extends HTMLElement {
     };
     try {
       await this._plotly.newPlot(container, spec.data, defaultLayout, defaultConfig);
+      if (seq !== this._renderSeq) return;
     } catch (e) {
       container.innerHTML = `<div class="rk-plot3d__error">Plotly render error: ${e.message}</div>`;
     }
     this._ro = new ResizeObserver(() => {
+      if (seq !== this._renderSeq) return;
       if (this._plotly && this._container) {
         try {
           this._plotly.relayout(this._container, {
@@ -3956,6 +3997,7 @@ var RkGraph3d = class extends HTMLElement {
   _raw = "";
   _graph = null;
   _ro = null;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "dag"];
   }
@@ -3964,6 +4006,7 @@ var RkGraph3d = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     this._cleanup();
   }
   attributeChangedCallback() {
@@ -3984,6 +4027,7 @@ var RkGraph3d = class extends HTMLElement {
     }
   }
   async _render() {
+    const seq = ++this._renderSeq;
     this._cleanup();
     const title = this.getAttribute("title") || "";
     const height = parseInt(this.getAttribute("height") || "500", 10);
@@ -4018,6 +4062,7 @@ var RkGraph3d = class extends HTMLElement {
     let FG;
     try {
       FG = await this._loadLib();
+      if (seq !== this._renderSeq) return;
     } catch {
       this.innerHTML = `<div class="rk-graph3d"><div class="rk-graph3d__error">Failed to load 3d-force-graph from CDN.</div></div>`;
       return;
@@ -4031,6 +4076,7 @@ var RkGraph3d = class extends HTMLElement {
       }
       this._graph = graph;
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         if (this._graph) {
           try {
             this._graph.width(container.offsetWidth).height(container.offsetHeight);
@@ -4092,6 +4138,7 @@ var RkGraph = class extends HTMLElement {
   _cy = null;
   _raw = "";
   _uid = Math.random().toString(36).slice(2, 9);
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "layout"];
   }
@@ -4100,6 +4147,7 @@ var RkGraph = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     if (this._cy) {
       this._cy.destroy();
       this._cy = null;
@@ -4129,6 +4177,7 @@ var RkGraph = class extends HTMLElement {
     return d.innerHTML;
   }
   async _render() {
+    const seq = ++this._renderSeq;
     const height = parseInt(this.getAttribute("height") || "400", 10) || 400;
     const title = this.getAttribute("title") || "";
     const layoutName = this.getAttribute("layout") || "cose";
@@ -4149,6 +4198,7 @@ var RkGraph = class extends HTMLElement {
         /* @vite-ignore */
         "https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.esm.min.js"
       );
+      if (seq !== this._renderSeq) return;
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;
       const groups = [...new Set(data.nodes.map((n) => n.group || "default"))];
@@ -4252,6 +4302,7 @@ var RkFlow = class extends HTMLElement {
   _raw = "";
   _uid = Math.random().toString(36).slice(2, 9);
   _scriptLoaded = false;
+  _renderSeq = 0;
   static get observedAttributes() {
     return ["title", "height", "readonly"];
   }
@@ -4260,6 +4311,7 @@ var RkFlow = class extends HTMLElement {
     this._render();
   }
   disconnectedCallback() {
+    this._renderSeq++;
     if (this._graph) {
       this._graph.dispose();
       this._graph = null;
@@ -4309,6 +4361,7 @@ var RkFlow = class extends HTMLElement {
     });
   }
   async _render() {
+    const seq = ++this._renderSeq;
     const height = parseInt(this.getAttribute("height") || "350", 10) || 350;
     const title = this.getAttribute("title") || "";
     const readonly = this.hasAttribute("readonly") || !this.hasAttribute("readonly") && true;
@@ -4327,6 +4380,7 @@ var RkFlow = class extends HTMLElement {
       </div>`;
     try {
       await this._loadScript();
+      if (seq !== this._renderSeq) return;
       const X6 = window.X6;
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;

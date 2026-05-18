@@ -11,6 +11,7 @@ class RkPlot extends HTMLElement {
   _raw = '';
   _ro: ResizeObserver | null = null;
   _plotEl: SVGSVGElement | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'caption', 'height'];
@@ -23,6 +24,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._ro?.disconnect();
     this._ro = null;
   }
@@ -33,6 +35,10 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    this._ro?.disconnect();
+    this._ro = null;
+
     const title = this.getAttribute('title') || '';
     const caption = this.getAttribute('caption') || '';
     const height = parseInt(this.getAttribute('height') || '300', 10);
@@ -63,6 +69,7 @@ connectedCallback(): void {
     let Plot: PlotModule;
     try {
       Plot = await this._loadPlot();
+      if (seq !== this._renderSeq) return;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       canvas.innerHTML = `<div class="rk-plot__error">Plot library load failed: ${this._esc(msg)}</div>`;
@@ -78,6 +85,7 @@ connectedCallback(): void {
       // ResizeObserver
       this._ro?.disconnect();
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         const newWidth = canvas.offsetWidth || 600;
         try {
           const updated = this._buildPlot(Plot, spec, newWidth, height);

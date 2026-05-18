@@ -17,6 +17,7 @@ class RkDatagrid extends HTMLElement {
   _raw = '';
   _gridApi: AgGridApi | null = null;
   _resizeObserver: ResizeObserver | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'theme', 'pagination', 'page-size'];
@@ -29,6 +30,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._destroy();
   }
 
@@ -49,6 +51,9 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    this._destroy();
+
     const title = this.getAttribute('title') || '';
     const height = parseInt(this.getAttribute('height') || '400', 10);
     const rawTheme = this.getAttribute('theme') || 'alpine';
@@ -127,12 +132,15 @@ connectedCallback(): void {
       await this._loadStylesheet(
         'https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-grid.css',
       );
+      if (seq !== this._renderSeq) return;
       await this._loadStylesheet(
         `https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.9/styles/ag-theme-${theme}.css`,
       );
+      if (seq !== this._renderSeq) return;
 
       // Load AG Grid JS
       const agGrid = await this._loadAgGrid();
+      if (seq !== this._renderSeq) return;
 
       // Auto-add defaultColDef for sortable/filter if columns don't specify
       const gridOptions: Record<string, unknown> = {

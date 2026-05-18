@@ -54,6 +54,7 @@ class RkInfographic extends HTMLElement {
   _raw = '';
   _instance: InfographicInstance | null = null;
   _ro: ResizeObserver | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'theme'] as string[];
@@ -66,6 +67,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._cleanup();
   }
 
@@ -96,6 +98,9 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    this._cleanup();
+
     const title = this.getAttribute('title') || '';
     const height = this.getAttribute('height') || '400';
     const theme = this.getAttribute('theme') || '';
@@ -121,6 +126,7 @@ connectedCallback(): void {
 
     try {
       const lib = await loadLib();
+      if (seq !== this._renderSeq) return;
 
       // Cleanup previous instance
       this._cleanup();
@@ -141,6 +147,7 @@ connectedCallback(): void {
 
       // ResizeObserver for responsive sizing
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         // Re-render is expensive; Infographic handles internal resize
         // via width: '100%' so we just need to trigger a re-layout
         const svg = container.querySelector('svg');

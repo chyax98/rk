@@ -57,6 +57,7 @@ class RkGraph3d extends HTMLElement {
   private _raw = '';
   private _graph: FGInstance | null = null;
   private _ro: ResizeObserver | null = null;
+  private _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'dag'];
@@ -69,6 +70,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._cleanup();
   }
 
@@ -93,7 +95,9 @@ connectedCallback(): void {
   }
 
   private async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
     this._cleanup();
+
     const title = this.getAttribute('title') || '';
     const height = parseInt(this.getAttribute('height') || '500', 10);
     const dagAttr = this.getAttribute('dag');
@@ -133,6 +137,7 @@ connectedCallback(): void {
     let FG: FGConstructor;
     try {
       FG = await this._loadLib();
+      if (seq !== this._renderSeq) return;
     } catch {
       this.innerHTML = `<div class="rk-graph3d"><div class="rk-graph3d__error">Failed to load 3d-force-graph from CDN.</div></div>`;
       return;
@@ -164,6 +169,7 @@ connectedCallback(): void {
 
       // Resize observer
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         if (this._graph) {
           try {
             this._graph.width(container.offsetWidth).height(container.offsetHeight);

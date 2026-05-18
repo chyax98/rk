@@ -2,6 +2,7 @@
 
 class RkModel extends HTMLElement {
   private _uid = Math.random().toString(36).slice(2, 9);
+  private _renderSeq = 0;
 
   static get observedAttributes() {
     return ['src', 'poster', 'title', 'height', 'ar', 'auto-rotate', 'camera-controls', 'shadow-intensity', 'exposure'];
@@ -12,6 +13,7 @@ class RkModel extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     // model-viewer handles its own cleanup when removed from DOM
   }
 
@@ -50,6 +52,8 @@ class RkModel extends HTMLElement {
   }
 
   private async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+
     const src = this.getAttribute('src') || '';
     const poster = this.getAttribute('poster') || '';
     const title = this.getAttribute('title') || '';
@@ -92,6 +96,8 @@ class RkModel extends HTMLElement {
 
     try {
       await this._injectModelViewer();
+      if (seq !== this._renderSeq) return;
+
       const container = this.querySelector(`#${containerId}`);
       if (!container) return;
 

@@ -47,6 +47,7 @@ class RkZdog extends HTMLElement {
   _illo: ZdogIllustration | null = null;
   _raf: number | null = null;
   _Zdog: ZdogConstructor | null = null;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['width', 'height', 'rotate', 'zoom', 'title'];
@@ -59,6 +60,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._cleanup();
   }
 
@@ -136,6 +138,9 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    this._cleanup();
+
     const width = parseInt(this.getAttribute('width') || '300', 10) || 300;
     const height = parseInt(this.getAttribute('height') || '300', 10) || 300;
     const rotate = this.hasAttribute('rotate');
@@ -171,6 +176,7 @@ connectedCallback(): void {
 
     try {
       const Z = await this._loadScript();
+      if (seq !== this._renderSeq) return;
       this._Zdog = Z;
 
       const illo = new Z.Illustration({
@@ -266,6 +272,7 @@ connectedCallback(): void {
 
       // Animate
       const animate = () => {
+        if (seq !== this._renderSeq) return;
         if (rotate) {
           illo.rotate.y = (illo.rotate.y || 0) + 0.02;
         }

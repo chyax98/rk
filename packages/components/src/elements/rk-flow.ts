@@ -46,6 +46,7 @@ class RkFlow extends HTMLElement {
   _raw = '';
   _uid = Math.random().toString(36).slice(2, 9);
   _scriptLoaded = false;
+  _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'readonly'];
@@ -58,6 +59,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     if (this._graph) {
       this._graph.dispose();
       this._graph = null;
@@ -113,6 +115,8 @@ connectedCallback(): void {
   }
 
   async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+
     const height = parseInt(this.getAttribute('height') || '350', 10) || 350;
     const title = this.getAttribute('title') || '';
     const readonly = this.hasAttribute('readonly') || !this.hasAttribute('readonly') && true;
@@ -135,6 +139,7 @@ connectedCallback(): void {
 
     try {
       await this._loadScript();
+      if (seq !== this._renderSeq) return;
 
       const X6 = (window as unknown as { X6: X6Static }).X6;
       const container = this.querySelector(`#${containerId}`) as HTMLElement;

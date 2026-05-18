@@ -37,6 +37,7 @@ class RkGlobe extends HTMLElement {
   private _raw = '';
   private _uid = Math.random().toString(36).slice(2, 9);
   private _ro: ResizeObserver | null = null;
+  private _renderSeq = 0;
 
   static get observedAttributes() {
     return ['height', 'title', 'auto-rotate'];
@@ -49,12 +50,12 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._cleanup();
   }
 
   attributeChangedCallback(): void {
     if (!this.isConnected) return;
-    this._cleanup();
     this._render();
   }
 
@@ -119,6 +120,9 @@ connectedCallback(): void {
   }
 
   private async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
+    this._cleanup();
+
     const height = parseInt(this.getAttribute('height') || '500', 10) || 500;
     const title = this.getAttribute('title') || '';
     const autoRotate = this.hasAttribute('auto-rotate');
@@ -134,6 +138,8 @@ connectedCallback(): void {
 
     try {
       const Globe = await this._loadGlobeLib();
+      if (seq !== this._renderSeq) return;
+
       const container = this.querySelector(`#${containerId}`) as HTMLElement;
       if (!container) return;
 
@@ -169,6 +175,7 @@ connectedCallback(): void {
 
       // ResizeObserver for responsive
       this._ro = new ResizeObserver(() => {
+        if (seq !== this._renderSeq) return;
         if (this._globe && container) {
           try {
             this._globe.width(container.clientWidth || 600).height(height);

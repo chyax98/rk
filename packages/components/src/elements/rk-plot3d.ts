@@ -16,6 +16,7 @@ class RkPlot3d extends HTMLElement {
   private _plotly: PlotlyModule | null = null;
   private _container: HTMLDivElement | null = null;
   private _ro: ResizeObserver | null = null;
+  private _renderSeq = 0;
 
   static get observedAttributes() {
     return ['title', 'height', 'caption'];
@@ -28,6 +29,7 @@ connectedCallback(): void {
   }
 
   disconnectedCallback(): void {
+    this._renderSeq++;
     this._cleanup();
   }
 
@@ -53,7 +55,9 @@ connectedCallback(): void {
   }
 
   private async _render(): Promise<void> {
+    const seq = ++this._renderSeq;
     this._cleanup();
+
     const title = this.getAttribute('title') || '';
     const height = parseInt(this.getAttribute('height') || '450', 10);
     const caption = this.getAttribute('caption') || '';
@@ -98,6 +102,7 @@ connectedCallback(): void {
     // Lazy-load Plotly CDN
     try {
       this._plotly = await this._loadPlotly();
+      if (seq !== this._renderSeq) return;
     } catch {
       this.innerHTML = `<div class="rk-plot3d"><div class="rk-plot3d__error">Failed to load Plotly.js from CDN.</div></div>`;
       return;
@@ -123,12 +128,14 @@ connectedCallback(): void {
 
     try {
       await this._plotly.newPlot(container, spec.data, defaultLayout, defaultConfig);
+      if (seq !== this._renderSeq) return;
     } catch (e) {
       container.innerHTML = `<div class="rk-plot3d__error">Plotly render error: ${(e as Error).message}</div>`;
     }
 
     // Resize observer
     this._ro = new ResizeObserver(() => {
+      if (seq !== this._renderSeq) return;
       if (this._plotly && this._container) {
         try {
           this._plotly.relayout(this._container, {
