@@ -7,8 +7,9 @@ class RkDiagram extends HTMLElement {
     return ['title', 'caption', 'engine'];
   }
 
-  connectedCallback(): void {
-    this._raw = (this.textContent || '').trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
 

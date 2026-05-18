@@ -56,8 +56,9 @@ class RkMap extends HTMLElement {
     return ['center', 'zoom', 'height', 'title', 'tiles'];
   }
 
-  connectedCallback(): void {
-    this._raw = (this.textContent || '').trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
 

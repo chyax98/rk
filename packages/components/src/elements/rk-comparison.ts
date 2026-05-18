@@ -27,8 +27,9 @@ class RkComparison extends HTMLElement {
     return ['title', 'variant'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.textContent || '';
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent || '';
     this._render();
   }
 

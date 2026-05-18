@@ -21,8 +21,9 @@ class RkPlot3d extends HTMLElement {
     return ['title', 'height', 'caption'];
   }
 
-  connectedCallback(): void {
-    this._raw = (this.textContent || '').trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
 

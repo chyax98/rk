@@ -22,8 +22,9 @@ class RkDatagrid extends HTMLElement {
     return ['title', 'height', 'theme', 'pagination', 'page-size'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.textContent?.trim() || '';
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent?.trim() || '';
     this._render();
   }
 
@@ -105,7 +106,7 @@ class RkDatagrid extends HTMLElement {
     this.innerHTML = /* html */ `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ''}
-        <div class="rk-datagrid__container" style="height:${height}px"></div>
+        <div class="rk-datagrid__container" style="height:${pagination ? height + 48 : height}px"></div>
       </div>
     `;
 

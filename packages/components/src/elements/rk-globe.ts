@@ -42,8 +42,9 @@ class RkGlobe extends HTMLElement {
     return ['height', 'title', 'auto-rotate'];
   }
 
-  connectedCallback(): void {
-    this._raw = (this.textContent || '').trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
 

@@ -6,8 +6,9 @@ class RkStat extends HTMLElement {
     return ['value', 'unit', 'label', 'delta', 'tone'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML.trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML.trim();
     this._render();
   }
 

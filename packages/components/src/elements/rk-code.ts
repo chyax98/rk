@@ -6,8 +6,9 @@ class RkCode extends HTMLElement {
     return ['lang', 'title', 'frame', 'showlinenumbers', 'data-highlighted'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.textContent || '';
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent || '';
     this._render();
   }
 

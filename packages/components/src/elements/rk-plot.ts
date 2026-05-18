@@ -16,8 +16,9 @@ class RkPlot extends HTMLElement {
     return ['title', 'caption', 'height'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.textContent?.trim() || '';
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent?.trim() || '';
     this._render();
   }
 
@@ -157,23 +158,12 @@ class RkPlot extends HTMLElement {
     return mapped;
   }
 
-  /** Lazy-load Observable Plot from CDN (UMD → window.Plot) */
+  /** Lazy-load Observable Plot from CDN (ESM dynamic import) */
   async _loadPlot(): Promise<PlotModule> {
-    // Check if already loaded
-    const w = window as unknown as { Plot?: PlotModule };
-    if (w.Plot) return w.Plot;
-
-    return new Promise<PlotModule>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.umd.min.js';
-      script.async = true;
-      script.onload = () => {
-        if (w.Plot) resolve(w.Plot);
-        else reject(new Error('Plot not found after script load'));
-      };
-      script.onerror = () => reject(new Error('Failed to load Plot from CDN'));
-      document.head.appendChild(script);
-    });
+    const mod = await import(
+      'https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.esm.min.js'
+    );
+    return mod as unknown as PlotModule;
   }
 
   _esc(s: string): string {

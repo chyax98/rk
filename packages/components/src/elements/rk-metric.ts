@@ -6,8 +6,9 @@ class RkMetric extends HTMLElement {
     return ['cols'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML;
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
 

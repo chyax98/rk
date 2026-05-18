@@ -51,7 +51,7 @@ var RkStat = class extends HTMLElement {
     return ["value", "unit", "label", "delta", "tone"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML.trim();
+    if (!this._raw) this._raw = this.innerHTML.trim();
     this._render();
   }
   attributeChangedCallback() {
@@ -111,7 +111,7 @@ var RkSummary = class extends HTMLElement {
     return ["title"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML.trim();
+    if (!this._raw) this._raw = this.innerHTML.trim();
     this._render();
   }
   attributeChangedCallback() {
@@ -142,7 +142,7 @@ var RkCode = class extends HTMLElement {
     return ["lang", "title", "frame", "showlinenumbers", "data-highlighted"];
   }
   connectedCallback() {
-    this._raw = this.textContent || "";
+    if (!this._raw) this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
@@ -239,7 +239,7 @@ var RkTable = class extends HTMLElement {
     return ["title", "profile"];
   }
   connectedCallback() {
-    this._raw = this.textContent || "";
+    if (!this._raw) this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
@@ -319,7 +319,7 @@ var RkChart = class extends HTMLElement {
     return ["type", "title", "caption", "xfield", "yfield"];
   }
   connectedCallback() {
-    this._raw = this.textContent || "";
+    if (!this._raw) this._raw = this.textContent || "";
     this._render();
   }
   disconnectedCallback() {
@@ -647,7 +647,7 @@ var RkDiagram = class extends HTMLElement {
     return ["title", "caption", "engine"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -908,7 +908,7 @@ var RkDecision = class extends HTMLElement {
     return ["question", "chosen", "status"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -967,7 +967,7 @@ var RkChecklist = class extends HTMLElement {
     return ["title"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1030,7 +1030,7 @@ var RkComparison = class extends HTMLElement {
     return ["title", "variant"];
   }
   connectedCallback() {
-    this._raw = this.textContent || "";
+    if (!this._raw) this._raw = this.textContent || "";
     this._render();
   }
   attributeChangedCallback() {
@@ -1110,7 +1110,7 @@ var RkTimeline = class extends HTMLElement {
     return ["title"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1165,7 +1165,7 @@ var RkTabs = class extends HTMLElement {
     return ["title"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1260,7 +1260,7 @@ var RkImage = class extends HTMLElement {
     return ["src", "alt", "caption", "credit", "width"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1308,7 +1308,7 @@ var RkQuote = class extends HTMLElement {
     return ["attribution", "source", "source-url"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1348,7 +1348,7 @@ var RkCollapsible = class extends HTMLElement {
     return ["summary", "open"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1383,7 +1383,7 @@ var RkHighlight = class extends HTMLElement {
     return ["label"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1414,7 +1414,7 @@ var RkProgress = class extends HTMLElement {
     return ["label", "value", "max", "tone"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1456,7 +1456,7 @@ var RkSteps = class extends HTMLElement {
     return ["current"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -1506,7 +1506,7 @@ var RkMetric = class extends HTMLElement {
     return ["cols"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -2182,7 +2182,7 @@ var RkCard = class extends HTMLElement {
     return ["title", "subtitle", "variant", "accent"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -2222,7 +2222,7 @@ var RkSection = class extends HTMLElement {
     return ["title", "subtitle", "level", "divider"];
   }
   connectedCallback() {
-    this._raw = this.innerHTML;
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
   attributeChangedCallback() {
@@ -2414,7 +2414,7 @@ var RkInfographic = class extends HTMLElement {
     return ["title", "height", "theme"];
   }
   connectedCallback() {
-    this._raw = this.textContent || "";
+    if (!this._raw) this._raw = this.textContent || "";
     this._render();
   }
   disconnectedCallback() {
@@ -2509,7 +2509,7 @@ var RkMap = class extends HTMLElement {
     return ["center", "zoom", "height", "title", "tiles"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -2637,7 +2637,7 @@ var RkDatagrid = class extends HTMLElement {
     return ["title", "height", "theme", "pagination", "page-size"];
   }
   connectedCallback() {
-    this._raw = this.textContent?.trim() || "";
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
     this._render();
   }
   disconnectedCallback() {
@@ -2706,7 +2706,7 @@ var RkDatagrid = class extends HTMLElement {
     `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ""}
-        <div class="rk-datagrid__container" style="height:${height}px"></div>
+        <div class="rk-datagrid__container" style="height:${pagination ? height + 48 : height}px"></div>
       </div>
     `;
     const container = this.querySelector(".rk-datagrid__container");
@@ -2818,7 +2818,7 @@ var RkPlot = class extends HTMLElement {
     return ["title", "caption", "height"];
   }
   connectedCallback() {
-    this._raw = this.textContent?.trim() || "";
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
     this._render();
   }
   disconnectedCallback() {
@@ -2921,21 +2921,10 @@ var RkPlot = class extends HTMLElement {
     }
     return mapped;
   }
-  /** Lazy-load Observable Plot from CDN (UMD → window.Plot) */
+  /** Lazy-load Observable Plot from CDN (ESM dynamic import) */
   async _loadPlot() {
-    const w = window;
-    if (w.Plot) return w.Plot;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.umd.min.js";
-      script.async = true;
-      script.onload = () => {
-        if (w.Plot) resolve(w.Plot);
-        else reject(new Error("Plot not found after script load"));
-      };
-      script.onerror = () => reject(new Error("Failed to load Plot from CDN"));
-      document.head.appendChild(script);
-    });
+    const mod = await import("https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/dist/plot.esm.min.js");
+    return mod;
   }
   _esc(s) {
     const d = document.createElement("div");
@@ -2954,7 +2943,7 @@ var RkSketch = class extends HTMLElement {
     return ["width", "height", "roughness", "title"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -3138,7 +3127,7 @@ var RkZdog = class extends HTMLElement {
     return ["width", "height", "rotate", "zoom", "title"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -3431,7 +3420,7 @@ var RkGlobe = class extends HTMLElement {
     return ["height", "title", "auto-rotate"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -3548,7 +3537,7 @@ var RkNarrative = class extends HTMLElement {
     return ["title"];
   }
   connectedCallback() {
-    this._raw = this.textContent?.trim() || "";
+    if (!this._raw) this._raw = this.textContent?.trim() || "";
     this._render();
   }
   attributeChangedCallback() {
@@ -3637,7 +3626,7 @@ var RkPlot3d = class extends HTMLElement {
     return ["title", "height", "caption"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -3787,7 +3776,7 @@ var RkGraph3d = class extends HTMLElement {
     return ["title", "height", "dag"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -3922,7 +3911,7 @@ var RkGraph = class extends HTMLElement {
     return ["title", "height", "layout"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {
@@ -4081,7 +4070,7 @@ var RkFlow = class extends HTMLElement {
     return ["title", "height", "readonly"];
   }
   connectedCallback() {
-    this._raw = (this.textContent || "").trim();
+    if (!this._raw) this._raw = (this.textContent || "").trim();
     this._render();
   }
   disconnectedCallback() {

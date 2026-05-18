@@ -53,8 +53,9 @@ class RkZdog extends HTMLElement {
     return ['width', 'height', 'rotate', 'zoom', 'title'];
   }
 
-  connectedCallback(): void {
-    this._raw = (this.textContent || '').trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
 
