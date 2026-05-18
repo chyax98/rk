@@ -2706,7 +2706,7 @@ var RkDatagrid = class extends HTMLElement {
     `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ""}
-        <div class="rk-datagrid__container" style="height:${pagination ? height + 48 : height}px"></div>
+        <div class="rk-datagrid__container" style="height:${height}px"></div>
       </div>
     `;
     const container = this.querySelector(".rk-datagrid__container");
@@ -2734,6 +2734,7 @@ var RkDatagrid = class extends HTMLElement {
       if (pagination) {
         gridOptions.pagination = true;
         gridOptions.paginationPageSize = pageSize;
+        gridOptions.domLayout = "autoHeight";
       }
       const { api } = agGrid.createGrid(container, gridOptions);
       this._gridApi = api;

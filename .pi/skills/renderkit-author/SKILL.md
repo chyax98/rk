@@ -65,7 +65,7 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 | `ibm-enterprise` | 企业报告 |
 | `editorial-kami` | 设计提案、创意简报 |
 
-→ 详细说明：[reference/02-themes.md](reference/02-themes.md)
+→ 详细说明：[reference/themes.md](reference/themes.md)
 
 ---
 
@@ -148,7 +148,7 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 | `rk-badge` | 标签 | `tone`, `variant` |
 | `rk-badge-group` | 标签组 | `rk-badge` 子组件 |
 
-→ 完整语法示例：[reference/03-components.md](reference/03-components.md)
+→ 完整语法示例：[reference/components.md](reference/components.md)
 
 ---
 
@@ -170,7 +170,7 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 | 项目进度 | `rk-kanban` + `rk-timeline` |
 | 数据叙事 | `rk-narrative` + `rk-scroll-story` |
 
-→ 详细决策树：[reference/06-component-guide.md](reference/06-component-guide.md)
+→ 详细决策树：[reference/component-guide.md](reference/component-guide.md)
 
 ---
 
@@ -178,10 +178,10 @@ RenderKit：Agent 写 HTML + `<rk-*>` WC → push → 浏览器渲染 → 人评
 
 | 文件 | 内容 |
 |---|---|
-| [reference/01-quickstart.md](reference/01-quickstart.md) | 完整 HTML 模板、快速开始示例 |
-| [reference/02-themes.md](reference/02-themes.md) | 8 个主题详细说明 |
-| [reference/03-components.md](reference/03-components.md) | **46 个 WC 完整语法示例** |
-| [reference/04-design-rules.md](reference/04-design-rules.md) | Anti-Slop 设计规则、排版、颜色 |
-| [reference/05-cli.md](reference/05-cli.md) | rk push / feedback / validate / doctor |
-| [reference/06-component-guide.md](reference/06-component-guide.md) | 按场景选组件的决策指南 |
-| [reference/07-warnings.md](reference/07-warnings.md) | 常见错误、排障、评论系统 |
+| [reference/quickstart.md](reference/quickstart.md) | 完整 HTML 模板、快速开始示例 |
+| [reference/themes.md](reference/themes.md) | 8 个主题详细说明 |
+| [reference/components.md](reference/components.md) | **46 个 WC 完整语法示例** |
+| [reference/design-rules.md](reference/design-rules.md) | Anti-Slop 设计规则、排版、颜色 |
+| [reference/cli.md](reference/cli.md) | rk push / feedback / validate / doctor |
+| [reference/component-guide.md](reference/component-guide.md) | 按场景选组件的决策指南 |
+| [reference/warnings.md](reference/warnings.md) | 常见错误、排障、评论系统 |

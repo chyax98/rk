@@ -106,7 +106,7 @@ connectedCallback(): void {
     this.innerHTML = /* html */ `
       <div class="rk-datagrid">
         ${title ? `<div class="rk-datagrid__title">${this._esc(title)}</div>` : ''}
-        <div class="rk-datagrid__container" style="height:${pagination ? height + 48 : height}px"></div>
+        <div class="rk-datagrid__container" style="height:${height}px"></div>
       </div>
     `;
 
@@ -144,6 +144,8 @@ connectedCallback(): void {
       if (pagination) {
         gridOptions.pagination = true;
         gridOptions.paginationPageSize = pageSize;
+        // domLayout='autoHeight' lets AG Grid size itself including pagination bar
+        gridOptions.domLayout = 'autoHeight';
       }
 
       const { api } = agGrid.createGrid(container, gridOptions);
