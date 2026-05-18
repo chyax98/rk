@@ -3,15 +3,20 @@
 .rk-compare-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
   height: 100%;
+  min-height: 0;
   gap: 1px;
   background: #e5e7eb;
+  overflow: hidden;
 }
 .rk-compare-pane {
   display: flex;
   flex-direction: column;
   background: var(--rk-bg);
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 .rk-compare-pane-head {
   display: flex;
@@ -26,7 +31,8 @@
   flex-shrink: 0;
 }
 .rk-compare-pane-body {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   padding: 0;
 }
