@@ -39,3 +39,4 @@ import './elements/rk-plot3d.ts';
 import './elements/rk-graph3d.ts';
 import './elements/rk-graph.ts';
 import './elements/rk-flow.ts';
+import './elements/rk-scroll-story.ts';

@@ -84,6 +84,38 @@ program
       process.exit(1);
     }
 
+    // Pre-push validation warnings (non-blocking)
+    {
+      const preWarnings = [];
+      // Empty diagram blocks
+      const diagRegex = /<rk-diagram[^>]*>([\s\S]*?)<\/rk-diagram>/gi;
+      let dm;
+      while ((dm = diagRegex.exec(html)) !== null) {
+        if (!dm[1].trim()) {
+          const engineM = dm[0].match(/engine=["']([^"']+)["']/);
+          preWarnings.push({ engine: engineM?.[1] || 'unknown', message: 'Empty diagram block' });
+        }
+      }
+      // Invalid JSON in data components
+      const jsonTags = ['rk-chart', 'rk-plot', 'rk-datagrid', 'rk-plot3d', 'rk-graph3d', 'rk-graph', 'rk-flow', 'rk-globe'];
+      for (const tag of jsonTags) {
+        const jr = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'gi');
+        let jm;
+        while ((jm = jr.exec(html)) !== null) {
+          const body = jm[1].trim();
+          if (!body) continue;
+          try { JSON.parse(body); } catch (e) {
+            preWarnings.push({ engine: tag, message: `Invalid JSON: ${e.message.slice(0, 120)}` });
+          }
+        }
+      }
+      if (preWarnings.length) {
+        process.stderr.write(`\n⚠  Pre-push warnings:\n`);
+        for (const w of preWarnings) process.stderr.write(`   [${w.engine}] ${w.message}\n`);
+        process.stderr.write('\n');
+      }
+    }
+
     const lock = await readLock(file);
     const title = path.basename(file, path.extname(file));
 
@@ -325,6 +357,111 @@ program
 
     output({ ok: true, checks });
   });
+
+// rk validate <file.html>
+program
+  .command('validate <file>')
+  .description('Validate artifact HTML before pushing')
+  .action(async (file) => {
+    let html;
+    try {
+      html = await fs.readFile(file, 'utf8');
+    } catch {
+      output({ ok: false, error: `Cannot read file: ${file}` });
+      process.exit(1);
+    }
+
+    const errors = [];
+    const warnings = [];
+    let diagramsChecked = 0;
+    let jsonBlocksChecked = 0;
+
+    // 1. D2 blocks — try `d2 validate -`
+    const d2Regex = /<rk-diagram[^>]*engine=["']d2["'][^>]*>([\s\S]*?)<\/rk-diagram>/gi;
+    let d2Match;
+    while ((d2Match = d2Regex.exec(html)) !== null) {
+      diagramsChecked++;
+      const source = d2Match[1].trim();
+      if (!source) {
+        errors.push({ engine: 'd2', message: 'Empty D2 diagram block' });
+        continue;
+      }
+      const result = await validateD2(source);
+      if (!result.ok) errors.push({ engine: 'd2', message: result.error });
+    }
+
+    // 2. JSON blocks in data components
+    const jsonComponents = ['rk-chart', 'rk-plot', 'rk-datagrid', 'rk-infographic', 'rk-plot3d', 'rk-graph3d', 'rk-graph', 'rk-flow', 'rk-globe'];
+    for (const tag of jsonComponents) {
+      const jsonRegex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\/${tag}>`, 'gi');
+      let jMatch;
+      while ((jMatch = jsonRegex.exec(html)) !== null) {
+        const body = jMatch[1].trim();
+        if (!body) continue;
+        jsonBlocksChecked++;
+        try {
+          JSON.parse(body);
+        } catch (e) {
+          errors.push({ engine: tag, message: `Invalid JSON: ${e.message}` });
+        }
+      }
+    }
+
+    // 3. Mermaid blocks — basic non-empty check
+    const mermaidRegex = /<rk-diagram[^>]*engine=["']mermaid["'][^>]*>([\s\S]*?)<\/rk-diagram>/gi;
+    let mMatch;
+    while ((mMatch = mermaidRegex.exec(html)) !== null) {
+      diagramsChecked++;
+      const source = mMatch[1].trim();
+      if (!source) {
+        errors.push({ engine: 'mermaid', message: 'Empty mermaid diagram block' });
+      }
+    }
+
+    // 4. PlantUML / Graphviz blocks — basic non-empty check
+    const pumlRegex = /<rk-diagram[^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*>([\s\S]*?)<\/rk-diagram>/gi;
+    let pMatch;
+    while ((pMatch = pumlRegex.exec(html)) !== null) {
+      diagramsChecked++;
+      const source = pMatch[2].trim();
+      if (!source) {
+        errors.push({ engine: pMatch[1], message: 'Empty diagram block' });
+      }
+    }
+
+    // Summary
+    const hasErrors = errors.length > 0;
+    console.log(hasErrors ? `✗ ${file}` : `✓ ${file}`);
+    console.log(`  ${diagramsChecked} diagram(s) checked`);
+    console.log(`  ${jsonBlocksChecked} JSON block(s) checked`);
+    for (const err of errors) {
+      console.log(`  ✗ [${err.engine}] ${err.message}`);
+    }
+    for (const w of warnings) {
+      console.log(`  ⚠ [${w.engine}] ${w.message}`);
+    }
+
+    output({ ok: !hasErrors, errors, warnings, diagramsChecked, jsonBlocksChecked });
+    if (hasErrors) process.exit(1);
+  });
+
+async function validateD2(source) {
+  return new Promise((resolve) => {
+    const proc = spawn('d2', ['--layout=elk', '-'], { timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] });
+    let err = '';
+    proc.stdin.write(source);
+    proc.stdin.end();
+    proc.stderr.on('data', (d) => (err += d.toString()));
+    proc.stdout.resume(); // drain
+    proc.on('close', (code) => {
+      if (code === 0) resolve({ ok: true });
+      else resolve({ ok: false, error: err.trim().replace(/^err:\s*/gm, '').slice(0, 300) || `exit code ${String(code)}` });
+    });
+    proc.on('error', (e) => {
+      resolve({ ok: false, error: `d2 not found: ${e.message}. Install: curl -fsSL https://d2lang.com/install.sh | sh` });
+    });
+  });
+}
 
 program
   .command('archive <file>')
