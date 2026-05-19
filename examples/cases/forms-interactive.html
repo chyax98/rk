@@ -1,66 +1,34 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Forms &amp; Interactive Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Forms Interactive Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
 <script type="application/json" data-rk-smoke>{"cases":[
-{"id":"FM-01","selector":"rk-form .rk-form__fields"},
-{"id":"FM-02","selector":"rk-kanban-col","min":2},
-{"id":"FM-03","selector":".rk-checklist__item","min":2},
-{"id":"FM-04","selector":".rk-steps__item","min":3},
-{"id":"FM-05","selector":".rk-timeline__step","min":2},
-{"id":"FM-06","selector":".rk-decision__status"},
-{"id":"FM-07","selector":"rk-comparison table"}
+{"id":"FM-01","selector":"rk-form .rk-form__fields .rk-field","min":5},
+{"id":"FM-02","selector":"rk-form .rk-form__submit"},
+{"id":"FM-03","selector":"rk-kanban-col .rk-kanban-col__header","min":3},
+{"id":"FM-04","selector":"rk-kanban-col .rk-kanban-card","min":4},
+{"id":"FM-05","selector":"rk-checklist .rk-checklist__item","min":3},
+{"id":"FM-06","selector":"rk-steps .rk-steps__item--active"},
+{"id":"FM-07","selector":"rk-timeline .rk-timeline__step--active"},
+{"id":"FM-08","selector":"rk-decision .rk-decision__status"},
+{"id":"FM-09","selector":"rk-comparison .rk-comparison__table"},
+{"id":"FM-10","selector":"rk-comparison .rk-comparison--matrix table"}
 ]}</script></head>
 <body data-rk-theme="notion-clean">
-<h1>Forms &amp; Interactive Cases</h1>
-<rk-section title="Form" level="h2" divider>
-  <rk-form title="Feedback" submit-label="Submit">
-    <rk-field label="Rating" type="rating" max="5"></rk-field>
-    <rk-field label="Comment" type="textarea" placeholder="Your thoughts..."></rk-field>
-    <rk-field label="Priority" type="select" options="High,Medium,Low"></rk-field>
-  </rk-form>
-</rk-section>
-<rk-section title="Kanban" level="h2">
-  <rk-kanban>
-    <rk-kanban-col title="Todo">
-      <rk-kanban-card priority="high" tag="bug">Fix login</rk-kanban-card>
-      <rk-kanban-card>Update docs</rk-kanban-card>
-    </rk-kanban-col>
-    <rk-kanban-col title="Done" done>
-      <rk-kanban-card>Setup CI</rk-kanban-card>
-    </rk-kanban-col>
-  </rk-kanban>
-</rk-section>
-<rk-section title="Checklist" level="h2">
-  <rk-checklist title="Release Checklist">
-    <rk-item checked>Code review</rk-item>
-    <rk-item checked>Tests pass</rk-item>
-    <rk-item>Deploy</rk-item>
-  </rk-checklist>
-</rk-section>
-<rk-section title="Steps" level="h2">
-  <rk-steps current="2">
-    <rk-step label="Design" status="done"></rk-step>
-    <rk-step label="Build" status="active"></rk-step>
-    <rk-step label="Ship" status="pending"></rk-step>
-  </rk-steps>
-</rk-section>
-<rk-section title="Timeline" level="h2">
-  <rk-timeline>
-    <rk-step date="2026-05-01" title="Start">Project kickoff</rk-step>
-    <rk-step date="2026-05-15" title="Milestone">First release</rk-step>
-  </rk-timeline>
-</rk-section>
-<rk-section title="Decision" level="h2">
-  <rk-decision question="Use D2 for architecture" chosen="D2" status="approved">
-    <rk-reason><li>Better auto-layout for system diagrams</li></rk-reason>
-    <rk-alternative>Mermaid — good for flowcharts but limited layout</rk-alternative>
-  </rk-decision>
-</rk-section>
-<rk-section title="Comparison" level="h2">
-  <rk-comparison variant="matrix">
-    | Feature | D2 | Mermaid |
-    |---|---|---|
-    | Auto-layout | Yes | Limited |
-    | Text syntax | Declarative | DSL |
-  </rk-comparison>
-</rk-section>
+<h1>Forms Interactive Cases</h1>
+<rk-grid cols="2" gap="20">
+<rk-form title="Review Form" submit-label="Submit"><rk-field label="Rating" type="rating" max="5" required></rk-field><rk-field label="Notes" type="textarea" placeholder="Describe issues"></rk-field><rk-field label="Priority" type="select" options="High,Medium,Low"></rk-field><rk-field label="Owner" type="text" placeholder="Name"></rk-field><rk-field label="Accepted" type="checkbox"></rk-field></rk-form>
+<rk-kanban><rk-kanban-col title="Todo" accent="blue"><rk-kanban-card priority="high" tag="bug" assignee="xd" due="2026-05-20">Fix renderer</rk-kanban-card><rk-kanban-card>Update docs</rk-kanban-card></rk-kanban-col><rk-kanban-col title="Doing" accent="orange"><rk-kanban-card priority="medium" tag="feature">Add cases</rk-kanban-card></rk-kanban-col><rk-kanban-col title="Done" done><rk-kanban-card>Lifecycle guard</rk-kanban-card></rk-kanban-col></rk-kanban>
+<rk-checklist title="Release Checklist"><rk-item checked>Tests pass</rk-item><rk-item checked note="browser scan">Render scan pass</rk-item><rk-item>Update changelog</rk-item></rk-checklist>
+<rk-steps current="2"><rk-step label="Plan">Plan</rk-step><rk-step label="Implement">Implement</rk-step><rk-step label="Verify">Verify</rk-step></rk-steps>
+<rk-timeline title="Milestones"><rk-step status="done">Requirement frozen</rk-step><rk-step status="active" tags="critical">Render harness</rk-step><rk-step status="next">Visual regression</rk-step></rk-timeline>
+<rk-decision question="Use browser render scan as gate?" chosen="Yes" status="approved"><rk-reason><li>Catches CDN failures</li><li>Catches WC runtime errors</li></rk-reason><rk-alternative>Only unit tests</rk-alternative></rk-decision>
+<rk-comparison title="Pros Cons">| Pros | Cons |
+|---|---|
+| Diagnosable | Slower |
+| Browser-backed | Needs server |</rk-comparison>
+<rk-comparison title="Matrix" variant="matrix">| Feature | Unit Test | Render Scan |
+|---|---|---|
+| Store API | Yes | No |
+| CDN Failure | No | Yes |
+| DOM Smoke | Partial | Yes |</rk-comparison>
+</rk-grid>
 </body></html>

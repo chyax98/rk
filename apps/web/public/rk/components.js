@@ -28,7 +28,7 @@
     mod
   ));
 
-  // src/elements/rk-section.ts
+  // packages/components/src/elements/rk-section.ts
   var RkSection = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -69,7 +69,7 @@
   };
   customElements.define("rk-section", RkSection);
 
-  // src/elements/rk-card.ts
+  // packages/components/src/elements/rk-card.ts
   var RkCard = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -110,7 +110,7 @@
   };
   customElements.define("rk-card", RkCard);
 
-  // src/elements/rk-grid.ts
+  // packages/components/src/elements/rk-grid.ts
   var RkGrid = class extends HTMLElement {
     _rendered = false;
     static get observedAttributes() {
@@ -142,7 +142,7 @@
   };
   customElements.define("rk-grid", RkGrid);
 
-  // src/elements/rk-tabs.ts
+  // packages/components/src/elements/rk-tabs.ts
   var RkTabs = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -206,7 +206,7 @@
   };
   customElements.define("rk-tabs", RkTabs);
 
-  // src/elements/rk-collapsible.ts
+  // packages/components/src/elements/rk-collapsible.ts
   var RkCollapsible = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -242,7 +242,7 @@
   };
   customElements.define("rk-collapsible", RkCollapsible);
 
-  // src/elements/rk-metric.ts
+  // packages/components/src/elements/rk-metric.ts
   var RkMetric = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -294,7 +294,7 @@
   };
   customElements.define("rk-metric", RkMetric);
 
-  // src/elements/rk-scroll-story.ts
+  // packages/components/src/elements/rk-scroll-story.ts
   var SCROLLAMA_CDN = "https://cdn.jsdelivr.net/npm/scrollama@3.2.0/build/scrollama.min.js";
   function loadScrollama() {
     if (window.scrollama) return Promise.resolve(window.scrollama);
@@ -399,7 +399,7 @@
   customElements.define("rk-scroll-story", RkScrollStory);
   customElements.define("rk-step", RkStep);
 
-  // src/elements/rk-callout.ts
+  // packages/components/src/elements/rk-callout.ts
   var ICONS = {
     info: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`,
     warning: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`,
@@ -446,7 +446,7 @@
   };
   customElements.define("rk-callout", RkCallout);
 
-  // src/elements/rk-stat.ts
+  // packages/components/src/elements/rk-stat.ts
   var RkStat = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -507,7 +507,7 @@
   };
   customElements.define("rk-stat", RkStat);
 
-  // src/elements/rk-summary.ts
+  // packages/components/src/elements/rk-summary.ts
   var RkSummary = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -539,7 +539,7 @@
   };
   customElements.define("rk-summary", RkSummary);
 
-  // src/elements/rk-code.ts
+  // packages/components/src/elements/rk-code.ts
   var RkCode = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -620,7 +620,7 @@
   };
   customElements.define("rk-code", RkCode);
 
-  // src/elements/rk-table.ts
+  // packages/components/src/elements/rk-table.ts
   function parsePipeTable(raw) {
     const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
     const rows = [];
@@ -705,7 +705,7 @@
   };
   customElements.define("rk-table", RkTable);
 
-  // src/elements/rk-decision.ts
+  // packages/components/src/elements/rk-decision.ts
   var RkDecision = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -765,7 +765,7 @@
   };
   customElements.define("rk-decision", RkDecision);
 
-  // src/elements/rk-checklist.ts
+  // packages/components/src/elements/rk-checklist.ts
   var RkChecklist = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -817,7 +817,7 @@
   };
   customElements.define("rk-checklist", RkChecklist);
 
-  // src/elements/rk-comparison.ts
+  // packages/components/src/elements/rk-comparison.ts
   function parsePipeTable2(raw) {
     const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
     const rows = [];
@@ -910,7 +910,7 @@
   };
   customElements.define("rk-comparison", RkComparison);
 
-  // src/elements/rk-timeline.ts
+  // packages/components/src/elements/rk-timeline.ts
   var RkTimeline = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -966,7 +966,7 @@
   };
   customElements.define("rk-timeline", RkTimeline);
 
-  // src/elements/rk-image.ts
+  // packages/components/src/elements/rk-image.ts
   var RkImage = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1015,7 +1015,7 @@
   };
   customElements.define("rk-image", RkImage);
 
-  // src/elements/rk-quote.ts
+  // packages/components/src/elements/rk-quote.ts
   var RkQuote = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1056,7 +1056,7 @@
   };
   customElements.define("rk-quote", RkQuote);
 
-  // src/elements/rk-highlight.ts
+  // packages/components/src/elements/rk-highlight.ts
   var RkHighlight = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1088,7 +1088,7 @@
   };
   customElements.define("rk-highlight", RkHighlight);
 
-  // src/elements/rk-progress.ts
+  // packages/components/src/elements/rk-progress.ts
   var RkProgress = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1131,7 +1131,7 @@
   };
   customElements.define("rk-progress", RkProgress);
 
-  // src/elements/rk-steps.ts
+  // packages/components/src/elements/rk-steps.ts
   var RkSteps = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1182,7 +1182,7 @@
   };
   customElements.define("rk-steps", RkSteps);
 
-  // src/elements/rk-badge.ts
+  // packages/components/src/elements/rk-badge.ts
   var RkBadge = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1263,7 +1263,7 @@
   customElements.define("rk-badge", RkBadge);
   customElements.define("rk-badge-group", RkBadgeGroup);
 
-  // src/elements/rk-kanban.ts
+  // packages/components/src/elements/rk-kanban.ts
   var RkKanbanCard = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1427,7 +1427,7 @@
   customElements.define("rk-kanban-col", RkKanbanCol);
   customElements.define("rk-kanban", RkKanban);
 
-  // src/elements/rk-form.ts
+  // packages/components/src/elements/rk-form.ts
   var RkField = class extends HTMLElement {
     static get observedAttributes() {
       return ["label", "type", "max", "placeholder", "options", "required", "name", "value"];
@@ -1661,7 +1661,7 @@
   customElements.define("rk-field", RkField);
   customElements.define("rk-form", RkForm);
 
-  // src/elements/rk-diff.ts
+  // packages/components/src/elements/rk-diff.ts
   var RkDiff = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1789,7 +1789,7 @@
   };
   customElements.define("rk-diff", RkDiff);
 
-  // src/elements/rk-narrative.ts
+  // packages/components/src/elements/rk-narrative.ts
   var RkNarrative = class extends HTMLElement {
     _raw = "";
     static get observedAttributes() {
@@ -1876,7 +1876,7 @@
   };
   customElements.define("rk-narrative", RkNarrative);
 
-  // src/elements/rk-chart.ts
+  // packages/components/src/elements/rk-chart.ts
   function parsePipeTable3(raw) {
     const lines = raw.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
     const rows = [];
@@ -2241,7 +2241,7 @@
   };
   customElements.define("rk-chart", RkChart);
 
-  // src/elements/rk-diagram.ts
+  // packages/components/src/elements/rk-diagram.ts
   var RkDiagram = class extends HTMLElement {
     _raw = "";
     _observer = null;
@@ -2514,7 +2514,7 @@ ${prelude}`);
   };
   customElements.define("rk-diagram", RkDiagram);
 
-  // src/elements/rk-3d.ts
+  // packages/components/src/elements/rk-3d.ts
   var RkThreeD = class extends HTMLElement {
     _rendered = false;
     _raf = null;
@@ -2694,7 +2694,7 @@ ${prelude}`);
   };
   customElements.define("rk-3d", RkThreeD);
 
-  // src/elements/rk-infographic.ts
+  // packages/components/src/elements/rk-infographic.ts
   var _libLoaded = null;
   function loadLib() {
     if (_libLoaded) return _libLoaded;
@@ -2809,7 +2809,7 @@ ${prelude}`);
   };
   customElements.define("rk-infographic", RkInfographic);
 
-  // src/elements/rk-map.ts
+  // packages/components/src/elements/rk-map.ts
   var TILE_URLS = {
     osm: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     "carto-light": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -2823,14 +2823,23 @@ ${prelude}`);
   var RkMap = class extends HTMLElement {
     _map = null;
     _raw = "";
+    _rawCaptured = false;
     _uid = Math.random().toString(36).slice(2, 9);
     _renderSeq = 0;
     static get observedAttributes() {
       return ["center", "zoom", "height", "title", "tiles"];
     }
     connectedCallback() {
-      if (!this._raw) this._raw = (this.textContent || "").trim();
-      this._render();
+      if (this._rawCaptured) {
+        this._render();
+        return;
+      }
+      window.setTimeout(() => {
+        if (!this.isConnected || this._rawCaptured) return;
+        this._raw = (this.textContent || "").trim();
+        this._rawCaptured = true;
+        this._render();
+      }, 0);
     }
     disconnectedCallback() {
       if (this._map) {
@@ -2839,9 +2848,8 @@ ${prelude}`);
       }
     }
     attributeChangedCallback() {
-      if (!this.isConnected) return;
+      if (!this.isConnected || !this._rawCaptured) return;
       if (this._map) {
-        this._map.remove();
         this._map = null;
       }
       this._render();
@@ -2955,7 +2963,7 @@ ${prelude}`);
   };
   customElements.define("rk-map", RkMap);
 
-  // src/elements/rk-datagrid.ts
+  // packages/components/src/elements/rk-datagrid.ts
   var RkDatagrid = class extends HTMLElement {
     _raw = "";
     _gridApi = null;
@@ -3146,7 +3154,7 @@ ${prelude}`);
   };
   customElements.define("rk-datagrid", RkDatagrid);
 
-  // src/elements/rk-plot.ts
+  // packages/components/src/elements/rk-plot.ts
   var RkPlot = class extends HTMLElement {
     _raw = "";
     _ro = null;
@@ -3279,7 +3287,7 @@ ${prelude}`);
   };
   customElements.define("rk-plot", RkPlot);
 
-  // src/elements/rk-sketch.ts
+  // packages/components/src/elements/rk-sketch.ts
   var RkSketch = class extends HTMLElement {
     _raw = "";
     _ro = null;
@@ -3471,7 +3479,7 @@ ${prelude}`);
   };
   customElements.define("rk-sketch", RkSketch);
 
-  // src/elements/rk-zdog.ts
+  // packages/components/src/elements/rk-zdog.ts
   var RkZdog = class extends HTMLElement {
     _raw = "";
     _illo = null;
@@ -3682,7 +3690,7 @@ ${prelude}`);
   };
   customElements.define("rk-zdog", RkZdog);
 
-  // src/elements/rk-model.ts
+  // packages/components/src/elements/rk-model.ts
   var RkModel = class extends HTMLElement {
     _uid = Math.random().toString(36).slice(2, 9);
     _renderSeq = 0;
@@ -3778,26 +3786,34 @@ ${prelude}`);
   };
   customElements.define("rk-model", RkModel);
 
-  // src/elements/rk-globe.ts
+  // packages/components/src/elements/rk-globe.ts
   var RkGlobe = class extends HTMLElement {
     _globe = null;
     _raw = "";
+    _rawCaptured = false;
     _uid = Math.random().toString(36).slice(2, 9);
-    _ro = null;
     _renderSeq = 0;
     static get observedAttributes() {
       return ["height", "title", "auto-rotate"];
     }
     connectedCallback() {
-      if (!this._raw) this._raw = (this.textContent || "").trim();
-      this._render();
+      if (this._rawCaptured) {
+        this._render();
+        return;
+      }
+      window.setTimeout(() => {
+        if (!this.isConnected || this._rawCaptured) return;
+        this._raw = (this.textContent || "").trim();
+        this._rawCaptured = true;
+        this._render();
+      }, 0);
     }
     disconnectedCallback() {
       this._renderSeq++;
       this._cleanup();
     }
     attributeChangedCallback() {
-      if (!this.isConnected) return;
+      if (!this.isConnected || !this._rawCaptured) return;
       this._render();
     }
     _cleanup() {
@@ -3830,8 +3846,58 @@ ${prelude}`);
       d.textContent = s;
       return d.innerHTML;
     }
+    _drawCanvasGlobe(container, points, height) {
+      const width = Math.max(container.clientWidth || 600, 320);
+      const canvas = document.createElement("canvas");
+      canvas.className = "rk-globe__canvas";
+      canvas.width = width;
+      canvas.height = height;
+      canvas.style.width = "100%";
+      canvas.style.height = `${height}px`;
+      container.appendChild(canvas);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return canvas;
+      const cx = width / 2;
+      const cy = height / 2;
+      const r = Math.min(width, height) * 0.38;
+      const grd = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+      grd.addColorStop(0, "rgba(147,197,253,0.95)");
+      grd.addColorStop(0.6, "rgba(59,130,246,0.42)");
+      grd.addColorStop(1, "rgba(30,41,59,0.18)");
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(99,102,241,0.45)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(148,163,184,0.22)";
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r * (0.25 + Math.abs(i) * 0.16), r, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + i * r / 3, r, r * 0.18, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      for (const p of points) {
+        const lat = p.lat * Math.PI / 180;
+        const lng = p.lng * Math.PI / 180;
+        const x = cx + r * Math.cos(lat) * Math.sin(lng);
+        const y = cy - r * Math.sin(lat);
+        const pr = Math.max(3, (p.size || 0.8) * 4);
+        ctx.fillStyle = p.color || "#6366f1";
+        ctx.beginPath();
+        ctx.arc(x, y, pr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      return canvas;
+    }
     async _loadGlobeLib() {
-      if (window.Globe) return window.Globe;
       if (document.querySelector("script[data-rk-globe]")) {
         return new Promise((resolve, reject) => {
           const check = () => {
@@ -3873,7 +3939,8 @@ ${prelude}`);
         if (seq !== this._renderSeq) return;
         const container = this.querySelector(`#${containerId}`);
         if (!container) return;
-        const globe = Globe(container).globeImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg").backgroundColor("rgba(0,0,0,0)").atmosphereColor("#6366f1").atmosphereAltitude(0.15).width(container.clientWidth || 600).height(height);
+        const fallbackCanvas = this._drawCanvasGlobe(container, points, height);
+        const globe = Globe(container).globeImageUrl("https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg").backgroundColor("rgba(0,0,0,0)").atmosphereAltitude(0.15).width(container.clientWidth || 600).height(height);
         if (points.length > 0) {
           globe.pointsData(points).pointLat((d) => d.lat).pointLng((d) => d.lng).pointAltitude((d) => d.size || 0.5).pointRadius((d) => (d.size || 0.5) * 0.6).pointColor((d) => d.color || "#6366f1").pointLabel((d) => d.label || `${d.lat.toFixed(2)}, ${d.lng.toFixed(2)}`);
         }
@@ -3886,11 +3953,20 @@ ${prelude}`);
           }
         }
         this._globe = globe;
+        requestAnimationFrame(() => {
+          const canvases = Array.from(container.querySelectorAll("canvas"));
+          if (fallbackCanvas && canvases.length > 1) fallbackCanvas.remove();
+        });
         this._ro = new ResizeObserver(() => {
           if (seq !== this._renderSeq) return;
           if (this._globe && container) {
             try {
               this._globe.width(container.clientWidth || 600).height(height);
+              const fallback = container.querySelector(".rk-globe__canvas");
+              if (fallback && container.querySelectorAll("canvas").length === 1) {
+                fallback.remove();
+                this._drawCanvasGlobe(container, points, height);
+              }
             } catch {
             }
           }
@@ -3906,7 +3982,7 @@ ${prelude}`);
   };
   customElements.define("rk-globe", RkGlobe);
 
-  // src/elements/rk-plot3d.ts
+  // packages/components/src/elements/rk-plot3d.ts
   var RkPlot3d = class extends HTMLElement {
     _raw = "";
     _plotly = null;
@@ -4052,7 +4128,7 @@ ${prelude}`);
   };
   customElements.define("rk-plot3d", RkPlot3d);
 
-  // src/elements/rk-graph3d.ts
+  // packages/components/src/elements/rk-graph3d.ts
   var GROUP_COLORS = [
     "#6366f1",
     "#3b82f6",
@@ -4193,7 +4269,7 @@ ${prelude}`);
   };
   customElements.define("rk-graph3d", RkGraph3d);
 
-  // src/elements/rk-graph.ts
+  // packages/components/src/elements/rk-graph.ts
   var ACCENT_PALETTE = [
     "#6366f1",
     "#3b82f6",
@@ -4355,7 +4431,7 @@ ${prelude}`);
   };
   customElements.define("rk-graph", RkGraph);
 
-  // src/elements/rk-flow.ts
+  // packages/components/src/elements/rk-flow.ts
   var NODE_DEFAULTS = { width: 120, height: 40 };
   var NODE_COLORS = [
     "#6366f1",

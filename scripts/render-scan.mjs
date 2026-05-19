@@ -4,7 +4,7 @@
  *
  * Scans examples/cases/*.html by default:
  *   1. POST HTML to RenderKit server
- *   2. Open artifact with opencli browser
+ *   2. Open artifact with pw (Playwright CLI)
  *   3. Collect DOM render errors, console errors, failed network requests,
  *      feedback.renderErrors[], and component smoke signals
  *   4. Write JSON + Markdown reports under reports/render-scan/
@@ -17,11 +17,15 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const endpoint = process.env.RK_ENDPOINT || 'http://localhost:3737';
 const waitMs = Number(process.env.RK_RENDER_SCAN_WAIT_MS || 8000);
-const session = process.env.RK_RENDER_SCAN_SESSION || `rk-scan-${Date.now().toString(36)}`;
+const sessionBase = (process.env.RK_RENDER_SCAN_SESSION || `rks${Date.now().toString(36).slice(-6)}`).slice(0, 12);
 const outDir = resolve(root, 'reports/render-scan');
 
 const args = process.argv.slice(2);
 const files = resolveInputs(args.length ? args : ['examples/cases']);
+
+let activeSession = '';
+let sessionCounter = 0;
+let sessionOpen = false;
 
 function resolveInputs(inputs) {
   const out = [];
@@ -46,7 +50,7 @@ function run(cmd, args, options = {}) {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
       timeout: options.timeout ?? 120_000,
-      env: { ...process.env, OPENCLI_WINDOW: process.env.OPENCLI_WINDOW || 'background' },
+      env: { ...process.env },
     });
     return { ok: true, code: 0, stdout };
   } catch (e) {
@@ -61,6 +65,12 @@ function run(cmd, args, options = {}) {
 
 function parseJson(s, fallback = null) {
   try { return JSON.parse(s); } catch { return fallback; }
+}
+
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  return [value];
 }
 
 async function health() {
@@ -103,22 +113,46 @@ async function feedback(artifactId) {
   return json;
 }
 
+function closeBrowser() {
+  if (!sessionOpen || !activeSession) return;
+  run('pw', ['session', 'close', activeSession], { timeout: 30_000 });
+  sessionOpen = false;
+}
+
 function openBrowser(url) {
-  const r = run('opencli', ['browser', session, 'open', url], { timeout: 60_000 });
-  if (!r.ok) throw new Error(`opencli open failed: ${r.stderr || r.stdout}`);
+  closeBrowser();
+  activeSession = `${sessionBase}-${++sessionCounter}`;
+  const r = run('pw', ['session', 'create', activeSession, '--output=json', '--open', url], { timeout: 120_000 });
+  if (!r.ok) throw new Error(`pw open failed: ${r.stderr || r.stdout || `exit ${r.code}`}`);
+  sessionOpen = true;
   return parseJson(r.stdout, {});
 }
 
-function browserEval(js) {
-  const r = run('opencli', ['browser', session, 'eval', js], { timeout: 60_000 });
-  if (!r.ok) return { ok: false, error: r.stderr || r.stdout };
-  return parseJson(r.stdout, { ok: false, raw: r.stdout });
+function waitBrowser() {
+  run('pw', ['wait', '-s', activeSession, '--networkidle', '--output=json'], { timeout: Math.max(waitMs, 5_000) + 20_000 });
 }
 
-function browserJson(command, args = []) {
-  const r = run('opencli', ['browser', session, command, ...args], { timeout: 60_000 });
-  if (!r.ok) return { ok: false, error: r.stderr || r.stdout, count: 0, entries: [], messages: [] };
-  return parseJson(r.stdout, { ok: false, raw: r.stdout, count: 0, entries: [], messages: [] });
+function browserEval(js) {
+  const source = `async () => await page.evaluate(${JSON.stringify(js)})`;
+  const r = run('pw', ['code', '-s', activeSession, '--output=json', '--timeout', String(waitMs + 60_000), source], { timeout: waitMs + 90_000 });
+  if (!r.ok) return { ok: false, error: r.stderr || r.stdout };
+  const parsed = parseJson(r.stdout, null);
+  return parsed?.data?.result ?? parsed?.data ?? parsed ?? { ok: false, raw: r.stdout };
+}
+
+function browserConsole() {
+  const r = run('pw', ['console', '-s', activeSession, '--output=json', '--level', 'error', '--current', '--limit', '100'], { timeout: 60_000 });
+  if (!r.ok) return { ok: false, error: r.stderr || r.stdout, messages: [] };
+  const parsed = parseJson(r.stdout, {});
+  const sample = asArray(parsed?.data?.summary?.sample);
+  return { ok: true, messages: sample.filter((e) => !String(e.location?.url || e.text || '').includes('/favicon.ico')) };
+}
+
+function browserNetwork() {
+  const r = run('pw', ['network', '-s', activeSession, '--output=json', '--kind', 'requestfailed', '--current', '--limit', '100'], { timeout: 60_000 });
+  if (!r.ok) return { ok: false, error: r.stderr || r.stdout, entries: [] };
+  const parsed = parseJson(r.stdout, {});
+  return { ok: true, entries: asArray(parsed?.data?.summary?.sample) };
 }
 
 function declaredSmokeSnippet(cases) {
@@ -206,13 +240,13 @@ const collectSnippet = String.raw`(() => {
 })()`;
 
 function summarizeCase(result) {
-  const pushWarnings = result.push?.warnings?.length || 0;
-  const domErrors = result.dom?.errorEls?.length || 0;
-  const feedbackErrors = result.feedback?.renderErrors?.length || 0;
-  const consoleErrors = result.console?.messages?.length || 0;
-  const networkFailed = result.network?.entries?.length || 0;
-  const smokeFailed = (result.dom?.smoke || []).reduce((n, s) => n + (s.failed || 0), 0);
-  const declaredFailed = (result.dom?.declared || []).filter((s) => !s.ok).length;
+  const pushWarnings = asArray(result.push?.warnings).length;
+  const domErrors = asArray(result.dom?.errorEls).length;
+  const feedbackErrors = asArray(result.feedback?.renderErrors).length;
+  const consoleErrors = asArray(result.console?.messages).length;
+  const networkFailed = asArray(result.network?.entries).length;
+  const smokeFailed = asArray(result.dom?.smoke).reduce((n, s) => n + (s.failed || 0), 0);
+  const declaredFailed = asArray(result.dom?.declared).filter((s) => !s.ok).length;
   return { pushWarnings, domErrors, feedbackErrors, consoleErrors, networkFailed, smokeFailed, declaredFailed };
 }
 
@@ -222,7 +256,7 @@ function isPassing(summary) {
 
 function markdownReport(report) {
   const lines = [];
-  lines.push(`# Render Scan Report`);
+  lines.push('# Render Scan Report');
   lines.push('');
   lines.push(`- generatedAt: ${report.generatedAt}`);
   lines.push(`- endpoint: ${report.endpoint}`);
@@ -232,8 +266,8 @@ function markdownReport(report) {
   lines.push(`- pass: ${report.pass}`);
   lines.push(`- fail: ${report.fail}`);
   lines.push('');
-  lines.push(`| Case | Status | Artifact | Push Warn | DOM Err | Feedback Err | Console Err | Network Failed | Smoke Failed |`);
-  lines.push(`|---|---:|---|---:|---:|---:|---:|---:|---:|`);
+  lines.push('| Case | Status | Artifact | Push Warn | DOM Err | Feedback Err | Console Err | Network Failed | Smoke Failed |');
+  lines.push('|---|---:|---|---:|---:|---:|---:|---:|---:|');
   for (const r of report.results) {
     const s = r.summary;
     lines.push(`| ${r.file} | ${r.ok ? 'PASS' : 'FAIL'} | ${r.artifactId ? `[${r.artifactId}](${r.url})` : ''} | ${s.pushWarnings} | ${s.domErrors} | ${s.feedbackErrors} | ${s.consoleErrors} | ${s.networkFailed} | ${s.smokeFailed + s.declaredFailed} |`);
@@ -242,13 +276,13 @@ function markdownReport(report) {
     lines.push('');
     lines.push(`## ${r.file}`);
     if (r.error) lines.push(`- harness error: ${r.error}`);
-    for (const w of r.push?.warnings || []) lines.push(`- push warning [${w.engine || 'unknown'}]: ${w.message}`);
-    for (const e of r.dom?.errorEls || []) lines.push(`- DOM error ${e.className}: ${e.text}`);
-    for (const e of r.feedback?.renderErrors || []) lines.push(`- feedback renderError [${e.engine || 'unknown'}]: ${e.message}`);
-    for (const e of r.console?.messages || []) lines.push(`- console ${e.level || ''}: ${e.text || e.message || JSON.stringify(e)}`);
-    for (const e of r.network?.entries || []) lines.push(`- network failed: ${e.url || e.request?.url || JSON.stringify(e).slice(0, 200)}`);
-    for (const s of r.dom?.smoke || []) if (s.failed) lines.push(`- smoke failed ${s.tag}: ${s.ok}/${s.total} matched ${s.selector}`);
-    for (const s of r.dom?.declared || []) if (!s.ok) lines.push(`- declared smoke failed ${s.id}: selector=${s.selector} count=${s.count} min=${s.min}`);
+    for (const w of asArray(r.push?.warnings)) lines.push(`- push warning [${w.engine || 'unknown'}]: ${w.message}`);
+    for (const e of asArray(r.dom?.errorEls)) lines.push(`- DOM error ${e.className}: ${e.text}`);
+    for (const e of asArray(r.feedback?.renderErrors)) lines.push(`- feedback renderError [${e.engine || 'unknown'}]: ${e.message}`);
+    for (const e of asArray(r.console?.messages)) lines.push(`- console ${e.level || ''}: ${e.text || e.message || JSON.stringify(e)}`);
+    for (const e of asArray(r.network?.entries)) lines.push(`- network failed: ${e.url || e.request?.url || JSON.stringify(e).slice(0, 200)}`);
+    for (const s of asArray(r.dom?.smoke)) if (s.failed) lines.push(`- smoke failed ${s.tag}: ${s.ok}/${s.total} matched ${s.selector}`);
+    for (const s of asArray(r.dom?.declared)) if (!s.ok) lines.push(`- declared smoke failed ${s.id}: selector=${s.selector} count=${s.count} min=${s.min}`);
   }
   lines.push('');
   return lines.join('\n');
@@ -279,13 +313,14 @@ async function main() {
       result.artifactId = push.artifactId;
       result.url = push.url || `${endpoint}/a/${push.artifactId}`;
       openBrowser(result.url);
-      run('opencli', ['browser', session, 'wait', 'time', String(Math.ceil(waitMs / 1000))], { timeout: waitMs + 20_000 });
+      waitBrowser();
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
       result.dom = browserEval(collectSnippet);
       if (result.dom && typeof result.dom === 'object') {
         result.dom.declared = declaredSmoke.length ? browserEval(declaredSmokeSnippet(declaredSmoke)) : [];
       }
-      result.console = browserJson('console', ['--level', 'error', '--since', '2m']);
-      result.network = browserJson('network', ['--failed', '--all', '--since', '2m']);
+      result.console = browserConsole();
+      result.network = browserNetwork();
       result.feedback = await feedback(push.artifactId);
       result.summary = summarizeCase(result);
       result.ok = isPassing(result.summary);
@@ -296,14 +331,14 @@ async function main() {
       process.stdout.write(`FAIL (${result.error})\n`);
     }
     results.push(result);
+    closeBrowser();
   }
-
-  run('opencli', ['browser', session, 'close'], { timeout: 10_000 });
+  closeBrowser();
 
   const report = {
     generatedAt: new Date().toISOString(),
     endpoint,
-    session,
+    session: sessionBase,
     inputs: files.map((f) => f.replace(`${root}/`, '')),
     declaredCaseCount: results.reduce((n, r) => n + (r.declaredCaseCount || 0), 0),
     pass: results.filter((r) => r.ok).length,
@@ -322,6 +357,7 @@ async function main() {
 }
 
 main().catch((e) => {
+  closeBrowser();
   console.error(e);
   process.exit(1);
 });

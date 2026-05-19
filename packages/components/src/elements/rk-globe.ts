@@ -35,8 +35,9 @@ interface GlobeAPI {
 class RkGlobe extends HTMLElement {
   private _globe: GlobeAPI | null = null;
   private _raw = '';
+  private _rawCaptured = false;
   private _uid = Math.random().toString(36).slice(2, 9);
-  private _ro: ResizeObserver | null = null;
+
   private _renderSeq = 0;
 
   static get observedAttributes() {
@@ -45,8 +46,16 @@ class RkGlobe extends HTMLElement {
 
   
 connectedCallback(): void {
-    if (!this._raw) this._raw = (this.textContent || '').trim();
-    this._render();
+    if (this._rawCaptured) {
+      this._render();
+      return;
+    }
+    window.setTimeout(() => {
+      if (!this.isConnected || this._rawCaptured) return;
+      this._raw = (this.textContent || '').trim();
+      this._rawCaptured = true;
+      this._render();
+    }, 0);
   }
 
   disconnectedCallback(): void {
@@ -55,7 +64,7 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
-    if (!this.isConnected) return;
+    if (!this.isConnected || !this._rawCaptured) return;
     this._render();
   }
 
@@ -93,8 +102,66 @@ connectedCallback(): void {
     return d.innerHTML;
   }
 
+  private _drawCanvasGlobe(container: HTMLElement, points: GlobePoint[], height: number): HTMLCanvasElement | null {
+    const width = Math.max(container.clientWidth || 600, 320);
+    const canvas = document.createElement('canvas');
+    canvas.className = 'rk-globe__canvas';
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = '100%';
+    canvas.style.height = `${height}px`;
+    container.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+
+    const cx = width / 2;
+    const cy = height / 2;
+    const r = Math.min(width, height) * 0.38;
+    const grd = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+    grd.addColorStop(0, 'rgba(147,197,253,0.95)');
+    grd.addColorStop(0.6, 'rgba(59,130,246,0.42)');
+    grd.addColorStop(1, 'rgba(30,41,59,0.18)');
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(99,102,241,0.45)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(148,163,184,0.22)';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r * (0.25 + Math.abs(i) * 0.16), r, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + (i * r) / 3, r, r * 0.18, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (const p of points) {
+      const lat = (p.lat * Math.PI) / 180;
+      const lng = (p.lng * Math.PI) / 180;
+      const x = cx + r * Math.cos(lat) * Math.sin(lng);
+      const y = cy - r * Math.sin(lat);
+      const pr = Math.max(3, (p.size || 0.8) * 4);
+      ctx.fillStyle = p.color || '#6366f1';
+      ctx.beginPath();
+      ctx.arc(x, y, pr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    return canvas;
+  }
+
   private async _loadGlobeLib(): Promise<GlobeInstance> {
-    if ((window as any).Globe) return (window as any).Globe as GlobeInstance;
+
     if (document.querySelector('script[data-rk-globe]')) {
       return new Promise<GlobeInstance>((resolve, reject) => {
         const check = () => {
@@ -143,10 +210,12 @@ connectedCallback(): void {
       const container = this.querySelector(`#${containerId}`) as HTMLElement;
       if (!container) return;
 
+      const fallbackCanvas = this._drawCanvasGlobe(container, points, height);
+
       const globe = Globe(container)
         .globeImageUrl('https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg')
         .backgroundColor('rgba(0,0,0,0)')
-        .atmosphereColor('#6366f1')
+
         .atmosphereAltitude(0.15)
         .width(container.clientWidth || 600)
         .height(height);
@@ -172,6 +241,10 @@ connectedCallback(): void {
       }
 
       this._globe = globe;
+      requestAnimationFrame(() => {
+        const canvases = Array.from(container.querySelectorAll('canvas'));
+        if (fallbackCanvas && canvases.length > 1) fallbackCanvas.remove();
+      });
 
       // ResizeObserver for responsive
       this._ro = new ResizeObserver(() => {
@@ -179,6 +252,11 @@ connectedCallback(): void {
         if (this._globe && container) {
           try {
             this._globe.width(container.clientWidth || 600).height(height);
+            const fallback = container.querySelector('.rk-globe__canvas') as HTMLCanvasElement | null;
+            if (fallback && container.querySelectorAll('canvas').length === 1) {
+              fallback.remove();
+              this._drawCanvasGlobe(container, points, height);
+            }
           } catch { /* ignore resize errors */ }
         }
       });
@@ -193,4 +271,4 @@ connectedCallback(): void {
 }
 
 customElements.define('rk-globe', RkGlobe);
-export { RkGlobe };
+

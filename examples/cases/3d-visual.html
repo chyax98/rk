@@ -1,41 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit 3D Visual Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
 <script type="application/json" data-rk-smoke>{"cases":[
-{"id":"3D-01","selector":"rk-3d canvas"},
-{"id":"3D-02","selector":"rk-3d canvas"},
-{"id":"3D-03","selector":"rk-zdog canvas"},
-{"id":"3D-04","selector":"rk-sketch svg"},
-{"id":"3D-05","selector":"rk-model model-viewer"}
+{"id":"3D-01","selector":"rk-3d[scene='cube'] canvas"},
+{"id":"3D-02","selector":"rk-3d[scene='sphere'] canvas"},
+{"id":"3D-03","selector":"rk-3d[scene='orbit'] canvas"},
+{"id":"3D-04","selector":"rk-zdog canvas"},
+{"id":"3D-05","selector":"rk-sketch svg"},
+{"id":"3D-06","selector":"rk-model model-viewer"}
 ]}</script></head>
-<body data-rk-theme="dark-pro">
+<body data-rk-theme="glassmorphism">
 <h1>3D Visual Cases</h1>
-<rk-section title="Three.js Scenes" level="h2" divider>
-  <rk-grid cols="2" gap="16">
-    <rk-3d scene="torus" height="280" color="#6366f1" caption="Torus"></rk-3d>
-    <rk-3d scene="orbit" height="280" color="#10b981" caption="Orbit"></rk-3d>
-  </rk-grid>
-</rk-section>
-<rk-section title="Zdog Illustration" level="h2">
-  <rk-zdog width="280" height="280" rotate title="Zdog Shapes">
-{"shapes":[
-  {"type":"box","x":0,"y":0,"z":0,"width":60,"height":60,"depth":60,"color":"#6366f1","stroke":false},
-  {"type":"ellipse","x":-80,"y":-40,"diameter":40,"color":"#10b981","stroke":20},
-  {"type":"rect","x":60,"y":-50,"width":50,"height":50,"color":"#f59e0b","stroke":20}
-]}
-  </rk-zdog>
-</rk-section>
-<rk-section title="Rough.js Sketch" level="h2">
-  <rk-sketch width="500" height="260" title="Sketch Diagram" roughness="1.2">
-{"shapes":[
-  {"type":"rect","x":40,"y":40,"w":100,"h":60,"label":"Start","fill":"#dbeafe"},
-  {"type":"arrow","x1":140,"y1":70,"x2":220,"y2":70},
-  {"type":"rect","x":220,"y":40,"w":120,"h":60,"label":"Process","fill":"#dcfce7"},
-  {"type":"arrow","x1":340,"y1":70,"x2":420,"y2":70},
-  {"type":"rect","x":420,"y":40,"w":100,"h":60,"label":"End","fill":"#fef9c3"}
-]}
-  </rk-sketch>
-</rk-section>
-<rk-section title="3D Model" level="h2">
-  <rk-model src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" title="Astronaut" height="360" auto-rotate camera-controls></rk-model>
-</rk-section>
+<rk-grid cols="2" gap="20">
+<rk-3d scene="cube" height="300" color="#6366f1" caption="Cube"></rk-3d>
+<rk-3d scene="sphere" height="300" color="#ef4444" caption="Sphere"></rk-3d>
+<rk-3d scene="orbit" height="300" color="#10b981" caption="Orbit"></rk-3d>
+<rk-zdog width="320" height="300" rotate title="Zdog Shapes">{"shapes":[{"type":"box","width":80,"height":80,"depth":80,"color":"#6366f1","translate":{"x":-60}},{"type":"sphere","diameter":60,"color":"#ef4444","translate":{"x":60}},{"type":"cylinder","diameter":40,"length":60,"color":"#10b981","translate":{"y":60}}]}</rk-zdog>
+<rk-sketch width="500" height="280" title="Sketch Diagram" roughness="1.2">{"shapes":[{"type":"rect","x":50,"y":50,"w":100,"h":60,"label":"Box","fill":"#dbeafe"},{"type":"circle","cx":250,"cy":80,"r":30,"label":"Circle","fill":"#dcfce7"},{"type":"arrow","x1":150,"y1":80,"x2":220,"y2":80,"stroke":"#6366f1"},{"type":"ellipse","cx":380,"cy":80,"rx":40,"ry":25,"label":"Ellipse","fill":"#fef9c3"}]}</rk-sketch>
+<rk-model src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" height="400" title="Astronaut" auto-rotate camera-controls></rk-model>
+</rk-grid>
 </body></html>

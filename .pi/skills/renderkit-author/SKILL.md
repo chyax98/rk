@@ -69,6 +69,24 @@ rk reopen doc.html <cmt_id>           # 重新打开
 ✓  <rk-callout type="info"></rk-callout>
 ```
 
+**禁止 rk-card 嵌套 rk-card**——会产生双重边框、双重圆角、双重内边距，视觉上明显错误。需要分组时用 `rk-section` 或 `rk-collapsible` 作为外层容器，内部再放 `rk-card`：
+
+```html
+✗  <rk-card title="外层">
+      <rk-card title="内层">…</rk-card>        ← 双重边框/圆角
+    </rk-card>
+
+✓  <rk-card title="主题内容">
+      <rk-flow>…</rk-flow>
+      <rk-callout>…</rk-callout>
+    </rk-card>
+
+✓  <rk-section title="主题">
+      <rk-card title="子主题 A">…</rk-card>
+      <rk-card title="子主题 B">…</rk-card>
+    </rk-section>
+```
+
 ---
 
 ## 主题（8 个）

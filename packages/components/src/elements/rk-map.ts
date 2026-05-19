@@ -50,6 +50,7 @@ const TILE_ATTRIBUTIONS: Record<string, string> = {
 class RkMap extends HTMLElement {
   _map: LeafletMap | null = null;
   _raw = '';
+  _rawCaptured = false;
   _uid = Math.random().toString(36).slice(2, 9);
   _renderSeq = 0;
 
@@ -59,8 +60,16 @@ class RkMap extends HTMLElement {
 
   
 connectedCallback(): void {
-    if (!this._raw) this._raw = (this.textContent || '').trim();
-    this._render();
+    if (this._rawCaptured) {
+      this._render();
+      return;
+    }
+    window.setTimeout(() => {
+      if (!this.isConnected || this._rawCaptured) return;
+      this._raw = (this.textContent || '').trim();
+      this._rawCaptured = true;
+      this._render();
+    }, 0);
   }
 
   disconnectedCallback(): void {
@@ -71,9 +80,9 @@ connectedCallback(): void {
   }
 
   attributeChangedCallback(): void {
-    if (!this.isConnected) return;
+    if (!this.isConnected || !this._rawCaptured) return;
     if (this._map) {
-      this._map.remove();
+
       this._map = null;
     }
     this._render();
