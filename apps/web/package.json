@@ -1,11 +1,11 @@
 {
   "name": "@renderkit/web",
-  "version": "0.0.2-alpha.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p 3737",
-    "start": "next start -p 3737",
+    "dev": "next dev -p ${PORT:-3737}",
+    "start": "next start -p ${PORT:-3000}",
     "build": "next build"
   },
   "dependencies": {
@@ -13,12 +13,12 @@
     "linkedom": "^0.18.0",
     "@terrastruct/d2": "^0.1.33",
     "better-sqlite3": "^12.10.0",
-    "echarts": "latest",
-    "mermaid": "latest",
-    "next": "latest",
+    "echarts": "6.0.0",
+    "mermaid": "11.15.0",
+    "next": "16.2.6",
     "plantuml": "^0.0.2",
-    "react": "latest",
-    "react-dom": "latest",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "shiki": "^4.0.2"
   },
   "devDependencies": {

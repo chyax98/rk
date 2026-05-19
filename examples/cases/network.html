@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Network Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"NW-01","selector":".rk-graph__container","min":1},
+{"id":"NW-02","selector":"rk-graph3d canvas"},
+{"id":"NW-03","selector":"rk-graph3d canvas"},
+{"id":"NW-04","selector":"rk-flow .x6-graph"},
+{"id":"NW-05","selector":"rk-flow .x6-graph"}
+]}</script></head>
+<body data-rk-theme="dark-pro">
+<h1>Network Cases v2</h1>
+<rk-section title="Cytoscape Graph" level="h2" divider>
+  <rk-graph title="Knowledge Graph" height="320"
+>{"nodes":[{"id":"rk","label":"RenderKit","group":"core"},{"id":"wc","label":"WC","group":"core"},{"id":"cli","label":"CLI","group":"tool"},{"id":"srv","label":"Server","group":"infra"},{"id":"db","label":"SQLite","group":"infra"}],"edges":[{"source":"rk","target":"wc"},{"source":"rk","target":"cli"},{"source":"cli","target":"srv"},{"source":"srv","target":"db"}]}
+  </rk-graph>
+</rk-section>
+<rk-section title="3D Force Graph" level="h2">
+  <rk-grid cols="2" gap="16">
+    <rk-graph3d title="3D Network" height="320"
+>{"nodes":[{"id":"a","label":"A","group":0},{"id":"b","label":"B","group":1},{"id":"c","label":"C","group":0},{"id":"d","label":"D","group":2}],"links":[{"source":"a","target":"b"},{"source":"b","target":"c"},{"source":"c","target":"d"},{"source":"d","target":"a"}]}
+    </rk-graph3d>
+    <rk-graph3d title="3D DAG" height="320" dag
+>{"nodes":[{"id":"src","label":"Source"},{"id":"mid","label":"Middle"},{"id":"dst","label":"Dest"}],"links":[{"source":"src","target":"mid"},{"source":"mid","target":"dst"}]}
+    </rk-graph3d>
+  </rk-grid>
+</rk-section>
+<rk-section title="X6 Flow" level="h2">
+  <rk-flow title="Service Flow" height="300"
+>{"nodes":[{"id":"gw","label":"Gateway"},{"id":"auth","label":"Auth"},{"id":"api","label":"API"},{"id":"cache","label":"Cache"}],"edges":[{"source":"gw","target":"auth","label":"verify"},{"source":"auth","target":"api","label":"route"},{"source":"api","target":"cache","label":"read"}]}
+  </rk-flow>
+  <rk-flow title="Auto-layout Flow" height="280"
+>{"nodes":[{"id":"a","label":"Start"},{"id":"b","label":"Process"},{"id":"c","label":"Check"},{"id":"d","label":"End"}],"edges":[{"source":"a","target":"b"},{"source":"b","target":"c"},{"source":"c","target":"d"}]}
+  </rk-flow>
+</rk-section>
+</body></html>

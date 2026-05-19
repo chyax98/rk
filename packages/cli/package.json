@@ -1,16 +1,22 @@
 {
   "name": "@renderkit/cli",
-  "version": "0.0.2-alpha.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "bin": {
-    "renderkit": "./bin/renderkit.mjs"
+    "renderkit": "./bin/renderkit.mjs",
+    "rk": "./bin/renderkit.mjs"
   },
   "scripts": {
     "start": "node ./bin/renderkit.mjs",
-    "build": "node -e \"console.log('cli: no build yet')\""
+    "build": "node ./scripts/check.mjs"
   },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
   "dependencies": {
-    "commander": "latest"
+    "commander": "14.0.3"
   }
 }

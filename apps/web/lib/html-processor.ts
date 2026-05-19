@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { parseHTML } from 'linkedom';
 import { createHighlighter, type Highlighter } from 'shiki';
 
@@ -10,10 +11,16 @@ export interface ProcessedAnchor {
   textPreview: string | null;
 }
 
+export interface RenderWarning {
+  engine: string;
+  message: string;
+}
+
 export interface ProcessedHTML {
   processedHtml: string;
   anchors: ProcessedAnchor[];
   title: string;
+  warnings: RenderWarning[];
 }
 
 const TOP_LEVEL_TAGS = new Set([
@@ -97,8 +104,43 @@ async function preRenderCodeBlocks(document: Document): Promise<void> {
   }
 }
 
+/** Render D2 source via local d2 binary (best-effort) */
+async function d2Render(
+  source: string,
+): Promise<{ svg: string; error: null } | { svg: null; error: string }> {
+  return new Promise((resolve) => {
+    const proc = spawn('d2', ['--layout=elk', '--theme=0', '-'], {
+      timeout: 15000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let svg = '';
+    let err = '';
+    proc.stdin.write(source);
+    proc.stdin.end();
+    proc.stdout.on('data', (d: Buffer) => (svg += d.toString()));
+    proc.stderr.on('data', (d: Buffer) => (err += d.toString()));
+    proc.on('close', (code) => {
+      if (code === 0 && svg.includes('<svg')) resolve({ svg, error: null });
+      else
+        resolve({
+          svg: null,
+          error: err.trim().replace(/^err:\s*/gm, '').slice(0, 300) || `exit code ${String(code)}`,
+        });
+    });
+    proc.on('error', (e) => {
+      resolve({
+        svg: null,
+        error: `d2 not found: ${e.message}. Install: curl -fsSL https://d2lang.com/install.sh | sh`,
+      });
+    });
+  });
+}
+
 /** Fetch SVG from Kroki for a given engine (best-effort) */
-async function krokiRender(engine: string, source: string): Promise<string | null> {
+async function krokiRender(
+  engine: string,
+  source: string,
+): Promise<{ svg: string; error: null } | { svg: null; error: string }> {
   try {
     const res = await fetch(`https://kroki.io/${engine}/svg`, {
       method: 'POST',
@@ -106,44 +148,72 @@ async function krokiRender(engine: string, source: string): Promise<string | nul
       body: source,
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
-    return await res.text();
-  } catch {
-    return null;
+    if (!res.ok) {
+      // Capture Kroki's error body — it contains the actual syntax error from PlantUML/Graphviz
+      const errBody = await res.text().catch(() => `HTTP ${res.status}`);
+      return { svg: null, error: errBody.trim().slice(0, 300) };
+    }
+    return { svg: await res.text(), error: null };
+  } catch (e) {
+    return { svg: null, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
-/** Pre-process diagrams via Kroki SSR: plantuml + graphviz (best-effort, failures are silent) */
-async function processPlantUML(html: string): Promise<string> {
-  const regex = /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
+/** Pre-process diagrams via SSR: d2 (local binary) + plantuml/graphviz/mermaid (Kroki) */
+async function processPlantUML(html: string): Promise<{ html: string; warnings: RenderWarning[] }> {
+  const regex =
+    /<rk-diagram([^>]*engine=["'](plantuml|graphviz|dot|d2|mermaid)["'][^>]*)>([\s\S]*?)<\/rk-diagram>/gi;
   const matches: Array<{ full: string; attrs: string; engine: string; source: string }> = [];
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(html)) !== null) {
-    const engine = (m[2] || 'plantuml').replace('dot', 'graphviz');
-    matches.push({ full: m[0], attrs: m[1], engine, source: m[3].trim() });
+  let match = regex.exec(html);
+  while (match !== null) {
+    const raw = (match[2] || 'plantuml');
+    const engine = raw === 'dot' ? 'graphviz' : raw;
+    matches.push({ full: match[0], attrs: match[1], engine, source: match[3].trim() });
+    match = regex.exec(html);
   }
-  if (matches.length === 0) return html;
 
   const resolved = await Promise.all(
     matches.map(async ({ full, attrs, engine, source }) => {
-      const svg = await krokiRender(engine, source);
-      if (!svg) return { full, replacement: full };
-      const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${svg}</div></rk-diagram>`;
-      return { full, replacement };
-    })
+      const result =
+        engine === 'd2'
+          ? await d2Render(source)
+          : await krokiRender(engine, source);
+      if (!result.svg)
+        return { full, replacement: full, warning: { engine, message: result.error } };
+      const replacement = `<rk-diagram${attrs}><div class="rk-diagram__prerendered" style="width:100%;overflow-x:auto">${result.svg}</div></rk-diagram>`;
+      return { full, replacement, warning: null };
+    }),
   );
 
-  let result = html;
+  const warnings: RenderWarning[] = resolved
+    .filter((r) => r.warning !== null)
+    .map((r) => r.warning as RenderWarning);
+
+  let html2 = html;
   for (const { full, replacement } of resolved) {
-    result = result.replace(full, replacement);
+    html2 = html2.replace(full, replacement);
   }
-  return result;
+  return { html: html2, warnings };
+}
+
+/** Strip outer <html>/<head>/<body> wrapper if agent pushed a full document */
+function extractBodyContent(html: string): string {
+  const trimmed = html.trim();
+  // Quick check — only parse if looks like a full document
+  if (!/<html/i.test(trimmed)) return html;
+  const { document } = parseHTML(`<!doctype html>${trimmed}`);
+  const body = document.body;
+  return body ? body.innerHTML : html;
 }
 
 export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
-  // PlantUML SSR via Kroki (before DOM parsing)
-  const htmlWithDiagrams = await processPlantUML(rawHtml);
-  const { document } = parseHTML(`<!doctype html><html><body>${htmlWithDiagrams}</body></html>`);
+  // Diagram DSL must be processed before HTML parsing/serialization.
+  // Otherwise Mermaid/D2 arrows like --> are escaped to --&gt; by the parser,
+  // corrupting the source before it reaches Kroki/d2.
+  const { html: rawWithDiagrams, warnings } = await processPlantUML(rawHtml);
+  // Strip full HTML wrapper if agent pushed a complete document
+  const bodyContent = extractBodyContent(rawWithDiagrams);
+  const { document } = parseHTML(`<!doctype html><html><body>${bodyContent}</body></html>`);
 
   // Pre-render code blocks with shiki (best-effort)
   await preRenderCodeBlocks(document);
@@ -171,16 +241,21 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
       processedHtml: '',
       anchors: [],
       title: title || 'Untitled',
+      warnings,
     };
   }
 
+  const seenAnchors = new Map<string, number>();
   const children = Array.from(body.children);
   for (const child of children as unknown as HTMLElement[]) {
     const tag = child.tagName?.toLowerCase();
     if (!tag || !TOP_LEVEL_TAGS.has(tag)) continue;
 
     const textPreview = (child.textContent || '').trim().slice(0, 200) || null;
-    const anchor = generateAnchorId(tag, position, textPreview || '');
+    const baseAnchor = generateAnchorId(tag, position, textPreview || '');
+    const seenCount = (seenAnchors.get(baseAnchor) ?? 0) + 1;
+    seenAnchors.set(baseAnchor, seenCount);
+    const anchor = seenCount === 1 ? baseAnchor : `${baseAnchor}-${seenCount}`;
 
     child.setAttribute('data-rk-anchor', anchor);
 
@@ -202,5 +277,6 @@ export async function processHTML(rawHtml: string): Promise<ProcessedHTML> {
     processedHtml,
     anchors,
     title: title || 'Untitled',
+    warnings,
   };
 }

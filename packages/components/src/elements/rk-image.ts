@@ -6,12 +6,14 @@ class RkImage extends HTMLElement {
     return ['src', 'alt', 'caption', 'credit', 'width'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML;
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 
@@ -52,7 +54,11 @@ class RkImage extends HTMLElement {
   }
 
   _escapeAttr(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }
 

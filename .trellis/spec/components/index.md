@@ -22,7 +22,7 @@
 | [css-conventions.md](./css-conventions.md) | BEM 类名、token 消费、与 design 包的关系 |
 | [quality.md](./quality.md) | 质量标准、禁止模式、常见错误 |
 
-## 组件清单（21 个）
+## 组件清单（24 个）
 
 | 组件 | 标签 | 子元素 | 备注 |
 |---|---|---|---|
@@ -31,8 +31,8 @@
 | Summary | `rk-summary` | — | 标题 + 强调边框 |
 | Code | `rk-code` | — | editor/terminal frame，Shiki 高亮 |
 | Table | `rk-table` | — | pipe 语法解析，profile=status 彩色圆点 |
-| Chart | `rk-chart` | — | type=kpi 为 KPI 网格，其余走 ECharts |
-| Diagram | `rk-diagram` | — | Mermaid 渲染，loading 状态 |
+| Chart | `rk-chart` | — | JSON 多系列 + pipe table fallback，ECharts 渲染 |
+| Diagram | `rk-diagram` | — | Mermaid/D2/Graphviz/PlantUML 四引擎，Kroki SSR |
 | Decision | `rk-decision` | `rk-reason`, `rk-alternative` | 状态机：proposed/draft/approved/blocked/resolved |
 | Checklist | `rk-checklist` | `rk-item` | checked/note 属性 |
 | Comparison | `rk-comparison` | — | variant=proscons / matrix |
@@ -47,6 +47,16 @@
 | Steps | `rk-steps` | `rk-step` | current=1-based，水平步骤条 |
 | Metric | `rk-metric` | `rk-metric-item` | cols=2/3/4 |
 | 3D | `rk-3d` | — | CDN 动态 import Three.js |
+| Badge | `rk-badge` | — | color=blue/green/red/orange/purple/gray/accent |
+| Badge Group | `rk-badge-group` | `rk-badge` | 标签组容器 |
+| Kanban | `rk-kanban` | `rk-kanban-col` > `rk-kanban-card` | priority/tag/assignee/due |
+| Form | `rk-form` | `rk-field` | text/textarea/select/rating/checkbox，服务端提交 |
+
+### 新增组件（v0.1.0 新增）
+
+- **rk-badge / rk-badge-group**: 技术栈标签、状态标记
+- **rk-kanban**: 看板视图，支持列（`rk-kanban-col`）和卡片（`rk-kanban-card`）
+- **rk-form**: 结构化反馈表单，支持 rating/textarea/select 等字段类型
 
 ---
 

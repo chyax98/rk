@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RenderKit — Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ─── Reset ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  /* ─── Tokens ─────────────────────────────────────────────── */
+  :root {
+    --bg:          #0F0F11;
+    --surface:     #1A1A1F;
+    --surface-2:   #111116;
+    --border:      #2A2A35;
+    --text:        #F0F0F5;
+    --muted:       #7A7A8A;
+    --accent-from: #818CF8;
+    --accent-to:   #C084FC;
+    --tag-bg:      #312E81;
+    --tag-text:    #A5B4FC;
+    --success:     #34D399;
+    --danger:      #F87171;
+    --radius:      12px;
+    --radius-sm:   6px;
+    --radius-xs:   4px;
+    --font-ui:     'Inter', system-ui, sans-serif;
+    --font-mono:   'JetBrains Mono', monospace;
+    --grad:        linear-gradient(135deg, var(--accent-from) 0%, var(--accent-to) 100%);
+  }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ─── Scrollbar ──────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A3A48; }
+
+  /* ─── Topbar ─────────────────────────────────────────────── */
+  .topbar {
+    height: 52px;
+    min-height: 52px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    z-index: 100;
+  }
+
+  .topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--grad);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    font-family: var(--font-ui);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-mark::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  }
+
+  .logo-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .topbar-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .topbar-spacer { flex: 1; }
+
+  .server-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    padding: 5px 10px;
+    background: rgba(52, 211, 153, 0.06);
+    border: 1px solid rgba(52, 211, 153, 0.15);
+    border-radius: 20px;
+    cursor: default;
+    transition: all 0.2s;
+  }
+  .server-status:hover {
+    background: rgba(52, 211, 153, 0.1);
+    color: var(--success);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--success);
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px rgba(52, 211, 153, 0.6); }
+    50% { opacity: 0.7; box-shadow: 0 0 10px rgba(52, 211, 153, 0.9); }
+  }
+
+  .topbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .topbar-btn:hover {
+    color: var(--text);
+    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(129, 140, 248, 0.06);
+  }
+  .topbar-btn svg { opacity: 0.7; flex-shrink: 0; }
+  .topbar-btn:hover svg { opacity: 1; }
+
+  /* ─── App shell ──────────────────────────────────────────── */
+  .app-shell {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── Sidebar ────────────────────────────────────────────── */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface-2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .sidebar-section {
+    padding: 18px 12px 8px;
+  }
+  .sidebar-section + .sidebar-section {
+    padding-top: 12px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px;
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+
+  .sidebar-rule {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 12px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--muted);
+    position: relative;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active {
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--text);
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: var(--grad);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-item-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-item-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    padding: 1px 6px;
+    border-radius: 20px;
+    min-width: 20px;
+    text-align: center;
+  }
+  .nav-item.active .nav-item-count {
+    background: rgba(129, 140, 248, 0.18);
+    color: var(--tag-text);
+  }
+
+  .tag-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12.5px;
+    color: var(--muted);
+    user-select: none;
+  }
+  .tag-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .tag-item.active { color: var(--tag-text); }
+
+  .tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-from);
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+  .tag-item.active .tag-dot { opacity: 1; box-shadow: 0 0 6px rgba(129,140,248,0.5); }
+
+  .tag-name {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 400;
+  }
+
+  .tag-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px;
+  }
+
+  .archive-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .archive-section:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+
+  /* ─── Main ───────────────────────────────────────────────── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* ─── Toolbar (stats + filter) ───────────────────────────── */
+  .main-toolbar {
+    padding: 16px 24px 0;
+    flex-shrink: 0;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    margin-bottom: 14px;
+  }
+  .stats-row::-webkit-scrollbar { display: none; }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    white-space: nowrap;
+    cursor: default;
+    transition: border-color 0.15s;
+  }
+  .stat-chip:hover { border-color: rgba(129,140,248,0.3); }
+
+  .stat-num {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-num.accent { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .stat-label {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  /* Tag filter chips */
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+    margin-right: 2px;
+    font-family: var(--font-mono);
+  }
+
+  .filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    user-select: none;
+  }
+  .filter-chip:hover {
+    border-color: rgba(129,140,248,0.4);
+    color: var(--tag-text);
+    background: rgba(49,46,129,0.3);
+  }
+  .filter-chip.active {
+    background: var(--tag-bg);
+    border-color: rgba(165,180,252,0.3);
+    color: var(--tag-text);
+  }
+
+  .filter-chip-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  /* ─── Card grid ──────────────────────────────────────────── */
+  .grid-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 24px 24px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  /* ─── Card ───────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card:hover {
+    border-color: rgba(129, 140, 248, 0.4);
+    box-shadow: 0 0 20px rgba(129, 140, 248, 0.08), 0 4px 16px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+  }
+  .card:hover .card-actions { opacity: 1; }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(129,140,248,0.3) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .card:hover::before { opacity: 1; }
+
+  /* Hero card */
+  .card.hero {
+    grid-column: span 2;
+    background: linear-gradient(#1A1A1F, #1A1A1F) padding-box,
+                linear-gradient(135deg, #818CF8, #C084FC) border-box;
+    border: 1px solid transparent;
+    padding: 20px;
+    position: relative;
+  }
+  .card.hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, rgba(129,140,248,0.04) 0%, rgba(192,132,252,0.04) 100%);
+    pointer-events: none;
+  }
+  .card.hero:hover {
+    box-shadow: 0 0 40px rgba(129, 140, 248, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+  }
+
+  .card-id {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    opacity: 0.6;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+    flex: 1;
+  }
+  .card.hero .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.3;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .action-btn:hover { border-color: var(--danger); color: var(--danger); background: rgba(248,113,113,0.08); }
+  .action-btn.view:hover { border-color: var(--accent-from); color: var(--accent-from); background: rgba(129,140,248,0.08); }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border-radius: var(--radius-xs);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
+    border: 1px solid rgba(165,180,252,0.15);
+  }
+
+  .card-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 4px;
+  }
+
+  .card-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(129, 140, 248, 0.1);
+    color: var(--accent-from);
+    border: 1px solid rgba(129, 140, 248, 0.2);
+  }
+  .version-badge.single {
+    background: rgba(255,255,255,0.04);
+    color: var(--muted);
+    border-color: var(--border);
+  }
+
+  .card-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
+  /* Hero card bottom CTA */
+  .hero-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--grad);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: -0.1px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(129,140,248,0.25);
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(129,140,248,0.4);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid rgba(129,140,248,0.35);
+    border-radius: var(--radius-sm);
+    color: var(--tag-text);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    background: rgba(129,140,248,0.08);
+    border-color: rgba(129,140,248,0.6);
+    color: var(--accent-from);
+    transform: translateY(-1px);
+  }
+
+  /* Hero shimmer accent */
+  .hero-shimmer {
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(192,132,252,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ─── Empty state / archived marker ─────────────────────── */
+  .section-divider {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+  }
+  .section-divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-divider-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    opacity: 0.6;
+  }
+
+  .card.archived {
+    opacity: 0.6;
+  }
+  .card.archived:hover { opacity: 1; }
+
+  .archived-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ─── Scrollbar in grid ──────────────────────────────────── */
+  .grid-container { scrollbar-width: thin; scrollbar-color: #2A2A35 transparent; }
+
+  /* ─── Selection indicator on sidebar ────────────────────── */
+  .sidebar-search {
+    margin: 0 12px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    cursor: text;
+    transition: border-color 0.15s;
+  }
+  .sidebar-search:hover { border-color: rgba(129,140,248,0.35); }
+  .sidebar-search span { font-size: 12.5px; }
+
+  /* ─── Kbd ────────────────────────────────────────────────── */
+  .kbd {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Topbar ──────────────────────────────────────────────── -->
+<header class="topbar">
+  <a class="topbar-logo" href="#">
+    <div class="logo-mark">▐▌</div>
+    <span class="logo-name">RenderKit</span>
+  </a>
+
+  <div class="topbar-divider"></div>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="server-status">
+    <div class="status-dot"></div>
+    server online · localhost:7433
+  </div>
+
+  <button class="topbar-btn">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1a7 7 0 100 14A7 7 0 008 1zM6.5 6.5a1.5 1.5 0 013 0v.5a1.5 1.5 0 01-1.5 1.5V9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <circle cx="8" cy="11.5" r="0.75" fill="currentColor"/>
+    </svg>
+    doctor
+  </button>
+
+  <button class="topbar-btn">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+      <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.3"/>
+      <path d="M10 10l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    검색
+    <span class="kbd">⌘K</span>
+  </button>
+</header>
+
+<!-- ── App Shell ───────────────────────────────────────────── -->
+<div class="app-shell">
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-search">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.3" opacity="0.5"/>
+          <path d="M10 10l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.5"/>
+        </svg>
+        <span>搜索文档…</span>
+        <span class="kbd">⌘K</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="padding-top: 6px;">
+      <div class="sidebar-label">导航</div>
+      <div class="nav-item active">
+        <div class="nav-item-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <rect x="1.5" y="1.5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <rect x="9.5" y="1.5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <rect x="1.5" y="9.5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <rect x="9.5" y="9.5" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+          </svg>
+        </div>
+        全部文档
+        <span class="nav-item-count">8</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-item-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5L10 6h4.5L11 9l1.5 4.5L8 11l-4.5 2.5L5 9 1.5 6H6L8 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        最近访问
+        <span class="nav-item-count">5</span>
+      </div>
+      <div class="nav-item">
+        <div class="nav-item-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5v9M8 10.5l-3-3M8 10.5l3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12.5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        已分享
+        <span class="nav-item-count">2</span>
+      </div>
+    </div>
+
+    <div class="sidebar-rule"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">标签</div>
+      <div class="tag-item active" onclick="filterTag(this, 'report')">
+        <div class="tag-dot"></div>
+        <span class="tag-name">#report</span>
+        <span class="tag-count">3</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'analytics')">
+        <div class="tag-dot" style="background:#C084FC"></div>
+        <span class="tag-name">#analytics</span>
+        <span class="tag-count">2</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'review')">
+        <div class="tag-dot" style="background:#34D399"></div>
+        <span class="tag-name">#review</span>
+        <span class="tag-count">2</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'planning')">
+        <div class="tag-dot" style="background:#F87171"></div>
+        <span class="tag-name">#planning</span>
+        <span class="tag-count">2</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'architecture')">
+        <div class="tag-dot" style="background:#60A5FA"></div>
+        <span class="tag-name">#architecture</span>
+        <span class="tag-count">1</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'engineering')">
+        <div class="tag-dot" style="background:#FBBF24"></div>
+        <span class="tag-name">#engineering</span>
+        <span class="tag-count">1</span>
+      </div>
+      <div class="tag-item" onclick="filterTag(this, 'product')">
+        <div class="tag-dot" style="background:#F472B6"></div>
+        <span class="tag-name">#product</span>
+        <span class="tag-count">1</span>
+      </div>
+    </div>
+
+    <div class="sidebar-rule"></div>
+
+    <div class="sidebar-section" style="padding-bottom: 4px;">
+      <div class="archive-section">
+        <div class="nav-item-icon">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <rect x="1.5" y="3.5" width="13" height="2.5" rx="1" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M3 6v6.5a1 1 0 001 1h8a1 1 0 001-1V6" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M6 9.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        存档
+        <span class="nav-item-count" style="margin-left: auto;">2</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 8px;
+        border-radius: var(--radius-sm);
+        background: rgba(52,211,153,0.05);
+        border: 1px solid rgba(52,211,153,0.1);
+      ">
+        <div class="status-dot" style="width:6px;height:6px;"></div>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">agent · idle</span>
+        <span style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--muted);opacity:0.5;">v0.4.1</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main ───────────────────────────────────────────────── -->
+  <main class="main">
+    <div class="main-toolbar">
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-chip">
+          <span class="stat-num accent">8</span>
+          <div class="stat-divider"></div>
+          <span class="stat-label">文档总数</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num" style="color:#34D399;">6</span>
+          <div class="stat-divider"></div>
+          <span class="stat-label">活跃</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num" style="color:var(--muted);">2</span>
+          <div class="stat-divider"></div>
+          <span class="stat-label">已存档</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num accent">25</span>
+          <div class="stat-divider"></div>
+          <span class="stat-label">版本总计</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-num" style="font-size:14px;color:var(--muted);">3h</span>
+          <div class="stat-divider"></div>
+          <span class="stat-label">最近更新</span>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="filter-row">
+        <span class="filter-label">筛选</span>
+        <div class="filter-chip active" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          全部
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #report
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #analytics
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #review
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #planning
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #architecture
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #engineering
+        </div>
+        <div class="filter-chip" onclick="toggleFilter(this)">
+          <div class="filter-chip-dot"></div>
+          #product
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid-container">
+      <div class="card-grid" id="cardGrid">
+
+        <!-- ── Hero Card ─────────────────────────────── -->
+        <div class="card hero">
+          <div class="hero-shimmer"></div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:6px;">art_b607</div>
+              <div class="card-title">数据分析报告 Q2 2026</div>
+            </div>
+            <div class="card-actions" style="opacity:1;">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags" style="position:relative;z-index:1;">
+            <span class="tag">#report</span>
+            <span class="tag">#analytics</span>
+          </div>
+          <div class="card-desc" style="position:relative;z-index:1;">
+            Q2 季度全渠道数据聚合分析，涵盖 DAU 趋势、转化漏斗优化建议及 AB 实验结论。包含 12 张数据图表与执行摘要。
+          </div>
+          <div class="card-footer" style="position:relative;z-index:1;">
+            <div class="card-meta-left">
+              <span class="version-badge">
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none" style="opacity:0.8;">
+                  <path d="M6 1v4l2.5 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                  <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+                v7
+              </span>
+              <span class="card-time">3小时前</span>
+            </div>
+            <div class="hero-actions">
+              <button class="btn-primary">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="white" stroke-width="1.4"/>
+                  <circle cx="8" cy="8" r="2" stroke="white" stroke-width="1.4"/>
+                </svg>
+                查看文档
+              </button>
+              <button class="btn-ghost">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                7 版本对比
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Card 2 ──────────────────────────────── -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_a94f</div>
+              <div class="card-title">API 架构评审文档</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#architecture</span>
+            <span class="tag">#review</span>
+          </div>
+          <div class="card-desc">
+            RESTful → GraphQL 迁移方案评审，包含端点映射矩阵、性能基准及安全审查清单。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge">v3</span>
+            </div>
+            <span class="card-time">1天前</span>
+          </div>
+        </div>
+
+        <!-- ── Card 3 ──────────────────────────────── -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_c12e</div>
+              <div class="card-title">用户增长分析</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#analytics</span>
+            <span class="tag">#growth</span>
+          </div>
+          <div class="card-desc">
+            MAU 同比增长 34%，归因拆解与留存曲线分析，Cohort D30 达 22%。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge">v2</span>
+            </div>
+            <span class="card-time">2天前</span>
+          </div>
+        </div>
+
+        <!-- ── Card 4 ──────────────────────────────── -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_d83f</div>
+              <div class="card-title">Sprint 计划 Week 20</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#project-alpha</span>
+            <span class="tag">#planning</span>
+          </div>
+          <div class="card-desc">
+            Sprint #20 目标、任务分配与风险项。团队 7 人，计划交付 9 个故事点。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge single">v1</span>
+            </div>
+            <span class="card-time">3天前</span>
+          </div>
+        </div>
+
+        <!-- ── Card 5 ──────────────────────────────── -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_e45a</div>
+              <div class="card-title">竞品对比研究</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#research</span>
+            <span class="tag">#report</span>
+          </div>
+          <div class="card-desc">
+            覆盖 6 款竞品的功能矩阵对比、定价策略与用户评价分析，含差异化机会点。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge">v4</span>
+            </div>
+            <span class="card-time">1周前</span>
+          </div>
+        </div>
+
+        <!-- ── Card 6 ──────────────────────────────── -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_f91b</div>
+              <div class="card-title">技术债务评估</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#engineering</span>
+            <span class="tag">#review</span>
+          </div>
+          <div class="card-desc">
+            系统当前技术债 P0/P1 清单，涵盖遗留服务拆分、测试覆盖率改善路径与优先级矩阵。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge">v2</span>
+            </div>
+            <span class="card-time">1周前</span>
+          </div>
+        </div>
+
+        <!-- ── Archived section divider ───────────────────── -->
+        <div class="section-divider">
+          <div class="section-divider-line"></div>
+          <span class="section-divider-label">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="vertical-align:middle;margin-right:4px;opacity:0.6">
+              <rect x="1" y="2.5" width="10" height="2" rx="0.8" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M2.5 4.5v5a0.8 0.8 0 00.8.8h5.4a0.8 0.8 0 00.8-.8v-5" stroke="currentColor" stroke-width="1.1"/>
+              <path d="M4.5 7h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+            </svg>
+            存档 · 2 项
+          </span>
+          <div class="section-divider-line"></div>
+        </div>
+
+        <!-- ── Card 7 (archived) ──────────────────────────── -->
+        <div class="card archived">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_g23c</div>
+              <div class="card-title">产品路线图 2026</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#planning</span>
+            <span class="tag">#product</span>
+          </div>
+          <div class="card-desc">
+            2026 全年产品战略与里程碑规划，H1 执行路径与核心 KPI 分解。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge">v5</span>
+              <span class="archived-badge">存档</span>
+            </div>
+            <span class="card-time">2周前</span>
+          </div>
+        </div>
+
+        <!-- ── Card 8 (archived) ──────────────────────────── -->
+        <div class="card archived">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div style="flex:1;">
+              <div class="card-id" style="margin-bottom:5px;">art_h56d</div>
+              <div class="card-title">月度运营报告</div>
+            </div>
+            <div class="card-actions">
+              <div class="action-btn view" title="预览">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M1 8s3-5.5 7-5.5S15 8 15 8s-3 5.5-7 5.5S1 8 1 8z" stroke="currentColor" stroke-width="1.3"/>
+                  <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
+                </svg>
+              </div>
+              <div class="action-btn" title="删除">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 4.5h10M6.5 4.5V3h3v1.5M5.5 4.5v7.5a1 1 0 001 1h3a1 1 0 001-1V4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="card-tags">
+            <span class="tag">#report</span>
+            <span class="tag">#ops</span>
+          </div>
+          <div class="card-desc">
+            2025-04 运营数据汇总，包括成本结构、SLA 达成率与客服满意度月报。
+          </div>
+          <div class="card-footer">
+            <div class="card-meta-left">
+              <span class="version-badge single">v1</span>
+              <span class="archived-badge">存档</span>
+            </div>
+            <span class="card-time">3周前</span>
+          </div>
+        </div>
+
+      </div><!-- /card-grid -->
+    </div><!-- /grid-container -->
+  </main>
+</div><!-- /app-shell -->
+
+<script>
+  // ── Filter chip toggle (visual only) ──────────────────────
+  function toggleFilter(el) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ── Sidebar tag toggle (visual only) ──────────────────────
+  function filterTag(el, tag) {
+    document.querySelectorAll('.tag-item').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+
+    // Sync filter chips
+    document.querySelectorAll('.filter-chip').forEach(c => {
+      c.classList.remove('active');
+      if (c.textContent.trim() === '#' + tag) c.classList.add('active');
+    });
+  }
+
+  // ── Card hover micro-interaction: lift ─────────────────────
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mousedown', () => {
+      card.style.transform = card.classList.contains('hero')
+        ? 'translateY(0px)' : 'translateY(0px) scale(0.995)';
+    });
+    card.addEventListener('mouseup', () => {
+      card.style.transform = '';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+
+  // ── Prevent action btn click from bubbling to card ─────────
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    btn.addEventListener('click', e => e.stopPropagation());
+  });
+</script>
+</body>
+</html>

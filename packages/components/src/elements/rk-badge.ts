@@ -20,7 +20,10 @@ class RkBadge extends HTMLElement {
     if (!this._raw) this._raw = this.textContent?.trim() || '';
     this._render();
   }
-  attributeChangedCallback(): void { if (this._raw) this._render(); }
+  attributeChangedCallback(): void {
+    if (!this.isConnected) return;
+    if (this._raw) this._render();
+  }
 
   _render(): void {
     const color = this.getAttribute('color') || 'accent';
@@ -28,13 +31,37 @@ class RkBadge extends HTMLElement {
     const text = this._raw;
 
     const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-      blue:   { bg: 'var(--rk-tone-info-bg, #eff6ff)',     text: 'var(--rk-tone-info-border, #2563eb)',    border: 'var(--rk-tone-info-border, #2563eb)' },
-      green:  { bg: 'var(--rk-tone-success-bg, #f0fdf4)',  text: 'var(--rk-tone-success-border, #16a34a)', border: 'var(--rk-tone-success-border, #16a34a)' },
-      red:    { bg: 'var(--rk-tone-danger-bg, #fef2f2)',   text: 'var(--rk-tone-danger-border, #dc2626)',  border: 'var(--rk-tone-danger-border, #dc2626)' },
-      orange: { bg: 'var(--rk-tone-warning-bg, #fffbeb)',  text: 'var(--rk-tone-warning-border, #d97706)', border: 'var(--rk-tone-warning-border, #d97706)' },
-      purple: { bg: 'rgba(139,92,246,0.1)',                text: '#7c3aed',                                border: '#7c3aed' },
-      gray:   { bg: 'var(--rk-surface, #f5f5f4)',          text: 'var(--rk-text-tertiary, #6b6b66)',       border: 'var(--rk-border, #e5e4dc)' },
-      accent: { bg: 'var(--rk-accent-muted, rgba(2,103,165,0.1))', text: 'var(--rk-accent, #0267a5)',  border: 'var(--rk-accent, #0267a5)' },
+      blue: {
+        bg: 'var(--rk-tone-info-bg, #eff6ff)',
+        text: 'var(--rk-tone-info-border, #2563eb)',
+        border: 'var(--rk-tone-info-border, #2563eb)',
+      },
+      green: {
+        bg: 'var(--rk-tone-success-bg, #f0fdf4)',
+        text: 'var(--rk-tone-success-border, #16a34a)',
+        border: 'var(--rk-tone-success-border, #16a34a)',
+      },
+      red: {
+        bg: 'var(--rk-tone-danger-bg, #fef2f2)',
+        text: 'var(--rk-tone-danger-border, #dc2626)',
+        border: 'var(--rk-tone-danger-border, #dc2626)',
+      },
+      orange: {
+        bg: 'var(--rk-tone-warning-bg, #fffbeb)',
+        text: 'var(--rk-tone-warning-border, #d97706)',
+        border: 'var(--rk-tone-warning-border, #d97706)',
+      },
+      purple: { bg: 'rgba(139,92,246,0.1)', text: '#7c3aed', border: '#7c3aed' },
+      gray: {
+        bg: 'var(--rk-surface, #f5f5f4)',
+        text: 'var(--rk-text-tertiary, #6b6b66)',
+        border: 'var(--rk-border, #e5e4dc)',
+      },
+      accent: {
+        bg: 'var(--rk-accent-muted, rgba(2,103,165,0.1))',
+        text: 'var(--rk-accent, #0267a5)',
+        border: 'var(--rk-accent, #0267a5)',
+      },
     };
     const c = colorMap[color] || colorMap.accent;
 

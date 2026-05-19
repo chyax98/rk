@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Content Base Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"CT-01","selector":"rk-callout[type='info'] .rk-callout__body"},
+{"id":"CT-02","selector":"rk-callout[type='warning'] .rk-callout__body"},
+{"id":"CT-03","selector":"rk-code .rk-code__body"},
+{"id":"CT-04","selector":"rk-code[frame='terminal'] .rk-code__body"},
+{"id":"CT-05","selector":"rk-diff .rk-diff__row"},
+{"id":"CT-06","selector":"rk-quote .rk-quote__attribution"},
+{"id":"CT-07","selector":"rk-highlight"},
+{"id":"CT-08","selector":"rk-summary"},
+{"id":"CT-09","selector":"rk-collapsible[open]"},
+{"id":"CT-10","selector":"rk-narrative svg"},
+{"id":"CT-11","selector":"rk-table table"},
+{"id":"CT-12","selector":".rk-metric__card","min":4}
+]}</script></head>
+<body data-rk-theme="paper-light">
+<h1>Content Base Cases</h1>
+<rk-callout type="info" title="Info">Informational message.</rk-callout>
+<rk-callout type="warning" title="Warning">Warning message.</rk-callout>
+<rk-code lang="ts" title="TypeScript">const answer: number = 42;</rk-code>
+<rk-code lang="bash" frame="terminal" title="Terminal">pnpm scan:render</rk-code>
+<rk-diff lang="ts" from="before.ts" to="after.ts">--- before.ts
++++ after.ts
+@@ -1 +1 @@
+-const mode = 'old'
++const mode = 'new'</rk-diff>
+<rk-quote author="RenderKit" source="Design Principle">Make failures diagnosable.</rk-quote>
+<p>Inline <rk-highlight color="yellow">highlighted evidence</rk-highlight> in prose.</p>
+<rk-summary title="Summary">One paragraph summary for scan smoke.</rk-summary>
+<rk-collapsible title="Open details" open>Visible details.</rk-collapsible>
+<rk-narrative>{"phrases":[{"text":"Revenue "},{"value":"¥2.4M","trend":"up","delta":"+12%"},{"text":" with trend "},{"sparkline":[1,3,2,5,4,7]},{"badge":"healthy","color":"green"}]}</rk-narrative>
+<rk-table>| Name | Value |
+|---|---:|
+| Alpha | 12 |
+| Beta | 18 |</rk-table>
+<rk-metric cols="4"><rk-metric-item label="A" value="12"></rk-metric-item><rk-metric-item label="B" value="18"></rk-metric-item><rk-metric-item label="C" value="24"></rk-metric-item><rk-metric-item label="D" value="30"></rk-metric-item></rk-metric>
+</body></html>

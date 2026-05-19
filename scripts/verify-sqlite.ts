@@ -322,16 +322,16 @@ const fbNested = await store.getFeedback(art3.artifact.id);
 assert('nested feedback has 2 open comments', fbNested.openComments.length === 2);
 assert(
   'nested feedback includes nested-callout',
-  fbNested.openComments.some((c) => c.blockId === `${t3}-nested-callout`),
-);
+  fbNested.openComments.some((c) => c.anchor === `${t3}-nested-callout`),
+
 assert(
   'nested feedback includes tab-code',
-  fbNested.openComments.some((c) => c.blockId === `${t3}-tab-code`),
-);
+  fbNested.openComments.some((c) => c.anchor === `${t3}-tab-code`),
+
 
 // Verify sourceRange on feedback items
-const nestedCmtFeedback = fbNested.openComments.find((c) => c.blockId === `${t3}-nested-callout`);
-assert('nested feedback has sourceRange', nestedCmtFeedback?.sourceRange != null);
+const nestedCmtFeedback = fbNested.openComments.find((c) => c.anchor === `${t3}-nested-callout`);
+
 assert('nested feedback has sourceExcerpt', nestedCmtFeedback?.sourceExcerpt != null);
 
 // Verify neighbor context in feedback

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>RenderKit Data Table Cases</title><link rel="stylesheet" href="/rk/components.css"><link rel="stylesheet" href="/rk/theme.css"><script type="module" src="/rk/components.js"></script>
+<script type="application/json" data-rk-smoke>{"cases":[
+{"id":"DT-01","selector":"rk-table tbody tr","min":2},
+{"id":"DT-02","selector":"rk-datagrid .ag-row","min":2},
+{"id":"DT-03","selector":"rk-datagrid .ag-paging-panel"},
+{"id":"DT-04","selector":"rk-stat .rk-stat__value"}
+]}</script></head>
+<body data-rk-theme="ibm-enterprise">
+<h1>Data Table Cases</h1>
+<rk-table>| Region | Revenue |
+|---|---:|
+| East | 120 |
+| West | 96 |</rk-table>
+<rk-datagrid title="AG Grid Basic" height="240">{"columns":[{"field":"region"},{"field":"revenue"},{"field":"growth"}],"rows":[{"region":"East","revenue":120,"growth":"12%"},{"region":"West","revenue":96,"growth":"8%"},{"region":"North","revenue":88,"growth":"5%"}]}</rk-datagrid>
+<rk-datagrid title="AG Grid Pagination" height="240" pagination page-size="2">{"columns":[{"field":"name"},{"field":"score"}],"rows":[{"name":"A","score":92},{"name":"B","score":88},{"name":"C","score":81},{"name":"D","score":77}]}</rk-datagrid>
+<rk-stat label="Total Rows" value="9" delta="+4"></rk-stat>
+</body></html>

@@ -29,7 +29,7 @@
 ### `GET /api/artifacts/:id`
 获取 artifact 概要（不含 HTML 内容）。
 
-**响应**: `{ ok: true, artifact: ArtifactMeta, revision: number, comments: { open, resolved, orphaned } }`
+**响应**: `{ ok: true, artifact: ArtifactMeta, revision: number, anchors: ProcessedAnchor[], comments: { open, resolved, orphaned } }`
 
 ### `DELETE /api/artifacts/:id`
 删除 artifact 及所有关联数据。
@@ -37,10 +37,10 @@
 ### `POST /api/artifacts/:id/comments`
 创建评论。
 
-**请求体**: `{ blockId: string, text: string, selector?: TextQuoteSelector }`
-**响应**: `{ ok: true, comment }` 或 `{ ok: false, error }`
+**请求体**: `{ anchor: string, text: string, selector?: TextQuoteSelector }`
 
-注意：请求体用 `blockId`，store 内部映射为 `block_id`（anchor）。
+
+`anchor` 直接对应文档中的 `data-rk-anchor` 与 `comments.anchor`。
 
 ### `PATCH /api/artifacts/:id/comments/:commentId`
 更新评论状态。

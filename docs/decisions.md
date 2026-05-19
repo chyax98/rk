@@ -165,3 +165,41 @@
 ```
 
 Agent 根据 anchor 定位文档位置，修改对应内容，再次 push。
+
+---
+
+## ADR-10: Diagram Authoring Route — D2 and Mermaid First
+
+**Status**: Accepted, supersedes the client-D2 parts of ADR-04.
+
+**Context**: Browser scans found that diagram failures are easiest to diagnose when the source is a small text DSL and the server can produce push-time warnings.
+
+**Decision**:
+- Use `rk-diagram engine="d2"` for architecture, dependency, topology, system boundary, and deployment diagrams.
+- Use `rk-diagram engine="mermaid"` for flowcharts, sequence diagrams, state machines, gantt, ER, class, and journey diagrams.
+- Use Graphviz/PlantUML only when a document explicitly needs those legacy DSLs.
+- Do not add compatibility fallback chains for broken old syntax or obsolete CDN paths; fix the source case and the main rendering path.
+
+**Evidence**:
+- `scripts/render-scan.mjs` catches push warnings, DOM errors, console errors, network failures, feedback render errors, and smoke failures.
+- `examples/cases/diagram-rendering-matrix.html` verifies D2/Mermaid as the main route.
+
+## ADR-11: Component Cleanup Requires Decision Evidence
+
+**Status**: Accepted.
+
+**Context**: Some niche visual components may be worse-looking or harder for agents to author than a higher-level replacement.
+
+**Decision**: A component can be removed only after a decision entry records:
+- observed usage in examples/cases
+- replacement path
+- visual/authoring reason for removal
+- migration checklist
+
+**Initial evaluation candidates**:
+- `rk-sketch` → usually replace with D2/Mermaid
+- `rk-zdog` → replace with `rk-model` or remove use case
+- `rk-3d` → replace with `rk-model`
+- `rk-plot3d` → replace with `rk-chart` / `rk-plot` for most reports
+- `rk-graph3d` → replace with `rk-graph`
+- `rk-infographic` → replace with `rk-chart` + `rk-metric`

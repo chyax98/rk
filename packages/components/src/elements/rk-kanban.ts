@@ -24,7 +24,10 @@ class RkKanbanCard extends HTMLElement {
     if (!this._raw) this._raw = (this.textContent || '').trim();
     this._render();
   }
-  attributeChangedCallback(): void { if (this._raw) this._render(); }
+  attributeChangedCallback(): void {
+    if (!this.isConnected) return;
+    if (this._raw) this._render();
+  }
 
   _render(): void {
     const priority = this.getAttribute('priority') || '';
@@ -34,17 +37,19 @@ class RkKanbanCard extends HTMLElement {
     const text = this._raw;
 
     const priorityColors: Record<string, string> = {
-      high:   'var(--rk-tone-danger-border, #dc2626)',
+      high: 'var(--rk-tone-danger-border, #dc2626)',
       medium: 'var(--rk-tone-warning-border, #d97706)',
-      low:    'var(--rk-tone-info-border, #2563eb)',
+      low: 'var(--rk-tone-info-border, #2563eb)',
     };
     const priorityBg: Record<string, string> = {
-      high:   'var(--rk-tone-danger-bg, #fef2f2)',
+      high: 'var(--rk-tone-danger-bg, #fef2f2)',
       medium: 'var(--rk-tone-warning-bg, #fffbeb)',
-      low:    'var(--rk-tone-info-bg, #eff6ff)',
+      low: 'var(--rk-tone-info-bg, #eff6ff)',
     };
 
-    const borderColor = priority ? priorityColors[priority] || 'var(--rk-border)' : 'var(--rk-border)';
+    const borderColor = priority
+      ? priorityColors[priority] || 'var(--rk-border)'
+      : 'var(--rk-border)';
 
     this.innerHTML = `
       <div class="rk-kanban-card" style="
@@ -57,40 +62,64 @@ class RkKanbanCard extends HTMLElement {
         box-shadow:var(--rk-shadow-xs,0 1px 2px rgba(0,0,0,0.06));
         cursor:default;
       ">
-        ${tag || priority ? `
+        ${
+          tag || priority
+            ? `
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-            ${tag ? `<span style="
+            ${
+              tag
+                ? `<span style="
               font:600 10px/1.4 var(--rk-font-sans,sans-serif);
               text-transform:uppercase;letter-spacing:0.05em;
               padding:2px 6px;border-radius:4px;
               background:var(--rk-accent-muted,rgba(2,103,165,0.1));
               color:var(--rk-accent,#0267a5);
-            ">${this._escape(tag)}</span>` : ''}
-            ${priority ? `<span style="
+            ">${this._escape(tag)}</span>`
+                : ''
+            }
+            ${
+              priority
+                ? `<span style="
               font:600 10px/1.4 var(--rk-font-sans,sans-serif);
               text-transform:uppercase;letter-spacing:0.05em;
               padding:2px 6px;border-radius:4px;
               background:${priorityBg[priority] || 'var(--rk-surface-2)'};
               color:${priorityColors[priority] || 'var(--rk-text-muted)'};
-            ">${priority === 'high' ? '↑ 高优' : priority === 'medium' ? '→ 中' : '↓ 低'}</span>` : ''}
+            ">${priority === 'high' ? '↑ 高优' : priority === 'medium' ? '→ 中' : '↓ 低'}</span>`
+                : ''
+            }
           </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div style="
           font:var(--rk-weight-normal,400) var(--rk-text-sm,13px)/1.6 var(--rk-font-sans,sans-serif);
           color:var(--rk-text,#1a1a1a);
         ">${this._escape(text)}</div>
-        ${assignee || due ? `
+        ${
+          assignee || due
+            ? `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-            ${assignee ? `<span style="
+            ${
+              assignee
+                ? `<span style="
               font:500 11px/1 var(--rk-font-sans,sans-serif);
               color:var(--rk-text-tertiary,#6b6b66);
-            ">@${this._escape(assignee)}</span>` : '<span></span>'}
-            ${due ? `<span style="
+            ">@${this._escape(assignee)}</span>`
+                : '<span></span>'
+            }
+            ${
+              due
+                ? `<span style="
               font:400 11px/1 var(--rk-font-sans,sans-serif);
               color:var(--rk-muted,#a0a0a0);
-            ">${this._escape(due)}</span>` : ''}
+            ">${this._escape(due)}</span>`
+                : ''
+            }
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     `;
   }
@@ -107,8 +136,14 @@ class RkKanbanCol extends HTMLElement {
     return ['title', 'accent', 'done'];
   }
 
-  connectedCallback(): void { this._upgradeCards(); this._renderShell(); }
-  attributeChangedCallback(): void { this._renderShell(); }
+  connectedCallback(): void {
+    this._upgradeCards();
+    this._renderShell();
+  }
+  attributeChangedCallback(): void {
+    if (!this.isConnected) return;
+    this._renderShell();
+  }
 
   _upgradeCards(): void {
     // cards render themselves; just ensure they're slotted after shell renders
@@ -119,11 +154,16 @@ class RkKanbanCol extends HTMLElement {
     const done = this.hasAttribute('done');
     const accent = this.getAttribute('accent') || (done ? 'green' : '');
 
-    const accentColor = accent === 'green'  ? 'var(--rk-tone-success-border,#16a34a)'
-                      : accent === 'blue'   ? 'var(--rk-tone-info-border,#2563eb)'
-                      : accent === 'orange' ? 'var(--rk-tone-warning-border,#d97706)'
-                      : accent === 'red'    ? 'var(--rk-tone-danger-border,#dc2626)'
-                      : 'var(--rk-border,#e5e4dc)';
+    const accentColor =
+      accent === 'green'
+        ? 'var(--rk-tone-success-border,#16a34a)'
+        : accent === 'blue'
+          ? 'var(--rk-tone-info-border,#2563eb)'
+          : accent === 'orange'
+            ? 'var(--rk-tone-warning-border,#d97706)'
+            : accent === 'red'
+              ? 'var(--rk-tone-danger-border,#dc2626)'
+              : 'var(--rk-border,#e5e4dc)';
 
     // Collect existing cards before re-rendering
     const existingCards = Array.from(this.querySelectorAll('rk-kanban-card'));

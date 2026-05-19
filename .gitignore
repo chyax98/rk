@@ -10,4 +10,13 @@ node_modules
 research/design-assets/external-repos/
 dist/
 .pwcli/
+reports/render-scan/
 .alma-snapshots
+**/*.tsbuildinfo
+
+# CLI lock files (per-artifact lock; never check in)
+.rk-lock/
+**/.rk-lock/
+
+# scoring report (generated)
+score-report.json

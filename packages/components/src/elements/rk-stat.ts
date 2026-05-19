@@ -6,12 +6,14 @@ class RkStat extends HTMLElement {
     return ['value', 'unit', 'label', 'delta', 'tone'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML.trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML.trim();
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw !== '' || this.hasAttribute('value')) this._render();
   }
 
@@ -32,11 +34,9 @@ class RkStat extends HTMLElement {
       const parsed = parseFloat(delta);
       let direction = 'neutral';
       let arrow = '';
-      if (!isNaN(parsed) && parsed > 0) {
-        direction = 'up';
+      if (!Number.isNaN(parsed) && parsed > 0) {
         arrow = '↑';
-      } else if (!isNaN(parsed) && parsed < 0) {
-        direction = 'down';
+      } else if (!Number.isNaN(parsed) && parsed < 0) {
         arrow = '↓';
       } else if (delta.startsWith('+') || delta.startsWith('↑')) {
         direction = 'up';

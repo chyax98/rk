@@ -6,12 +6,14 @@ class RkQuote extends HTMLElement {
     return ['attribution', 'source', 'source-url'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML;
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 
@@ -26,11 +28,12 @@ class RkQuote extends HTMLElement {
         : ` <cite>${this._escape(source)}</cite>`
       : '';
 
-    const figcaption = attribution || source
-      ? `<figcaption class="rk-quote__attribution">
+    const figcaption =
+      attribution || source
+        ? `<figcaption class="rk-quote__attribution">
           ${attribution ? `— ${this._escape(attribution)}` : ''}${sourceHtml}
         </figcaption>`
-      : '';
+        : '';
 
     this.innerHTML = /* html */ `
       <figure class="rk-quote">
@@ -47,7 +50,11 @@ class RkQuote extends HTMLElement {
   }
 
   _escapeAttr(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }
 

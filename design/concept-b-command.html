@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RenderKit — Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg:          #FAFAFA;
+      --surface:     #FFFFFF;
+      --text:        #111827;
+      --accent:      #6366F1;
+      --accent-bg:   #EEF2FF;
+      --accent-muted:#C7D2FE;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --row-hover:   #F9FAFB;
+      --row-border:  #F3F4F6;
+      --sidebar-w:   200px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ─── Layout ─────────────────────────────────────── */
+    .app {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── Sidebar ────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      height: 100%;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 14px 14px;
+      border-bottom: 1px solid var(--border);
+      user-select: none;
+    }
+
+    .logo-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg {
+      display: block;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0px;
+      line-height: 1;
+    }
+
+    .logo-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 0;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar { width: 0; }
+
+    .sidebar-section {
+      padding: 0 8px 4px;
+    }
+
+    .sidebar-section + .sidebar-section {
+      margin-top: 4px;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 8px 6px 4px;
+      display: block;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: background 0.1s, color 0.1s;
+      user-select: none;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: var(--row-hover);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .nav-item .nav-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    .nav-item.active .nav-icon {
+      opacity: 1;
+    }
+
+    .nav-item .nav-label {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-badge {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--row-hover);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0px 5px;
+      min-width: 18px;
+      text-align: center;
+      line-height: 17px;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-badge {
+      background: var(--accent-muted);
+      border-color: var(--accent-muted);
+      color: var(--accent);
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 14px;
+    }
+
+    /* Sidebar bottom stats */
+    .sidebar-stats {
+      padding: 10px 14px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .stat-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ─── Main area ──────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Sort / filter bar */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 24px;
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    .sort-bar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .sort-bar-count {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--row-hover);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1px 7px;
+      line-height: 16px;
+    }
+
+    .sort-bar-spacer {
+      flex: 1;
+    }
+
+    .sort-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sort-label {
+      font-weight: 500;
+    }
+
+    .sort-select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 3px 22px 3px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 7px center;
+      transition: border-color 0.15s;
+    }
+
+    .sort-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+    }
+
+    .btn-new {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-muted);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-new:hover {
+      background: #E0E7FF;
+      border-color: var(--accent);
+    }
+
+    /* Content scroll area */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    /* Document table */
+    .doc-table {
+      width: 100%;
+    }
+
+    /* Column header row */
+    .col-header {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 34px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      gap: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .col-header-check {
+      width: 32px;
+      flex-shrink: 0;
+    }
+
+    .col-header-title {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .col-header-tags {
+      width: 180px;
+      flex-shrink: 0;
+    }
+
+    .col-header-rev {
+      width: 64px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .col-header-time {
+      width: 90px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .col-header-actions {
+      width: 56px;
+      flex-shrink: 0;
+    }
+
+    .col-hd {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Row */
+    .doc-row {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 48px;
+      border-bottom: 1px solid var(--row-border);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.1s;
+      gap: 0;
+    }
+
+    .doc-row:hover {
+      background: var(--row-hover);
+    }
+
+    .doc-row:hover .row-actions {
+      opacity: 1;
+    }
+
+    .doc-row:hover .row-time {
+      opacity: 0;
+    }
+
+    /* Checkbox */
+    .row-check {
+      width: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .row-checkbox {
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      position: relative;
+      transition: border-color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .row-checkbox:hover {
+      border-color: var(--accent);
+    }
+
+    .row-checkbox:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .row-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 0px;
+      width: 5px;
+      height: 8px;
+      border: 1.5px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(40deg);
+    }
+
+    /* Title */
+    .row-title {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-right: 16px;
+    }
+
+    .row-title-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.01em;
+    }
+
+    /* Tags */
+    .row-tags {
+      width: 180px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      padding-right: 12px;
+    }
+
+    .tag-chip {
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-radius: 4px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      flex-shrink: 0;
+    }
+
+    .tag-chip.overflow {
+      background: var(--row-hover);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Revision */
+    .row-rev {
+      width: 64px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+    }
+
+    .rev-badge {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', ui-monospace, monospace;
+      color: var(--muted);
+      background: var(--row-hover);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1px 7px;
+      line-height: 16px;
+    }
+
+    .rev-badge.v1 {
+      opacity: 0.5;
+    }
+
+    /* Time */
+    .row-time {
+      width: 90px;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+      text-align: right;
+      transition: opacity 0.1s;
+      white-space: nowrap;
+    }
+
+    /* Actions */
+    .row-actions {
+      width: 56px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+      position: absolute;
+      right: 24px;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    .action-btn {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
+    }
+
+    .action-btn:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .action-btn.danger:hover {
+      background: #FEE2E2;
+      color: #EF4444;
+    }
+
+    /* Archived section */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-divider:hover .section-divider-line {
+      background: var(--border);
+    }
+
+    .section-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--row-border);
+      transition: background 0.15s;
+    }
+
+    .section-divider-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .section-caret {
+      transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-caret.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .archived-rows {
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+
+    /* Archived row style tweak */
+    .doc-row.archived .row-title-text {
+      color: var(--muted);
+    }
+
+    .doc-row.archived .tag-chip {
+      background: var(--row-hover);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .doc-row.archived .rev-badge {
+      opacity: 0.5;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      width: 40px;
+      height: 40px;
+      opacity: 0.3;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* Kbd shortcut hint */
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--row-hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0;
+    }
+
+    /* Tooltip base */
+    [data-tip] {
+      position: relative;
+    }
+
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1F2937;
+      color: #F9FAFB;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      padding: 3px 7px;
+      border-radius: 5px;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Search input (sidebar) */
+    .search-wrap {
+      padding: 10px 8px 6px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      padding: 0 8px 0 28px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 8px center;
+    }
+
+    .search-input::placeholder {
+      color: var(--muted);
+      opacity: 0.7;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Scrollbar for content */
+    .content::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    /* Active row (selected) */
+    .doc-row.selected {
+      background: var(--accent-bg);
+    }
+
+    /* Focus visible */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="5" height="5" rx="1.2" fill="white" opacity="0.9"/>
+          <rect x="8" y="1" width="5" height="5" rx="1.2" fill="white" opacity="0.6"/>
+          <rect x="1" y="8" width="5" height="5" rx="1.2" fill="white" opacity="0.6"/>
+          <rect x="8" y="8" width="5" height="5" rx="1.2" fill="white" opacity="0.35"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">RenderKit</span>
+        <span class="logo-sub">本地文档代理</span>
+      </div>
+    </div>
+
+    <div class="sidebar-scroll">
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <input class="search-input" type="text" placeholder="搜索文档…" />
+      </div>
+
+      <!-- Nav -->
+      <div class="sidebar-section">
+        <a class="nav-item active" href="#">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </span>
+          <span class="nav-label">全部文档</span>
+          <span class="nav-badge">8</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </span>
+          <span class="nav-label">最近活跃</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </span>
+          <span class="nav-label">收藏</span>
+        </a>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Tags -->
+      <div class="sidebar-section">
+        <span class="sidebar-label">标签</span>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #6366F1;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#analytics</span>
+          <span class="nav-badge">2</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #8B5CF6;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#report</span>
+          <span class="nav-badge">3</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #06B6D4;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#review</span>
+          <span class="nav-badge">2</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #10B981;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#planning</span>
+          <span class="nav-badge">2</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #F59E0B;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#engineering</span>
+          <span class="nav-badge">1</span>
+        </a>
+        <a class="nav-item" href="#">
+          <span class="nav-icon" style="color: #EF4444;">
+            <svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>
+          </span>
+          <span class="nav-label">#architecture</span>
+          <span class="nav-badge">1</span>
+        </a>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Archive nav -->
+      <div class="sidebar-section">
+        <a class="nav-item" href="#" id="sidebar-archive-link">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="21 8 21 21 3 21 3 8"/>
+              <rect x="1" y="3" width="22" height="5"/>
+              <line x1="10" y1="12" x2="14" y2="12"/>
+            </svg>
+          </span>
+          <span class="nav-label">存档</span>
+          <span class="nav-badge">2</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Bottom stats -->
+    <div class="sidebar-stats">
+      <div class="stat-row">
+        <span class="stat-label">总文档</span>
+        <span class="stat-value">8</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">已存档</span>
+        <span class="stat-value" style="color: var(--muted);">2</span>
+      </div>
+      <div class="stat-row" style="margin-top: 2px;">
+        <span class="stat-label">本周修订</span>
+        <span class="stat-value" style="color: var(--accent);">16</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══ MAIN ══════════════════════════════════════════ -->
+  <main class="main">
+
+    <!-- Sort bar -->
+    <div class="sort-bar">
+      <span class="sort-bar-title">全部文档</span>
+      <span class="sort-bar-count" id="doc-count">6</span>
+      <div class="sort-bar-spacer"></div>
+      <div class="sort-select-wrap">
+        <span class="sort-label">排序:</span>
+        <select class="sort-select" id="sort-select">
+          <option value="newest">最新</option>
+          <option value="oldest">最旧</option>
+          <option value="title">标题</option>
+          <option value="revisions">修订数</option>
+        </select>
+      </div>
+      <button class="btn-new" id="btn-new">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        新建
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="doc-table">
+
+        <!-- Column headers -->
+        <div class="col-header">
+          <div class="col-header-check">
+            <input type="checkbox" class="row-checkbox" id="select-all" title="全选" />
+          </div>
+          <div class="col-header-title col-hd">文档标题</div>
+          <div class="col-header-tags col-hd">标签</div>
+          <div class="col-header-rev col-hd">版本</div>
+          <div class="col-header-time col-hd">更新时间</div>
+          <div class="col-header-actions"></div>
+        </div>
+
+        <!-- Active rows -->
+        <div id="active-rows"></div>
+
+        <!-- Archived section -->
+        <div class="section-divider" id="archive-toggle">
+          <div class="section-divider-line"></div>
+          <div class="section-divider-label">
+            <span class="section-caret" id="archive-caret">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+            已存档 (2)
+          </div>
+          <div class="section-divider-line"></div>
+        </div>
+
+        <div class="archived-rows" id="archive-rows" style="max-height: 200px;"></div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── Data ───────────────────────────────────────────────
+  const activeArtifacts = [
+    { id: 'art_b607', title: '数据分析报告 Q2 2026',  tags: ['report', 'analytics'],        rev: 7, time: '3小时前' },
+    { id: 'art_a94f', title: 'API 架构评审文档',       tags: ['architecture', 'review'],      rev: 3, time: '1天前'   },
+    { id: 'art_c12e', title: '用户增长分析',           tags: ['analytics', 'growth'],         rev: 2, time: '2天前'   },
+    { id: 'art_d83f', title: 'Sprint 计划 Week 20',    tags: ['project-alpha', 'planning'],   rev: 1, time: '3天前'   },
+    { id: 'art_e45a', title: '竞品对比研究',           tags: ['research', 'report'],          rev: 4, time: '1周前'   },
+    { id: 'art_f91b', title: '技术债务评估',           tags: ['engineering', 'review'],       rev: 2, time: '1周前'   },
+  ];
+
+  const archivedArtifacts = [
+    { id: 'art_g23c', title: '产品路线图 2026',        tags: ['planning', 'product'],         rev: 5, time: '2周前'   },
+    { id: 'art_h56d', title: '月度运营报告',           tags: ['report', 'ops'],               rev: 1, time: '3周前'   },
+  ];
+
+  // ── Render helpers ─────────────────────────────────────
+  function tagsHtml(tags) {
+    const MAX = 2;
+    let html = '';
+    tags.slice(0, MAX).forEach(t => {
+      html += `<span class="tag-chip">#${t}</span>`;
+    });
+    if (tags.length > MAX) {
+      html += `<span class="tag-chip overflow">+${tags.length - MAX}</span>`;
+    }
+    return html;
+  }
+
+  function revHtml(rev) {
+    const cls = rev === 1 ? 'rev-badge v1' : 'rev-badge';
+    return `<span class="${cls}">v${rev}</span>`;
+  }
+
+  function buildRow(art, archived = false) {
+    const div = document.createElement('div');
+    div.className = 'doc-row' + (archived ? ' archived' : '');
+    div.dataset.id = art.id;
+
+    div.innerHTML = `
+      <div class="row-check">
+        <input type="checkbox" class="row-checkbox row-cb" data-id="${art.id}" />
+      </div>
+      <div class="row-title">
+        <span class="row-title-text">${art.title}</span>
+      </div>
+      <div class="row-tags">${tagsHtml(art.tags)}</div>
+      <div class="row-rev">${revHtml(art.rev)}</div>
+      <div class="row-time">${art.time}</div>
+      <div class="row-actions">
+        <button class="action-btn" data-tip="存档" title="存档">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="21 8 21 21 3 21 3 8"/>
+            <rect x="1" y="3" width="22" height="5"/>
+            <line x1="10" y1="12" x2="14" y2="12"/>
+          </svg>
+        </button>
+        <button class="action-btn danger" data-tip="删除" title="删除">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    // Prevent checkbox click from triggering row click
+    div.querySelector('.row-cb').addEventListener('click', e => e.stopPropagation());
+
+    // Row click → select highlight (demo)
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.doc-row.selected').forEach(r => {
+        if (r !== div) r.classList.remove('selected');
+      });
+      div.classList.toggle('selected');
+    });
+
+    return div;
+  }
+
+  // ── Mount rows ─────────────────────────────────────────
+  const activeContainer  = document.getElementById('active-rows');
+  const archiveContainer = document.getElementById('archive-rows');
+
+  function renderActive(data) {
+    activeContainer.innerHTML = '';
+    data.forEach(art => activeContainer.appendChild(buildRow(art, false)));
+    document.getElementById('doc-count').textContent = data.length;
+  }
+
+  function renderArchived(data) {
+    archiveContainer.innerHTML = '';
+    data.forEach(art => archiveContainer.appendChild(buildRow(art, true)));
+  }
+
+  renderActive(activeArtifacts);
+  renderArchived(archivedArtifacts);
+
+  // ── Sort ───────────────────────────────────────────────
+  const sortSelect = document.getElementById('sort-select');
+  sortSelect.addEventListener('change', () => {
+    const val = sortSelect.value;
+    let sorted = [...activeArtifacts];
+    if (val === 'newest') sorted = activeArtifacts.slice();
+    else if (val === 'oldest') sorted = activeArtifacts.slice().reverse();
+    else if (val === 'title') sorted = [...activeArtifacts].sort((a,b) => a.title.localeCompare(b.title, 'zh'));
+    else if (val === 'revisions') sorted = [...activeArtifacts].sort((a,b) => b.rev - a.rev);
+    renderActive(sorted);
+  });
+
+  // ── Archive toggle ─────────────────────────────────────
+  let archiveOpen = true;
+  const archiveCaret = document.getElementById('archive-caret');
+  const archiveRows  = document.getElementById('archive-rows');
+
+  document.getElementById('archive-toggle').addEventListener('click', () => {
+    archiveOpen = !archiveOpen;
+    if (archiveOpen) {
+      archiveRows.style.maxHeight = archiveRows.scrollHeight + 'px';
+      archiveCaret.classList.remove('collapsed');
+    } else {
+      archiveRows.style.maxHeight = '0';
+      archiveCaret.classList.add('collapsed');
+    }
+  });
+
+  // ── Select-all ─────────────────────────────────────────
+  document.getElementById('select-all').addEventListener('change', function() {
+    document.querySelectorAll('.row-cb').forEach(cb => { cb.checked = this.checked; });
+  });
+
+  // ── New button (demo) ──────────────────────────────────
+  document.getElementById('btn-new').addEventListener('click', () => {
+    const titles = ['无标题文档', '新建分析报告', '会议纪要', '设计评审'];
+    const t = titles[Math.floor(Math.random() * titles.length)];
+    const newArt = {
+      id: 'art_' + Math.random().toString(36).slice(2,6),
+      title: t,
+      tags: ['draft'],
+      rev: 1,
+      time: '刚刚',
+    };
+    activeArtifacts.unshift(newArt);
+    renderActive(activeArtifacts);
+
+    // Flash first row
+    const first = activeContainer.firstElementChild;
+    if (first) {
+      first.style.background = '#EEF2FF';
+      first.style.transition = 'background 0.5s';
+      setTimeout(() => { first.style.background = ''; }, 800);
+    }
+  });
+
+  // ── Sidebar archive link scrolls to section ─────────────
+  document.getElementById('sidebar-archive-link').addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector('.section-divider').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!archiveOpen) {
+      archiveOpen = true;
+      archiveRows.style.maxHeight = archiveRows.scrollHeight + 'px';
+      archiveCaret.classList.remove('collapsed');
+    }
+  });
+
+  // Recalc scrollHeight after content mounts
+  requestAnimationFrame(() => {
+    if (archiveOpen) archiveRows.style.maxHeight = archiveRows.scrollHeight + 'px';
+  });
+</script>
+
+</body>
+</html>

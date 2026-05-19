@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RenderKit — 文档库</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;700&family=Public+Sans:wght@300;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #FFFEF9;
+      --text:     #1a1a1a;
+      --accent:   #D4541A;
+      --border:   #E8E3DC;
+      --muted:    #8A7E72;
+      --card-bg:  #FFFFFF;
+      --chip-bg:  #F5EFE8;
+      --hero-g1:  #FDF3EC;
+      --hero-g2:  #FFF9F5;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Public Sans', system-ui, sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Top Bar ──────────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 32px;
+      height: 56px;
+    }
+
+    .topbar-brand {
+      font-family: 'Libre Bodoni', Georgia, serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .topbar-brand span {
+      color: var(--accent);
+    }
+
+    .topbar-spacer { flex: 1; }
+
+    .topbar-stats {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 20px;
+    }
+
+    .topbar-stat {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      text-decoration: none;
+    }
+
+    .topbar-stat:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .topbar-stat.archived {
+      opacity: 0.7;
+    }
+
+    .btn-new {
+      font-family: 'Public Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-new:hover { background: #BE4A16; transform: translateY(-1px); }
+    .btn-new:active { transform: translateY(0); }
+
+    /* ── Main Content ─────────────────────────────────────── */
+    main {
+      flex: 1;
+      max-width: 1120px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 32px 64px;
+    }
+
+    /* ── Section Label ────────────────────────────────────── */
+    .section-label {
+      font-family: 'Public Sans', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Hero Card ────────────────────────────────────────── */
+    .hero-card {
+      background: linear-gradient(135deg, var(--hero-g1) 0%, var(--hero-g2) 100%);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      padding: 36px 40px;
+      margin-bottom: 44px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,84,26,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-family: 'Libre Bodoni', Georgia, serif;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-rev-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(212,84,26,0.09);
+      border: 1px solid rgba(212,84,26,0.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .hero-rev-badge svg {
+      width: 12px;
+      height: 12px;
+      opacity: 0.8;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .hero-time {
+      font-size: 0.78rem;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--chip-bg);
+      border-radius: 20px;
+      padding: 2px 10px;
+      white-space: nowrap;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .chip:hover {
+      background: rgba(212,84,26,0.08);
+      color: var(--accent);
+      border-color: rgba(212,84,26,0.2);
+    }
+
+    .chip.active {
+      background: rgba(212,84,26,0.1);
+      color: var(--accent);
+      border-color: rgba(212,84,26,0.25);
+      font-weight: 600;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      font-family: 'Public Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 7px;
+      padding: 9px 22px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary:hover { background: #BE4A16; transform: translateY(-1px); }
+
+    .btn-text {
+      font-family: 'Public Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent);
+      text-decoration: none;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 9px 0;
+      transition: opacity 0.15s;
+    }
+
+    .btn-text:hover { opacity: 0.75; }
+
+    .btn-text .arrow { transition: transform 0.15s; }
+    .btn-text:hover .arrow { transform: translateX(3px); }
+
+    /* ── Tag Filter Bar ───────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .filter-chip {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(212,84,26,0.05);
+    }
+
+    .filter-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(212,84,26,0.08);
+      font-weight: 600;
+    }
+
+    .filter-chip.all {
+      border-color: var(--text);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .filter-chip.all:hover,
+    .filter-chip.all.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    /* ── Grid ─────────────────────────────────────────────── */
+    .grid-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .grid-count {
+      font-size: 0.78rem;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .grid-sort {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .grid-sort:hover { color: var(--text); }
+
+    .artifact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    /* ── Artifact Card ────────────────────────────────────── */
+    .artifact-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px 20px 18px;
+      position: relative;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      transition:
+        transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.18s ease,
+        border-left-color 0.15s,
+        border-left-width 0.15s;
+      border-left: 1px solid var(--border);
+    }
+
+    .artifact-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Card action buttons */
+    .card-actions {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .artifact-card:hover .card-actions { opacity: 1; }
+
+    .card-action-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.12s;
+      line-height: 1;
+    }
+
+    .card-action-btn:hover {
+      background: var(--chip-bg);
+      border-color: var(--muted);
+    }
+
+    .card-action-btn.delete:hover {
+      background: #FEF2F2;
+      border-color: #FCA5A5;
+      color: #DC2626;
+    }
+
+    .card-action-btn.archive:hover {
+      background: rgba(212,84,26,0.06);
+      border-color: rgba(212,84,26,0.3);
+      color: var(--accent);
+    }
+
+    /* Card content */
+    .card-id {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      opacity: 0.6;
+      margin-bottom: 8px;
+      font-family: 'Public Sans', monospace;
+    }
+
+    .card-title {
+      font-family: 'Libre Bodoni', Georgia, serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-right: 36px; /* room for action btns */
+      letter-spacing: -0.01em;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 16px;
+      flex: 1;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    .card-time {
+      font-size: 0.73rem;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .card-rev {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--chip-bg);
+      border-radius: 20px;
+      padding: 2px 9px;
+      border: 1px solid var(--border);
+      letter-spacing: 0.02em;
+    }
+
+    .card-rev.multi {
+      color: var(--accent);
+      background: rgba(212,84,26,0.07);
+      border-color: rgba(212,84,26,0.18);
+    }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 18px 32px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .footer-code {
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', Menlo, monospace;
+      font-size: 0.68rem;
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--accent);
+    }
+
+    .footer-dot {
+      margin: 0 8px;
+      opacity: 0.4;
+    }
+
+    /* ── Divider ──────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0 36px;
+    }
+
+    /* ── Empty state placeholder (if JS filters all out) ──── */
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 300;
+      display: none;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .artifact-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-title { font-size: 1.6rem; }
+    }
+
+    @media (max-width: 600px) {
+      main { padding: 28px 20px 48px; }
+      .topbar { padding: 0 20px; }
+      .artifact-grid { grid-template-columns: 1fr; }
+      .hero-card { padding: 24px 22px; }
+      .hero-title { font-size: 1.4rem; }
+      .topbar-stats { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Top Bar ──────────────────────────────────────────── -->
+  <header class="topbar" role="banner">
+    <a href="/" class="topbar-brand">Render<span>Kit</span></a>
+    <div class="topbar-spacer"></div>
+    <nav class="topbar-stats" aria-label="文档统计">
+      <a href="?view=all" class="topbar-stat">文档 8</a>
+      <a href="?view=archived" class="topbar-stat archived">已存档 2</a>
+    </nav>
+    <button class="btn-new" onclick="alert('新建文档 — 待实现')">
+      + 新建
+    </button>
+  </header>
+
+  <!-- ── Main ─────────────────────────────────────────────── -->
+  <main>
+
+    <!-- Hero -->
+    <p class="section-label">最新文档</p>
+    <article class="hero-card" id="hero">
+      <div class="hero-top">
+        <h1 class="hero-title">数据分析报告 Q2 2026</h1>
+        <span class="hero-rev-badge" title="共 7 个版本">
+          <!-- history icon -->
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="6"/>
+            <polyline points="8,5 8,8 10,10"/>
+          </svg>
+          v7 · 最新
+        </span>
+      </div>
+      <div class="hero-meta">
+        <span class="hero-time">3小时前更新</span>
+        <div class="hero-tags">
+          <a href="?tag=report" class="chip">#report</a>
+          <a href="?tag=analytics" class="chip">#analytics</a>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary" onclick="return false;">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 2h12v12H2z"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="9" y2="9"/>
+          </svg>
+          查看文档
+        </a>
+        <a href="#" class="btn-text" onclick="return false;">
+          查看 7 版本对比 <span class="arrow">→</span>
+        </a>
+      </div>
+    </article>
+
+    <!-- Tag Filter -->
+    <nav class="filter-bar" aria-label="标签筛选" id="filter-bar">
+      <span class="filter-label">筛选</span>
+      <a href="?" class="filter-chip all active" id="filter-all">全部</a>
+      <!-- chips injected by JS -->
+    </nav>
+
+    <!-- Grid -->
+    <div class="grid-header">
+      <span class="grid-count" id="grid-count">显示 7 篇文档</span>
+      <span class="grid-sort" role="button" tabindex="0" title="更改排序">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <line x1="2" y1="4" x2="14" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="6" y1="12" x2="10" y2="12"/>
+        </svg>
+        最近更新
+      </span>
+    </div>
+
+    <div class="artifact-grid" id="artifact-grid" role="list">
+      <!-- cards injected by JS -->
+      <div class="empty-state" id="empty-state">暂无符合条件的文档</div>
+    </div>
+
+  </main>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer>
+    <p class="footer-text">
+      RenderKit
+      <span class="footer-dot">·</span>
+      本地 AI 文档渲染器
+      <span class="footer-dot">·</span>
+      <code class="footer-code">rk push your-doc.html</code>
+    </p>
+  </footer>
+
+  <script>
+    // ── Data ──────────────────────────────────────────────────
+    const artifacts = [
+      { id: 'art_b607', title: '数据分析报告 Q2 2026',  tags: ['report', 'analytics'],        rev: 7, time: '3小时前',  archived: false },
+      { id: 'art_a94f', title: 'API 架构评审文档',       tags: ['architecture', 'review'],      rev: 3, time: '1天前',    archived: false },
+      { id: 'art_c12e', title: '用户增长分析',           tags: ['analytics', 'growth'],         rev: 2, time: '2天前',    archived: false },
+      { id: 'art_d83f', title: 'Sprint 计划 Week 20',    tags: ['project-alpha', 'planning'],   rev: 1, time: '3天前',    archived: false },
+      { id: 'art_e45a', title: '竞品对比研究',           tags: ['research', 'report'],          rev: 4, time: '1周前',    archived: false },
+      { id: 'art_f91b', title: '技术债务评估',           tags: ['engineering', 'review'],       rev: 2, time: '1周前',    archived: false },
+      { id: 'art_g23c', title: '产品路线图 2026',        tags: ['planning', 'product'],         rev: 5, time: '2周前',    archived: false },
+      { id: 'art_h56d', title: '月度运营报告',           tags: ['report', 'ops'],               rev: 1, time: '3周前',    archived: false },
+    ];
+
+    // Hero is artifacts[0]; grid shows artifacts[1..7]
+    const heroArtifact = artifacts[0];
+    const gridArtifacts = artifacts.slice(1);
+
+    // ── Collect unique tags (from grid only) ──────────────────
+    const allTags = [...new Set(gridArtifacts.flatMap(a => a.tags))].sort();
+
+    // ── Read active tag from URL ──────────────────────────────
+    function getActiveTag() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('tag') || null;
+    }
+
+    // ── Render filter chips ───────────────────────────────────
+    function renderFilters() {
+      const bar = document.getElementById('filter-bar');
+      const activeTag = getActiveTag();
+
+      // Clear old chips (keep label + "全部")
+      const existingChips = bar.querySelectorAll('.filter-chip:not(.all)');
+      existingChips.forEach(c => c.remove());
+
+      // Mark "全部" active state
+      const allChip = document.getElementById('filter-all');
+      allChip.classList.toggle('active', !activeTag);
+
+      allTags.forEach(tag => {
+        const a = document.createElement('a');
+        a.href = '?tag=' + encodeURIComponent(tag);
+        a.className = 'filter-chip' + (tag === activeTag ? ' active' : '');
+        a.textContent = '#' + tag;
+        a.setAttribute('role', 'button');
+        bar.appendChild(a);
+      });
+    }
+
+    // ── Render grid cards ─────────────────────────────────────
+    function renderGrid() {
+      const grid = document.getElementById('artifact-grid');
+      const emptyState = document.getElementById('empty-state');
+      const countEl = document.getElementById('grid-count');
+      const activeTag = getActiveTag();
+
+      // Filter
+      const visible = activeTag
+        ? gridArtifacts.filter(a => a.tags.includes(activeTag))
+        : gridArtifacts;
+
+      // Remove existing cards (not empty state)
+      grid.querySelectorAll('.artifact-card').forEach(c => c.remove());
+
+      if (visible.length === 0) {
+        emptyState.style.display = 'block';
+        countEl.textContent = '没有符合条件的文档';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      countEl.textContent = '显示 ' + visible.length + ' 篇文档';
+
+      visible.forEach(art => {
+        const card = document.createElement('article');
+        card.className = 'artifact-card';
+        card.setAttribute('role', 'listitem');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', art.title);
+
+        const isMultiRev = art.rev > 1;
+
+        card.innerHTML = `
+          <div class="card-actions" aria-label="文档操作">
+            <button class="card-action-btn archive" title="存档" aria-label="存档文档">⊟</button>
+            <button class="card-action-btn delete"  title="删除" aria-label="删除文档">✕</button>
+          </div>
+          <p class="card-id">${art.id}</p>
+          <h2 class="card-title">${escapeHtml(art.title)}</h2>
+          <div class="card-tags">
+            ${art.tags.map(t =>
+              `<a href="?tag=${encodeURIComponent(t)}" class="chip${t === activeTag ? ' active' : ''}">#${escapeHtml(t)}</a>`
+            ).join('')}
+          </div>
+          <div class="card-meta">
+            <span class="card-time">${art.time}</span>
+            <span class="card-rev${isMultiRev ? ' multi' : ''}" title="版本数">
+              v${art.rev}${isMultiRev ? ' · ' + art.rev + '版本' : ''}
+            </span>
+          </div>
+        `;
+
+        // Keyboard navigation
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            card.click();
+          }
+        });
+
+        // Action buttons: stop propagation so card click doesn't fire
+        card.querySelectorAll('.card-action-btn').forEach(btn => {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const action = btn.classList.contains('delete') ? '删除' : '存档';
+            alert(`${action}「${art.title}」— 待实现`);
+          });
+        });
+
+        grid.insertBefore(card, emptyState);
+      });
+    }
+
+    // ── Escape HTML ───────────────────────────────────────────
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Init ──────────────────────────────────────────────────
+    renderFilters();
+    renderGrid();
+
+    // Re-render on popstate (back/forward navigation)
+    window.addEventListener('popstate', () => {
+      renderFilters();
+      renderGrid();
+    });
+
+    // Intercept tag filter clicks for SPA-style nav (no full reload)
+    document.addEventListener('click', e => {
+      const chip = e.target.closest('.filter-chip, .chip');
+      if (!chip) return;
+      const href = chip.getAttribute('href');
+      if (!href || href === '#') return;
+
+      // Only intercept local tag links
+      if (href.startsWith('?') || href.startsWith(window.location.pathname + '?')) {
+        e.preventDefault();
+        const newUrl = href.startsWith('?')
+          ? window.location.pathname + href
+          : href;
+        history.pushState(null, '', newUrl);
+        renderFilters();
+        renderGrid();
+      }
+    });
+  </script>
+</body>
+</html>

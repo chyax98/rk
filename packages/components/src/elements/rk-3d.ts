@@ -1,12 +1,65 @@
 // ─── rk-3d — Interactive 3D scene (Three.js CDN) ──────────────────
 
+type Vec3Like = { set: (x: number, y: number, z: number) => void };
+type MeshLike = { rotation: { x: number; y: number }; position: Vec3Like; type?: string };
+type RendererLike = {
+  setPixelRatio: (ratio: number) => void;
+  setSize: (width: number, height: number) => void;
+  render: (scene: SceneLike, camera: CameraLike) => void;
+  dispose?: () => void;
+};
+type CameraLike = { position: Vec3Like; aspect: number; updateProjectionMatrix: () => void };
+type DirectionalLightLike = { position: Vec3Like };
+type SceneLike = { background: null; add: (object: unknown) => void; children: MeshLike[] };
+type ThreeModule = {
+  WebGLRenderer: new (options: {
+    canvas: HTMLCanvasElement;
+    antialias: boolean;
+    alpha: boolean;
+  }) => RendererLike;
+  PerspectiveCamera: new (fov: number, aspect: number, near: number, far: number) => CameraLike;
+  Scene: new () => SceneLike;
+  AmbientLight: new (color: number, intensity: number) => unknown;
+  DirectionalLight: new (color: number, intensity: number) => DirectionalLightLike;
+  SphereGeometry: new (...args: number[]) => unknown;
+  TorusGeometry: new (...args: number[]) => unknown;
+  IcosahedronGeometry: new (...args: number[]) => unknown;
+  BoxGeometry: new (...args: number[]) => unknown;
+  MeshPhongMaterial: new (options: { color: number; shininess: number }) => unknown;
+  Mesh: new (geometry: unknown, material: unknown) => MeshLike;
+};
+
 class RkThreeD extends HTMLElement {
   private _rendered = false;
+  private _raf: number | null = null;
+  private _ro: ResizeObserver | null = null;
+  private _renderer: RendererLike | null = null;
+  private _renderSeq = 0;
 
   connectedCallback() {
     if (this._rendered) return;
     this._rendered = true;
     this._render();
+  }
+
+  disconnectedCallback() {
+    this._cleanup();
+  }
+
+  private _cleanup() {
+    this._renderSeq++;
+    if (this._raf !== null) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+    if (this._ro) {
+      this._ro.disconnect();
+      this._ro = null;
+    }
+    if (this._renderer) {
+      try { this._renderer.dispose?.(); } catch { /* best-effort */ }
+      this._renderer = null;
+    }
   }
 
   private _render() {
@@ -22,20 +75,31 @@ class RkThreeD extends HTMLElement {
         ${caption ? `<p class="rk-3d__caption">${this._escape(caption)}</p>` : ''}
       </div>`;
 
-    this._loadThree(uid, scene, color, parseInt(height));
+    this._loadThree(uid, scene, color, parseInt(height, 10));
   }
 
   private async _loadThree(uid: string, scene: string, color: string, height: number) {
+    const seq = ++this._renderSeq;
     try {
-      const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js') as any;
+      const THREE = (await import(
+        'https://cdn.jsdelivr.net/npm/three@0.170/build/three.module.js'
+      )) as unknown as ThreeModule;
+      if (seq !== this._renderSeq) return;
+
       const canvas = this.querySelector(`#rk3d-${uid}`) as HTMLCanvasElement;
       if (!canvas) return;
 
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      this._renderer = renderer;
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(canvas.clientWidth || 600, height);
 
-      const camera = new THREE.PerspectiveCamera(60, (canvas.clientWidth || 600) / height, 0.1, 100);
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        (canvas.clientWidth || 600) / height,
+        0.1,
+        100,
+      );
       camera.position.set(0, 0, 3);
 
       const threeScene = new THREE.Scene();
@@ -48,7 +112,7 @@ class RkThreeD extends HTMLElement {
       threeScene.add(dirLight);
 
       // Geometry based on scene type
-      let geo: any;
+      let geo: unknown;
       if (scene === 'sphere') geo = new THREE.SphereGeometry(1, 32, 32);
       else if (scene === 'torus') geo = new THREE.TorusGeometry(0.7, 0.3, 16, 100);
       else if (scene === 'orbit') geo = new THREE.IcosahedronGeometry(0.8, 1);
@@ -96,35 +160,46 @@ class RkThreeD extends HTMLElement {
       });
 
       // Touch support
-      canvas.addEventListener('touchstart', (e: TouchEvent) => {
-        if (e.touches.length === 1) {
-          isDragging = true;
+      canvas.addEventListener(
+        'touchstart',
+        (e: TouchEvent) => {
+          if (e.touches.length === 1) {
+            isDragging = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+          }
+        },
+        { passive: true },
+      );
+      canvas.addEventListener(
+        'touchmove',
+        (e: TouchEvent) => {
+          if (!isDragging || e.touches.length !== 1) return;
+          mesh.rotation.y += (e.touches[0].clientX - lastX) * 0.01;
+          mesh.rotation.x += (e.touches[0].clientY - lastY) * 0.01;
           lastX = e.touches[0].clientX;
           lastY = e.touches[0].clientY;
-        }
-      }, { passive: true });
-      canvas.addEventListener('touchmove', (e: TouchEvent) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        mesh.rotation.y += (e.touches[0].clientX - lastX) * 0.01;
-        mesh.rotation.x += (e.touches[0].clientY - lastY) * 0.01;
-        lastX = e.touches[0].clientX;
-        lastY = e.touches[0].clientY;
-      }, { passive: true });
+        },
+        { passive: true },
+      );
       canvas.addEventListener('touchend', () => {
         isDragging = false;
       });
 
       // Animate
       const animate = () => {
-        requestAnimationFrame(animate);
+        if (seq !== this._renderSeq) return;
+        this._raf = requestAnimationFrame(animate);
         if (!isDragging) {
           mesh.rotation.x += 0.005;
           mesh.rotation.y += 0.008;
         }
         // Animate orbit children
         if (scene === 'orbit') {
-          const children = threeScene.children.filter((c: any) => c !== mesh && c.type === 'Mesh');
-          children.forEach((child: any, i: number) => {
+          const children = threeScene.children.filter(
+            (c: MeshLike) => c !== mesh && c.type === 'Mesh',
+          );
+          children.forEach((child: MeshLike, i: number) => {
             const t = Date.now() * 0.001 + (i / 3) * Math.PI * 2;
             child.position.set(Math.cos(t) * 1.5, Math.sin(t * 0.7) * 0.3, Math.sin(t) * 1.5);
           });
@@ -134,19 +209,20 @@ class RkThreeD extends HTMLElement {
       animate();
 
       // Resize observer
-      const ro = new ResizeObserver(() => {
+      this._ro = new ResizeObserver(() => {
         const w = canvas.clientWidth || 600;
         renderer.setSize(w, height);
         camera.aspect = w / height;
         camera.updateProjectionMatrix();
       });
-      ro.observe(canvas.parentElement!);
-
+      if (canvas.parentElement) this._ro.observe(canvas.parentElement);
     } catch {
       const canvas = this.querySelector('.rk-3d__canvas');
       if (canvas) {
-        canvas.insertAdjacentHTML('afterend',
-          '<p style="color:#999;font-size:0.8rem;text-align:center;padding:1rem">3D 需要 WebGL 支持和 Three.js CDN 加载</p>');
+        canvas.insertAdjacentHTML(
+          'afterend',
+          '<p style="color:#999;font-size:0.8rem;text-align:center;padding:1rem">3D 需要 WebGL 支持和 Three.js CDN 加载</p>',
+        );
       }
     }
   }

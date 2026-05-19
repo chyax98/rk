@@ -13,22 +13,27 @@ class RkCallout extends HTMLElement {
   _raw = '';
 
   static get observedAttributes() {
-    return ['tone', 'title'];
+    return ['tone', 'type', 'title'];
   }
 
   connectedCallback(): void {
+    // Prevent double-render when nested inside another callout's content
+    // (caused by agent writing self-closing <rk-callout /> which the HTML5 parser treats as an open tag)
+    if (this.parentElement?.closest('.rk-callout__content')) return;
     this._raw = this.innerHTML;
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 
   _render(): void {
-    const tone = this.getAttribute('tone') || 'info';
+    // Accept both `tone` and `type` attributes (agents often use `type`)
+    const tone = this.getAttribute('tone') || this.getAttribute('type') || 'info';
     const title = this.getAttribute('title') || '';
-    const icon = ICONS[tone] || ICONS['info'];
+    const icon = ICONS[tone] || ICONS.info;
 
     this.innerHTML = /* html */ `
       <div class="rk-callout rk-callout--${tone}">

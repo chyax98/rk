@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>RenderKit 图表引擎全面测试</title>
+</head>
+<body data-rk-theme="dark-pro">
+
+<h1>图表引擎全面测试</h1>
+<p>覆盖 Mermaid、D2、Graphviz/DOT、PlantUML 四种引擎的多种图表类型。</p>
+
+<!-- ═══ Mermaid ═══ -->
+<h2>Mermaid — flowchart LR</h2>
+<rk-diagram engine="mermaid" title="横向流程图">
+graph LR
+  Client -->|请求| Gateway
+  Gateway -->|路由| Auth[认证服务]
+  Auth -->|验证| API[业务 API]
+  API -->|读写| DB[(数据库)]
+  API -->|缓存| Redis[(Redis)]
+</rk-diagram>
+
+<h2>Mermaid — flowchart TD</h2>
+<rk-diagram engine="mermaid" title="纵向架构图">
+graph TD
+  subgraph 客户端
+    Web[Web App]
+    Mobile[移动端]
+  end
+  subgraph 服务端
+    API[API Gateway]
+    UserSvc[用户服务]
+    OrderSvc[订单服务]
+  end
+  Web --> API
+  Mobile --> API
+  API --> UserSvc
+  API --> OrderSvc
+</rk-diagram>
+
+<h2>Mermaid — sequenceDiagram</h2>
+<rk-diagram engine="mermaid" title="用户登录时序">
+sequenceDiagram
+  participant U as 用户
+  participant F as 前端
+  participant A as Auth 服务
+  participant D as 数据库
+  U->>F: 输入账号密码
+  F->>A: POST /login
+  A->>D: 查询用户
+  D-->>A: 用户数据
+  A-->>F: JWT Token
+  F-->>U: 登录成功
+</rk-diagram>
+
+<h2>Mermaid — gantt</h2>
+<rk-diagram engine="mermaid" title="项目甘特图">
+gantt
+  title 开发里程碑
+  dateFormat YYYY-MM-DD
+  section 基础架构
+    TypeScript 迁移     :done, a1, 2024-01-01, 30d
+    组件开发           :done, a2, 2024-01-15, 45d
+  section 核心功能
+    评论系统           :active, b1, 2024-02-15, 30d
+    图表引擎           :b2, 2024-03-01, 30d
+  section 发布
+    Beta 测试          :c1, 2024-04-01, 30d
+    正式发布           :milestone, c2, 2024-05-01, 0d
+</rk-diagram>
+
+<h2>Mermaid — pie</h2>
+<rk-diagram engine="mermaid" title="技术栈占比">
+pie title 代码库语言分布
+  "TypeScript" : 45
+  "CSS" : 20
+  "HTML" : 15
+  "Python" : 10
+  "Shell" : 10
+</rk-diagram>
+
+<h2>Mermaid — classDiagram</h2>
+<rk-diagram engine="mermaid" title="类图">
+classDiagram
+  class HTMLElement {
+    +connectedCallback()
+    +disconnectedCallback()
+    +attributeChangedCallback()
+  }
+  class RkChart {
+    +_raw: string
+    +_render()
+    +_parseData()
+  }
+  class RkDiagram {
+    +_raw: string
+    +_render()
+    +_renderMermaid()
+    +_renderD2()
+  }
+  HTMLElement <|-- RkChart
+  HTMLElement <|-- RkDiagram
+</rk-diagram>
+
+<h2>Mermaid — gitGraph</h2>
+<rk-diagram engine="mermaid" title="Git 分支">
+gitGraph
+  commit id: "init"
+  commit id: "add components"
+  branch develop
+  checkout develop
+  commit id: "feat: chart"
+  commit id: "fix: diagram"
+  checkout main
+  merge develop id: "merge"
+  commit id: "release"
+</rk-diagram>
+
+<h2>Mermaid — journey</h2>
+<rk-diagram engine="mermaid" title="用户体验旅程">
+journey
+  title 用户使用 RenderKit
+  section 编写
+    打开编辑器: 5: 用户
+    写 HTML+WC: 4: 用户
+  section 推送
+    rk push: 5: 用户, Agent
+  section 审阅
+    查看渲染: 5: 用户
+    添加评论: 4: 用户
+  section 迭代
+    读取反馈: 5: Agent
+    修改文档: 4: Agent
+</rk-diagram>
+
+<!-- ═══ D2 ═══ -->
+<h2>D2 — 基础架构图</h2>
+<rk-diagram engine="d2" title="系统架构">
+title: RenderKit Architecture
+direction: right
+
+Client -> Gateway: HTTP
+Gateway -> Auth: verify
+Auth -> API: token
+API -> DB: query
+API -> Cache: get/set
+
+Client {
+  shape: person
+}
+Gateway {
+  shape: hexagon
+}
+</rk-diagram>
+
+<!-- ═══ Graphviz ═══ -->
+<h2>Graphviz/DOT — 依赖图</h2>
+<rk-diagram engine="graphviz" title="包依赖关系">
+digraph Dependencies {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  CLI -> Core [label="push/pull"];
+  Core -> DB [label="SQLite"];
+  Core -> Processor [label="HTML"];
+  Processor -> Shiki [label="code"];
+  Processor -> Kroki [label="diagrams"];
+
+  Browser -> Core [label="render"];
+  Browser -> Components [label="WC"];
+}
+</rk-diagram>
+
+<h2>Graphviz/DOT — 流程图</h2>
+<rk-diagram engine="dot" title="部署流程">
+digraph deploy {
+  rankdir=TB;
+  node [shape=box];
+
+  Code [label="代码提交"];
+  CI [label="CI 检查"];
+  Build [label="构建"];
+  Test [label="测试"];
+  Deploy [label="部署"];
+  Monitor [label="监控"];
+
+  Code -> CI -> Build -> Test -> Deploy -> Monitor;
+  Monitor -> Code [label="反馈"];
+}
+</rk-diagram>
+
+<!-- ═══ PlantUML ═══ -->
+<h2>PlantUML — 时序图</h2>
+<rk-diagram engine="plantuml" title="API 调用时序">
+@startuml
+actor Agent
+participant "CLI" as CLI
+participant "Server" as Server
+database "SQLite" as DB
+
+Agent -> CLI: rk push doc.html
+CLI -> Server: POST /api/artifacts
+Server -> Server: processHTML()
+Server -> DB: INSERT revision
+Server --> CLI: { artifactId, revision }
+CLI --> Agent: 推送成功
+
+Agent -> CLI: rk feedback doc.html
+CLI -> Server: GET /api/artifacts/:id/feedback
+Server -> DB: SELECT comments
+Server --> CLI: { comments[] }
+CLI --> Agent: 评论列表
+@enduml
+</rk-diagram>
+
+</body>
+</html>

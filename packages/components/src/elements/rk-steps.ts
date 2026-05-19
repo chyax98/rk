@@ -6,12 +6,14 @@ class RkSteps extends HTMLElement {
     return ['current'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML;
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML;
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 
@@ -38,9 +40,7 @@ class RkSteps extends HTMLElement {
             <div class="rk-steps__circle">${circle}</div>
             <div class="rk-steps__label">${this._escape(label)}</div>
           </div>`;
-        const connector = i < steps.length - 1
-          ? '<div class="rk-steps__connector"></div>'
-          : '';
+        const connector = i < steps.length - 1 ? '<div class="rk-steps__connector"></div>' : '';
         return itemHtml + connector;
       })
       .join('');

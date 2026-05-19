@@ -45,12 +45,14 @@ class RkTable extends HTMLElement {
     return ['title', 'profile'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.textContent || '';
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.textContent || '';
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 

@@ -1,0 +1,740 @@
+/* ─── Artifact view (v1-ux) ────────────────────────────────────────────────── */
+
+.rk-doc-app {
+  --rk-panel-w: 360px;
+  --rk-gutter-w: 22px;
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  grid-template-columns: 1fr 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  gap: 0;
+  overflow: hidden;
+  background: var(--rk-bg);
+  transition: grid-template-columns 0.22s ease;
+}
+.rk-doc-app.is-panel-open {
+  grid-template-columns: 1fr var(--rk-panel-w);
+}
+
+/* ── Topbar ── */
+.rk-doc-topbar {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--rk-topbar-border);
+  background: var(--rk-topbar-bg);
+  z-index: 50;
+}
+.rk-doc-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--rk-muted);
+  text-decoration: none;
+  font-size: 16px;
+}
+.rk-doc-back:hover {
+  background: var(--rk-menu-item-hover);
+  color: var(--rk-text);
+}
+.rk-doc-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.rk-doc-title-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rk-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 36ch;
+}
+.rk-doc-id {
+  font-size: 10px;
+  color: var(--rk-text-tertiary);
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-doc-topbar-spacer {
+  flex: 1;
+}
+
+/* ── Render error badge ── */
+.rk-error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--rk-tone-danger-border);
+  background: var(--rk-tone-danger-bg);
+  color: var(--rk-tone-danger-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rk-error-badge:hover {
+  background: color-mix(in srgb, var(--rk-tone-danger-bg) 70%, var(--rk-tone-danger-border) 30%);
+}
+.rk-error-panel {
+  position: fixed;
+  top: 48px;
+  right: 12px;
+  width: 420px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--rk-surface-solid);
+  border: 1px solid var(--rk-tone-danger-border);
+  border-radius: 8px;
+  box-shadow: var(--rk-shadow-md);
+  z-index: 60;
+}
+.rk-error-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rk-tone-danger-border);
+  background: var(--rk-tone-danger-bg);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rk-tone-danger-border);
+}
+.rk-error-panel-clear {
+  border: none;
+  background: transparent;
+  color: var(--rk-tone-danger-border);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.rk-error-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rk-tone-danger-bg);
+  cursor: pointer;
+  font-size: 12px;
+}
+.rk-error-row:hover {
+  background: var(--rk-tone-danger-bg);
+}
+.rk-error-row-engine {
+  flex-shrink: 0;
+  background: var(--rk-tone-danger-bg);
+  color: var(--rk-tone-danger-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+}
+.rk-error-row-msg {
+  color: var(--rk-text-secondary);
+  word-break: break-word;
+}
+
+/* ── Revision/Compare menus ── */
+.rk-rev-menu {
+  position: relative;
+}
+.rk-rev-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text-secondary);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+  cursor: pointer;
+}
+.rk-rev-trigger:hover {
+  border-color: var(--rk-accent);
+  color: var(--rk-accent);
+}
+.rk-rev-trigger.is-old {
+  background: var(--rk-tone-warning-bg);
+  border-color: var(--rk-tone-warning-border);
+  color: var(--rk-tone-warning-border);
+}
+.rk-rev-trigger.is-active {
+  background: var(--rk-accent-muted);
+  border-color: var(--rk-accent);
+  color: var(--rk-accent);
+}
+.rk-rev-dropdown {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--rk-menu-bg);
+  border: 1px solid var(--rk-menu-border);
+  border-radius: 8px;
+  box-shadow: var(--rk-shadow-md);
+  z-index: 60;
+  padding: 4px;
+}
+.rk-rev-dropdown-header {
+  padding: 8px 10px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rk-text-tertiary);
+}
+.rk-rev-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--rk-text-secondary);
+  text-align: left;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.rk-rev-item:hover {
+  background: var(--rk-menu-item-hover);
+}
+.rk-rev-item.is-current {
+  background: var(--rk-accent-muted);
+  color: var(--rk-accent);
+}
+.rk-rev-item-num {
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+  font-weight: 600;
+}
+.rk-rev-item-time {
+  color: var(--rk-text-tertiary);
+  font-size: 11px;
+  margin-left: auto;
+}
+.rk-rev-item-badge {
+  background: var(--rk-accent);
+  color: var(--rk-btn-primary-text);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+}
+
+/* ── Panel toggle ── */
+.rk-panel-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  border-radius: 6px;
+  color: var(--rk-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.rk-panel-toggle:hover {
+  border-color: var(--rk-accent);
+  color: var(--rk-accent);
+}
+.rk-panel-toggle-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--rk-tone-warning-border);
+  color: var(--rk-btn-primary-text);
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 14px;
+  padding: 1px 4px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Stage / doc frame / gutter ── */
+.rk-doc-stage {
+  grid-row: 2;
+  grid-column: 1;
+  overflow: hidden;
+  background: var(--rk-bg);
+  position: relative;
+}
+.rk-doc-frame {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--rk-gutter-w) 1fr;
+  overflow-y: auto;
+}
+.rk-doc-frame .rk-html-body {
+  grid-column: 2;
+  position: relative;
+  /* Reset standalone-artifact constraints; review surface uses full panel width */
+  max-width: none;
+  margin: 0;
+  padding: 28px clamp(24px, 4vw, 72px) 96px;
+}
+.rk-doc-frame .rk-html-body > * {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Wide content (charts/grids/3d) should override the readable cap */
+.rk-doc-frame .rk-html-body > rk-chart,
+.rk-doc-frame .rk-html-body > rk-diagram,
+.rk-doc-frame .rk-html-body > rk-3d,
+.rk-doc-frame .rk-html-body > rk-table,
+.rk-doc-frame .rk-html-body > rk-grid,
+.rk-doc-frame .rk-html-body > rk-comparison,
+.rk-doc-frame .rk-html-body > rk-timeline,
+.rk-doc-frame .rk-html-body > rk-metric,
+.rk-doc-frame .rk-html-body > rk-tabs,
+.rk-doc-frame .rk-html-body > rk-steps {
+  max-width: none;
+}
+/* On compare mode, each pane is narrow; let inner content fit */
+.rk-compare-pane .rk-html-body > * {
+  max-width: none;
+}
+.rk-gutter {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+.rk-gutter-mark {
+  position: absolute;
+  left: 6px;
+  width: 8px;
+  min-height: 18px;
+  border-radius: 4px;
+  background: var(--rk-tone-warning-border);
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--rk-tone-warning-border) 40%, transparent);
+  transition:
+    background 0.15s,
+    transform 0.12s;
+}
+.rk-gutter-mark:hover {
+  background: var(--rk-status-orphaned);
+  transform: scaleX(1.4);
+}
+.rk-gutter-mark.is-active {
+  background: var(--rk-status-orphaned);
+  transform: scaleX(1.5);
+}
+.rk-gutter-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--rk-btn-primary-text);
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+}
+
+/* ── Anchor highlight when a comment is clicked ── */
+[data-rk-anchor] {
+  position: relative;
+  border-radius: 4px;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+}
+[data-rk-anchor]:hover {
+  background: var(--rk-menu-item-hover);
+}
+[data-rk-anchor].rk-has-comment {
+  box-shadow: inset 2px 0 0 var(--rk-tone-warning-border);
+}
+[data-rk-anchor].rk-anchor-flash {
+  animation: rk-flash 1.2s ease;
+}
+@keyframes rk-flash {
+  0%,
+  100% {
+    background: transparent;
+  }
+  25%,
+  60% {
+    background: var(--rk-accent-muted);
+  }
+}
+
+/* ── Floating "+" buttons ── */
+.rk-add-anchor-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rk-accent);
+  background: var(--rk-surface-solid);
+  color: var(--rk-accent);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px var(--rk-focus-ring);
+  z-index: 70;
+}
+.rk-add-anchor-btn:hover {
+  background: var(--rk-accent);
+  color: var(--rk-btn-primary-text);
+}
+.rk-add-selection-btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--rk-btn-primary);
+  color: var(--rk-btn-primary-text);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--rk-shadow-md);
+  z-index: 70;
+}
+
+/* ── Thread panel ── */
+.rk-thread-panel {
+  grid-row: 2;
+  grid-column: 2;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--rk-inspector-bg);
+  border-left: 1px solid var(--rk-inspector-border);
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    visibility 0.22s,
+    opacity 0.22s;
+}
+.rk-doc-app.is-panel-open .rk-thread-panel {
+  visibility: visible;
+  opacity: 1;
+}
+.rk-thread-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rk-inspector-border);
+  flex-shrink: 0;
+}
+.rk-thread-panel-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--rk-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rk-thread-panel-count {
+  background: var(--rk-tone-warning-border);
+  color: var(--rk-btn-primary-text);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.rk-thread-panel-close {
+  border: none;
+  background: transparent;
+  color: var(--rk-muted);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rk-thread-panel-close:hover {
+  color: var(--rk-text);
+  background: var(--rk-menu-item-hover);
+  border-radius: 4px;
+}
+.rk-thread-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0 12px;
+}
+.rk-thread-empty {
+  font-size: 12px;
+  color: var(--rk-text-tertiary);
+  text-align: center;
+  padding: 32px 16px;
+  line-height: 1.7;
+}
+.rk-thread-empty kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  margin: 0 1px;
+  background: var(--rk-surface-raised);
+  border: 1px solid var(--rk-border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+  color: var(--rk-text-secondary);
+}
+
+/* ── Thread card ── */
+.rk-thread {
+  margin: 6px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--rk-border);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  background: var(--rk-surface-solid);
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.rk-thread:hover {
+  border-color: var(--rk-border-hover);
+}
+.rk-thread.is-active {
+  border-color: var(--rk-accent);
+  box-shadow: 0 0 0 3px var(--rk-accent-subtle);
+}
+.rk-thread.is-open {
+  border-left-color: var(--rk-tone-warning-border);
+}
+.rk-thread.is-addressed {
+  border-left-color: var(--rk-tone-info-border);
+}
+.rk-thread.is-resolved {
+  border-left-color: var(--rk-tone-success-border);
+  opacity: 0.7;
+}
+.rk-thread.is-orphaned {
+  border-left-color: var(--rk-status-orphaned);
+  opacity: 0.6;
+}
+
+.rk-thread-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.rk-thread-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.rk-thread-status.is-open {
+  background: var(--rk-tone-warning-border);
+}
+.rk-thread-status.is-addressed {
+  background: var(--rk-tone-info-border);
+}
+.rk-thread-status.is-resolved {
+  background: var(--rk-tone-success-border);
+}
+.rk-thread-status.is-orphaned {
+  background: var(--rk-status-orphaned);
+}
+.rk-thread-quote {
+  flex: 1;
+  font-size: 11px;
+  color: var(--rk-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-thread-author {
+  font-size: 11px;
+}
+.rk-thread-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--rk-text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.rk-thread-reply {
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 2px solid var(--rk-menu-separator);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.rk-thread-reply-author {
+  font-size: 11px;
+}
+.rk-thread-reply-text {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--rk-text-secondary);
+  white-space: pre-wrap;
+}
+.rk-thread-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--rk-menu-separator);
+}
+.rk-thread-time {
+  font-size: 10.5px;
+  color: var(--rk-text-tertiary);
+  font-family: var(--rk-font-mono, "JetBrains Mono", monospace);
+}
+.rk-thread-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.rk-thread-actions button {
+  border: 1px solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  color: var(--rk-text-secondary);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-thread-actions button:hover {
+  border-color: var(--rk-accent);
+  color: var(--rk-accent);
+}
+.rk-thread-actions button.is-primary {
+  background: var(--rk-accent);
+  border-color: var(--rk-accent);
+  color: var(--rk-btn-primary-text);
+}
+.rk-thread-actions button.is-primary:hover {
+  background: var(--rk-accent-hover);
+}
+
+/* ── Draft / reply editor ── */
+.rk-thread-draft,
+.rk-thread-reply-draft {
+  margin: 8px 10px;
+  padding: 8px;
+  border: 1.5px solid var(--rk-accent);
+  border-radius: 8px;
+  background: var(--rk-surface-solid);
+}
+.rk-thread-draft-anchor {
+  font-size: 11px;
+  color: var(--rk-muted);
+  background: var(--rk-surface-raised);
+  padding: 5px 8px;
+  margin: -8px -8px 6px;
+  border-bottom: 1px solid var(--rk-border);
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-thread-draft-text,
+.rk-thread-reply-draft textarea,
+.rk-thread-edit-text {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px;
+  color: var(--rk-text);
+  background: transparent;
+  box-sizing: border-box;
+}
+.rk-thread-draft-actions,
+.rk-thread-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+.rk-thread-draft-actions button,
+.rk-thread-edit-actions button {
+  border: 1px solid var(--rk-border);
+  background: var(--rk-surface-solid);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rk-thread-draft-actions button.is-primary,
+.rk-thread-edit-actions button.is-primary {
+  background: var(--rk-accent);
+  border-color: var(--rk-accent);
+  color: var(--rk-btn-primary-text);
+}
+.rk-thread-draft-actions button.is-primary:hover,
+.rk-thread-edit-actions button.is-primary:hover {
+  background: var(--rk-accent-hover);
+}
+.rk-thread-draft-actions button:disabled,
+.rk-thread-edit-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rk-thread-edit {
+  margin-top: 4px;
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 900px) {
+  .rk-doc-app {
+    --rk-panel-w: 100vw;
+  }
+  .rk-doc-app.is-panel-open .rk-doc-stage {
+    visibility: hidden;
+  }
+  .rk-doc-frame {
+    grid-template-columns: var(--rk-gutter-w) 1fr;
+  }
+}

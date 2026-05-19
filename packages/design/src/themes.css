@@ -502,11 +502,13 @@
   --rk-code-text: rgba(0, 0, 0, 0.85);
   --rk-code-border: rgba(0, 0, 0, 0.08);
 
+  --rk-shadow: var(--rk-shadow-sm);
+
   --rk-font-sans: "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   --rk-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-/* ── linear-app ── dark precision, engineering aesthetic */
+/* ── linear-app
 [data-rk-theme="linear-app"] {
   color-scheme: dark;
 
@@ -548,11 +550,13 @@
   --rk-code-text: #d0d6e0;
   --rk-code-border: rgba(255, 255, 255, 0.06);
 
+  --rk-shadow: var(--rk-shadow-lg);
+
   --rk-font-sans: "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   --rk-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-/* ── glassmorphism ── frosted glass, luminous depth */
+/* ── glassmorphism
 [data-rk-theme="glassmorphism"] {
   color-scheme: light;
 
@@ -595,7 +599,9 @@
   --rk-code-text: #1a1a2e;
   --rk-code-border: rgba(255, 255, 255, 0.3);
 
-  --rk-font-sans: "Plus Jakarta Sans", "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-shadow: var(--rk-shadow-md);
+
+  --rk-font-sans: "Plus Jakarta Sans
   --rk-font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -641,6 +647,8 @@
   --rk-code-text: #161616;
   --rk-code-border: #e0e0e0;
 
-  --rk-font-sans: "IBM Plex Sans", "Inter", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --rk-shadow: var(--rk-shadow-sm);
+
+  --rk-font-sans: "IBM Plex Sans", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   --rk-font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
 }

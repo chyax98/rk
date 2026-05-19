@@ -6,12 +6,14 @@ class RkSummary extends HTMLElement {
     return ['title'];
   }
 
-  connectedCallback(): void {
-    this._raw = this.innerHTML.trim();
+  
+connectedCallback(): void {
+    if (!this._raw) this._raw = this.innerHTML.trim();
     this._render();
   }
 
   attributeChangedCallback(): void {
+    if (!this.isConnected) return;
     if (this._raw) this._render();
   }
 

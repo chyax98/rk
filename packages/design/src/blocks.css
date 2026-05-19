@@ -197,13 +197,7 @@
 }
 
 /* ─── Decision card ─── */
-.rk-block-decision-card {
-}
-.rk-decision-question {
-  margin-top: 0;
-}
 .rk-decision-status {
-  display: inline-block;
   padding: var(--rk-space-1) var(--rk-space-3);
   border-radius: var(--rk-radius-full);
   font: var(--rk-type-label);
@@ -288,10 +282,7 @@
 }
 
 /* ─── Diagram block ─── */
-.rk-block-diagram {
-}
 .rk-diagram-caption {
-  color: var(--rk-muted);
   font-size: var(--rk-text-sm);
   margin-bottom: var(--rk-space-2);
 }

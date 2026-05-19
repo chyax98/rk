@@ -1,30 +1,56 @@
 import type React from 'react';
-import { listArtifacts } from '../lib/store';
+import {
+  type ArtifactSort,
+  type ArtifactView,
+  getArtifactViewCounts,
+  listArtifacts,
+} from '@/lib/store.ts';
+import ArtifactList from './ArtifactList.tsx';
 
-interface ArtifactSummary {
-  id: string;
-  title?: string;
-  currentRevision: number;
-}
+const VIEWS: ArtifactView[] = ['active', 'archived', 'test', 'deleted'];
+const SORTS: ArtifactSort[] = ['updated', 'title'];
 
-export default async function Home(): Promise<React.ReactElement> {
-  const artifacts: ArtifactSummary[] = await listArtifacts();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; sort?: string; q?: string; tag?: string }>;
+}): Promise<React.ReactElement> {
+  const params = await searchParams;
+  const view: ArtifactView = (VIEWS as string[]).includes(params.view ?? '')
+    ? (params.view as ArtifactView)
+    : 'active';
+  const sort: ArtifactSort = (SORTS as string[]).includes(params.sort ?? '')
+    ? (params.sort as ArtifactSort)
+    : 'updated';
+  const q = params.q?.trim() ?? '';
+  const tag = params.tag?.trim() ?? '';
+
+  const [artifacts, counts] = await Promise.all([
+    listArtifacts({ view, sort, q: q || undefined, tag: tag || undefined }),
+    getArtifactViewCounts(),
+  ]);
+
+  // Tag facet computed from current view's full set (not the q-filtered set) so the
+  // sidebar/filter row stays stable while user types.
+  const tagSource =
+    q || tag
+      ? await listArtifacts({ view, sort: 'updated' })
+      : artifacts;
+  const allTags = [...new Set(tagSource.flatMap((a) => a.tags))].sort();
+  const tagCounts: Record<string, number> = Object.fromEntries(
+    allTags.map((t) => [t, tagSource.filter((a) => a.tags.includes(t)).length]),
+  );
+
   return (
-    <main className="rk-home">
-      <h1>RenderKit</h1>
-      <p className="rk-muted">Local Agent artifact renderer</p>
-      {artifacts.length === 0 ? (
-        <p className="rk-muted">尚无 artifact。推送 .rk.md 文件开始使用。</p>
-      ) : (
-        <ul>
-          {artifacts.map((a: ArtifactSummary) => (
-            <li key={a.id}>
-              <a href={`/a/${a.id}`}>{a.title || a.id}</a>
-              <span className="rk-muted"> rev {a.currentRevision}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+    <ArtifactList
+      initialArtifacts={artifacts}
+      counts={counts}
+      allTags={allTags}
+      tagCounts={tagCounts}
+      view={view}
+      sort={sort}
+      q={q}
+      tag={tag}
+    />
   );
 }
